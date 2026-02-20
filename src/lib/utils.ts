@@ -60,3 +60,22 @@ export function formatPhoneNumber(value: string): string {
   if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
+
+/**
+ * Formats a stored phone number for display.
+ * Handles 10-digit and 11-digit (with leading 1) US numbers.
+ * Returns original string if it doesn't match expected patterns.
+ */
+export function formatPhoneDisplay(value: string): string {
+  if (!value) return '';
+  const digits = value.replace(/\D/g, '');
+  // 11-digit with leading country code 1
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
+  }
+  // 10-digit US number
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+  return value;
+}

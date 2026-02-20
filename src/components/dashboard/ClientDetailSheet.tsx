@@ -39,7 +39,7 @@ import {
   StickyNote
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
-import { cn } from '@/lib/utils';
+import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { VisitHistoryTimeline } from './VisitHistoryTimeline';
 import { ClientNotesSection } from './ClientNotesSection';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
@@ -398,7 +398,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
             >
               <X className="w-4 h-4 text-muted-foreground" />
             </button>
-            <ScrollArea className="flex-1 max-h-[85vh]">
+            <ScrollArea className="flex-1">
     <div className="p-6 space-y-4">
           {/* Banned Client Alert */}
           {client.is_banned && (
@@ -455,35 +455,39 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
           </div>
 
           {/* Contact Quick Actions */}
-          <div className="flex gap-2">
-            {client.phone && (
-              <Button variant="outline" size={tokens.button.card} asChild className="flex-1 rounded-xl border-border/60">
-                <a href={`tel:${client.phone}`}>
-                  <Phone className="w-4 h-4 mr-2" />
-                  Call
-                </a>
-              </Button>
-            )}
-            {client.email && (
-              <Button variant="outline" size={tokens.button.card} asChild className="flex-1 rounded-xl border-border/60">
-                <a href={`mailto:${client.email}`}>
-                  <Mail className="w-4 h-4 mr-2" />
-                  Email
-                </a>
-              </Button>
-            )}
-            {client.phone && (
-              <Button variant="outline" size={tokens.button.card} asChild className="flex-1 rounded-xl border-border/60">
-                <a href={`sms:${client.phone}`}>
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  Text
-                </a>
-              </Button>
-            )}
-          </div>
+          {(client.phone || client.email) ? (
+            <div className="flex gap-2">
+              {client.phone && (
+                <Button variant="outline" size={tokens.button.card} asChild className="flex-1 rounded-xl border-border/60">
+                  <a href={`tel:${client.phone}`}>
+                    <Phone className="w-4 h-4 mr-2" />
+                    Call
+                  </a>
+                </Button>
+              )}
+              {client.email && (
+                <Button variant="outline" size={tokens.button.card} asChild className="flex-1 rounded-xl border-border/60">
+                  <a href={`mailto:${client.email}`}>
+                    <Mail className="w-4 h-4 mr-2" />
+                    Email
+                  </a>
+                </Button>
+              )}
+              {client.phone && (
+                <Button variant="outline" size={tokens.button.card} asChild className="flex-1 rounded-xl border-border/60">
+                  <a href={`sms:${client.phone}`}>
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Text
+                  </a>
+                </Button>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground italic text-center py-2">No contact info on file</p>
+          )}
 
           {/* Stats Cards — Bento tiles */}
-          <div className="grid grid-cols-3 gap-3">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="grid grid-cols-3 gap-3">
             <Card className="p-3 text-center bg-card/80 backdrop-blur-xl border-border/60">
               <Calendar className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
               <p className="font-display text-lg tracking-wide">{client.visit_count}</p>
@@ -504,10 +508,16 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
                 {client.daysSinceVisit !== null ? `${client.daysSinceVisit}d` : 'N/A'}
               </p>
               <p className="text-xs text-muted-foreground">Since Visit</p>
+              {client.last_visit && (
+                <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                  {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}
+                </p>
+              )}
             </Card>
-          </div>
+          </motion.div>
 
           {/* Contact Info — Phorest-aligned */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <Card className="bg-card/80 backdrop-blur-xl border-border/60">
             <EditHeader
               title="Contact Information"
@@ -572,13 +582,13 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
                   {client.phone && (
                     <div className="flex items-center gap-2">
                       <Phone className="w-4 h-4 text-muted-foreground" />
-                      <span>{client.phone}</span>
+                      <span>{formatPhoneDisplay(client.phone)}</span>
                     </div>
                   )}
                   {client.landline && (
                     <div className="flex items-center gap-2">
                       <Phone className="w-4 h-4 text-muted-foreground" />
-                      <span>{client.landline} (landline)</span>
+                      <span>{formatPhoneDisplay(client.landline)} (landline)</span>
                     </div>
                   )}
                   {client.gender && (
@@ -602,8 +612,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
               )}
             </CardContent>
           </Card>
+          </motion.div>
 
           {/* Important Dates */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
           <Card className="bg-card/80 backdrop-blur-xl border-border/60">
             <EditHeader
               title="Important Dates"
@@ -647,7 +659,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
                             const years = differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 365;
                             if (years >= 1) return `${Math.floor(years)} year${Math.floor(years) !== 1 ? 's' : ''}`;
                             const months = Math.floor(differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 30);
-                            return `${months} month${months !== 1 ? 's' : ''}`;
+                            return months === 0 ? 'Less than 1 month' : `${months} month${months !== 1 ? 's' : ''}`;
                           })()}
                         </>
                       ) : 'No start date on file'}
@@ -657,8 +669,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
               )}
             </CardContent>
           </Card>
+          </motion.div>
 
           {/* Notifications — Marketing + Reminders */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <Card className="bg-card/80 backdrop-blur-xl border-border/60">
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
@@ -719,8 +733,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
               </div>
             </CardContent>
           </Card>
+          </motion.div>
 
           {/* Client Settings */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
           <Card className="bg-card/80 backdrop-blur-xl border-border/60">
             <EditHeader
               title="Client Settings"
@@ -764,8 +780,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
               )}
             </CardContent>
           </Card>
+          </motion.div>
 
           {/* Prompts */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           <Card className="bg-card/80 backdrop-blur-xl border-border/60">
             <EditHeader
               title="Prompts"
@@ -796,8 +814,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
               )}
             </CardContent>
           </Card>
+          </motion.div>
 
           {/* Address */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
           <Card className="bg-card/80 backdrop-blur-xl border-border/60">
             <EditHeader
               title="Address"
@@ -855,6 +875,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
               )}
             </CardContent>
           </Card>
+          </motion.div>
 
           {/* Preferred Services */}
           {client.preferred_services && client.preferred_services.length > 0 && (
@@ -894,19 +915,21 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
           </Tabs>
 
           {/* Archive & Ban Actions */}
-          <div className="flex items-center gap-2 pt-4 mt-2 border-t border-border/40">
-            <ArchiveClientToggle
-              clientId={client.id}
-              clientName={client.name}
-              isArchived={client.is_archived || false}
-            />
-            <BanClientToggle
-              clientId={client.id}
-              clientName={client.name}
-              isBanned={client.is_banned || false}
-              banReason={client.ban_reason}
-            />
-          </div>
+          {roles.some(role => ['admin', 'manager', 'super_admin'].includes(role)) && (
+            <div className="flex items-center gap-2 pt-4 mt-2 border-t border-border/40">
+              <ArchiveClientToggle
+                clientId={client.id}
+                clientName={client.name}
+                isArchived={client.is_archived || false}
+              />
+              <BanClientToggle
+                clientId={client.id}
+                clientName={client.name}
+                isBanned={client.is_banned || false}
+                banReason={client.ban_reason}
+              />
+            </div>
+          )}
         </div>
             </ScrollArea>
           </motion.div>

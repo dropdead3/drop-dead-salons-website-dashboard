@@ -117,7 +117,7 @@ export function ClientMarketingStatus({ clientId, organizationId }: ClientMarket
             onCheckedChange={(checked) => 
               toggleMutation.mutate({ field: 'marketing_opt_out', value: !checked })
             }
-            disabled={toggleMutation.isPending}
+            disabled={toggleMutation.isPending || !organizationId}
           />
         )}
       </div>
@@ -143,7 +143,7 @@ export function ClientMarketingStatus({ clientId, organizationId }: ClientMarket
             onCheckedChange={(checked) => 
               toggleMutation.mutate({ field: 'sms_opt_out', value: !checked })
             }
-            disabled={toggleMutation.isPending}
+            disabled={toggleMutation.isPending || !organizationId}
           />
         )}
       </div>
