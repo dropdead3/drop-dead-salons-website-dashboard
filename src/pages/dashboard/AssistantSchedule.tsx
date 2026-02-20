@@ -73,9 +73,9 @@ function StatCard({
           <Icon className="h-4 w-4 text-muted-foreground" />
         </div>
       </div>
-      <div className="text-2xl font-medium text-foreground">{value}</div>
+      <div className={tokens.kpi.value}>{value}</div>
       {description && (
-        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+        <p className={cn(tokens.body.muted, "mt-1 text-xs")}>{description}</p>
       )}
     </div>
   );
@@ -134,7 +134,7 @@ function AdminRequestRow({ request, onManualAssign }: { request: AssistantReques
       </div>
       <div className="flex items-center gap-3">
         <div className="text-right text-sm">
-          <div className="font-medium">
+          <div className={tokens.body.emphasis}>
             {request.stylist_profile?.display_name || request.stylist_profile?.full_name || 'Unknown'}
           </div>
           {request.assistant_profile && (
@@ -196,14 +196,14 @@ function RequestCard({ request, isStylistView }: { request: AssistantRequest; is
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">
+              <span className={tokens.body.emphasis}>
                 {formatTime(request.start_time)} - {formatTime(request.end_time)}
               </span>
               <Badge className={cn('border', statusColorMap[request.status]?.bg, statusColorMap[request.status]?.text)}>
                 {request.status === 'assigned' && !isAccepted ? 'Awaiting Response' : request.status}
               </Badge>
               {isAccepted && (
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <Badge variant="outline" className={cn(APPOINTMENT_STATUS_BADGE.confirmed.bg, APPOINTMENT_STATUS_BADGE.confirmed.text)}>
                   <CheckCircle2 className="h-3 w-3 mr-1" />
                   Accepted
                 </Badge>
@@ -267,7 +267,7 @@ function RequestCard({ request, isStylistView }: { request: AssistantRequest; is
                   size="sm"
                   onClick={handleAccept}
                   disabled={acceptAssignment.isPending || declineAssignment.isPending}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-primary hover:bg-primary/90"
                 >
                   <CheckCircle2 className="h-4 w-4 mr-1" />
                   Accept
@@ -277,7 +277,7 @@ function RequestCard({ request, isStylistView }: { request: AssistantRequest; is
                   variant="outline"
                   onClick={handleDecline}
                   disabled={acceptAssignment.isPending || declineAssignment.isPending}
-                  className="text-red-600 border-red-200 hover:bg-red-50"
+                  className="text-destructive border-destructive/30 hover:bg-destructive/10"
                 >
                   <XCircle className="h-4 w-4 mr-1" />
                   Decline
@@ -319,7 +319,7 @@ function RequestCard({ request, isStylistView }: { request: AssistantRequest; is
                 />
               )}
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="bg-amber-50 text-amber-700">
+                <Badge variant="outline" className={cn(APPOINTMENT_STATUS_BADGE.checked_in.bg, APPOINTMENT_STATUS_BADGE.checked_in.text)}>
                   Awaiting assistant response
                 </Badge>
                 <Button
@@ -363,10 +363,7 @@ function RequestsList({ requests, isStylistView }: { requests: AssistantRequest[
 
   if (requests.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-        <p>No requests found</p>
-      </div>
+      <EmptyState icon={Calendar} title="No requests found" description="Try adjusting your filters or check back later." />
     );
   }
 
@@ -374,7 +371,7 @@ function RequestsList({ requests, isStylistView }: { requests: AssistantRequest[
     <div className="space-y-6">
       {sortedDates.map((date) => (
         <div key={date}>
-          <h3 className="font-medium text-sm text-muted-foreground mb-3">
+          <h3 className={cn(tokens.heading.subsection, "mb-3")}>
             {formatDateLabel(date, formatDate)}
           </h3>
           <div className="space-y-3">
@@ -496,7 +493,7 @@ export default function AssistantSchedule() {
             <h1 className={tokens.heading.page}>
               {isStylist ? 'Request An Assistant' : isStylistAssistant ? 'Assisting Requests' : 'Assistant Schedule'}
             </h1>
-            <p className="text-muted-foreground">
+            <p className={tokens.body.muted}>
               {isStylist ? 'Request help from salon assistants' : isStylistAssistant ? 'View and manage your assignments' : 'Overview of all assistant request activity'}
             </p>
           </div>
@@ -634,25 +631,25 @@ export default function AssistantSchedule() {
                     {/* Compact summary strip */}
                     <div className="flex items-center gap-6 px-4 py-3 rounded-xl bg-muted/30 border border-border/30 text-sm">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-muted-foreground">Total</span>
-                        <span className="font-medium text-foreground">{stats.total}</span>
+                        <span className={tokens.body.muted}>Total</span>
+                        <span className={tokens.body.emphasis}>{stats.total}</span>
                       </div>
                       <div className="w-px h-4 bg-border/40" />
                       <div className="flex items-center gap-1.5">
                         <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-                        <span className="text-muted-foreground">Completed</span>
-                        <span className="font-medium text-foreground">{stats.completed}</span>
+                        <span className={tokens.body.muted}>Completed</span>
+                        <span className={tokens.body.emphasis}>{stats.completed}</span>
                       </div>
                       <div className="w-px h-4 bg-border/40" />
                       <div className="flex items-center gap-1.5">
                         <XCircle className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="text-muted-foreground">Declines</span>
-                        <span className="font-medium text-foreground">{stats.totalDeclines}</span>
+                        <span className={tokens.body.muted}>Declines</span>
+                        <span className={tokens.body.emphasis}>{stats.totalDeclines}</span>
                       </div>
                       <div className="w-px h-4 bg-border/40" />
                       <div className="flex items-center gap-1.5">
-                        <span className="text-muted-foreground">Cancelled</span>
-                        <span className="font-medium text-foreground">{stats.cancelled}</span>
+                        <span className={tokens.body.muted}>Cancelled</span>
+                        <span className={tokens.body.emphasis}>{stats.cancelled}</span>
                       </div>
                     </div>
 
@@ -768,7 +765,7 @@ export default function AssistantSchedule() {
                                     return (
                                       <div key={schedule.location_id} className="flex items-center gap-2 text-sm">
                                         <MapPin className="h-3 w-3 text-muted-foreground" />
-                                        <span className="font-medium">{location?.name || schedule.location_id}:</span>
+                                        <span className={tokens.body.emphasis}>{location?.name || schedule.location_id}:</span>
                                         <div className="flex gap-1">
                                           {DAYS_OF_WEEK.map(day => (
                                             <span
@@ -852,8 +849,15 @@ export default function AssistantSchedule() {
               <TabsContent value="my-requests">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Upcoming Requests</CardTitle>
-                    <CardDescription>Your pending and assigned assistant requests</CardDescription>
+                    <div className="flex items-center gap-3">
+                      <div className={tokens.card.iconBox}>
+                        <Inbox className={tokens.card.icon} />
+                      </div>
+                      <div>
+                        <CardTitle className={tokens.card.title}>UPCOMING REQUESTS</CardTitle>
+                        <CardDescription>Your pending and assigned assistant requests</CardDescription>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     {loadingMyRequests ? (
@@ -869,7 +873,14 @@ export default function AssistantSchedule() {
                 {filterCompleted(myRequests).length > 0 && (
                   <Card className="mt-6">
                     <CardHeader>
-                      <CardTitle>Past Requests</CardTitle>
+                      <div className="flex items-center gap-3">
+                        <div className={tokens.card.iconBox}>
+                          <CheckCircle2 className={tokens.card.icon} />
+                        </div>
+                        <div>
+                          <CardTitle className={tokens.card.title}>PAST REQUESTS</CardTitle>
+                        </div>
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <RequestsList requests={filterCompleted(myRequests)} isStylistView={true} />
@@ -884,8 +895,15 @@ export default function AssistantSchedule() {
               <TabsContent value="my-assignments">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Your Assignments</CardTitle>
-                    <CardDescription>Stylists you're scheduled to assist</CardDescription>
+                    <div className="flex items-center gap-3">
+                      <div className={tokens.card.iconBox}>
+                        <UserCheck className={tokens.card.icon} />
+                      </div>
+                      <div>
+                        <CardTitle className={tokens.card.title}>YOUR ASSIGNMENTS</CardTitle>
+                        <CardDescription>Stylists you're scheduled to assist</CardDescription>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     {loadingMyAssignments ? (
@@ -901,7 +919,14 @@ export default function AssistantSchedule() {
                 {filterCompleted(myAssignments).length > 0 && (
                   <Card className="mt-6">
                     <CardHeader>
-                      <CardTitle>Completed</CardTitle>
+                      <div className="flex items-center gap-3">
+                        <div className={tokens.card.iconBox}>
+                          <CheckCircle2 className={tokens.card.icon} />
+                        </div>
+                        <div>
+                          <CardTitle className={tokens.card.title}>COMPLETED</CardTitle>
+                        </div>
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <RequestsList requests={filterCompleted(myAssignments)} isStylistView={false} />
