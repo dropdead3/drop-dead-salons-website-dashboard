@@ -290,7 +290,7 @@ export function AIInsightsSection() {
                 <div className="text-center py-8">
                   <ZuraAvatar size="md" className="mx-auto mb-3 opacity-40" />
                   <p className="text-sm text-muted-foreground mb-3">No insights generated yet</p>
-                  <Button variant="outline" size="sm" onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5">
+                  <Button variant="outline" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5">
                     <Brain className="w-3.5 h-3.5" />
                     Generate Insights
                   </Button>

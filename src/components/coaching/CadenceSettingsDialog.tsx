@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Settings2, X, RotateCcw, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import type { StaffMeetingInfo, CadenceSettings } from '@/hooks/useTeamMeetingOverview';
 
 interface CadenceSettingsDialogProps {
@@ -101,7 +102,7 @@ export function CadenceSettingsDialog({ staff, cadence, onUpdateCadence, onRemov
               />
               <span className="text-sm text-muted-foreground whitespace-nowrap">days</span>
               <Button
-                size="sm"
+                size={tokens.button.inline}
                 variant="outline"
                 onClick={handleSaveGlobal}
                 disabled={isUpdating || globalDays === cadence.globalDefault || globalDays < 1}

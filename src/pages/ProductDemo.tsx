@@ -36,10 +36,10 @@ export default function ProductDemo() {
           </div>
           
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={() => navigate('/login')}>
+            <Button variant="outline" size={tokens.button.card} onClick={() => navigate('/login')}>
               Sign In
             </Button>
-            <Button size="sm" onClick={() => navigate('/register')}>
+            <Button size={tokens.button.card} onClick={() => navigate('/register')}>
               Get Started
             </Button>
           </div>

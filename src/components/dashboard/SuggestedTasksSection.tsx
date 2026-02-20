@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Plus, Check, ListChecks } from 'lucide-react';
 import { toast } from 'sonner';
@@ -87,7 +88,7 @@ export function SuggestedTasksSection({ tasks, onAddTask }: SuggestedTasksSectio
               {!isAdded && (
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.inline}
                   className="h-7 px-3 text-[11px] font-medium flex-shrink-0 gap-1"
                   onClick={() => handleAdd(task)}
                 >

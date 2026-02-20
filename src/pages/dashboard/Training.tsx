@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Progress } from '@/components/ui/progress';
 import { Video, Play, CheckCircle, Clock, Loader2 } from 'lucide-react';
 import { useAchievements } from '@/hooks/useAchievements';
@@ -254,7 +255,7 @@ export default function Training() {
                     )}
                     {!isComplete(video.id) && (
                       <Button 
-                        size="sm" 
+                        size={tokens.button.inline} 
                         variant="outline"
                         onClick={() => markComplete(video.id)}
                         className="text-xs"
