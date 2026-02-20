@@ -1158,9 +1158,10 @@ export function QuickBookingPopover({
               suggestions={addonSuggestions}
               onAdd={(id) => {
                 handleServiceToggle(id);
-                // Hide toast when all suggestions are added
-                const remaining = addonSuggestions.filter(s => s.phorest_service_id !== id && !selectedServices.includes(s.phorest_service_id));
-                if (remaining.length === 0) setShowAddonToast(false);
+                // If this was the last suggestion, auto-dismiss immediately
+                if (addonSuggestions.length <= 1) {
+                  setShowAddonToast(false);
+                }
               }}
               onDismiss={() => {
                 setShowAddonToast(false);
