@@ -26,8 +26,7 @@ import {
   Lock,
   User,
   Ban,
-  Archive,
-  Type
+  Archive
 } from 'lucide-react';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
 import { useQuery } from '@tanstack/react-query';
@@ -586,7 +585,6 @@ export default function ClientDirectory() {
                   onClick={() => handleSort('name')}
                   className={cn("text-xs", sortField === 'name' && "bg-muted")}
                 >
-                  <Type className="w-3 h-3 mr-1" />
                   Name
                   <ArrowUpDown className="w-3 h-3 ml-1" />
                 </Button>
@@ -596,7 +594,6 @@ export default function ClientDirectory() {
                   onClick={() => handleSort('total_spend')}
                   className={cn("text-xs", sortField === 'total_spend' && "bg-muted")}
                 >
-                  <DollarSign className="w-3 h-3 mr-1" />
                   Spend
                   <ArrowUpDown className="w-3 h-3 ml-1" />
                 </Button>
@@ -606,7 +603,6 @@ export default function ClientDirectory() {
                   onClick={() => handleSort('visit_count')}
                   className={cn("text-xs", sortField === 'visit_count' && "bg-muted")}
                 >
-                  <Calendar className="w-3 h-3 mr-1" />
                   Visits
                   <ArrowUpDown className="w-3 h-3 ml-1" />
                 </Button>
@@ -616,7 +612,6 @@ export default function ClientDirectory() {
                   onClick={() => handleSort('last_visit')}
                   className={cn("text-xs", sortField === 'last_visit' && "bg-muted")}
                 >
-                  <Clock className="w-3 h-3 mr-1" />
                   Recent
                   <ArrowUpDown className="w-3 h-3 ml-1" />
                 </Button>
