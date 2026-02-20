@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { format, isToday, getWeek } from 'date-fns';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { cn } from '@/lib/utils';
@@ -427,6 +427,21 @@ export function DayView({
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const reschedule = useRescheduleAppointment();
   const [activeId, setActiveId] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to 1 hour before opening time
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    let openHour = hoursStart;
+    if (locationHours?.open) {
+      const [h] = locationHours.open.split(':').map(Number);
+      openHour = h;
+    }
+    const scrollToHour = Math.max(openHour - 1, hoursStart);
+    const slotsOffset = (scrollToHour - hoursStart) * 4; // 4 slots per hour
+    const top = slotsOffset * ROW_HEIGHT;
+    scrollRef.current.scrollTo({ top, behavior: 'instant' });
+  }, [date.toDateString(), locationHours?.open, hoursStart]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -572,7 +587,7 @@ export function DayView({
           </div>
         )}
         {/* Calendar Grid */}
-        <div className="flex-1 overflow-auto">
+        <div ref={scrollRef} className="flex-1 overflow-auto">
           <div className="min-w-[600px]">
             {/* Stylist Headers - Phorest dark style */}
             <div className="flex border-b sticky top-0 z-10">
