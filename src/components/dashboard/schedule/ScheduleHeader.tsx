@@ -105,20 +105,9 @@ export function ScheduleHeader({
               <div 
                 className={cn(
                   "absolute top-[2px] bottom-[2px] bg-[hsl(40,20%,92%)] rounded-full transition-all duration-300 ease-out",
-                  view === 'week' ? 'left-[2px] w-[calc(50%-2px)]' : 'left-[50%] w-[calc(50%-2px)]'
+                  view === 'day' ? 'left-[2px] w-[calc(50%-2px)]' : 'left-[50%] w-[calc(50%-2px)]'
                 )}
               />
-            <button
-                className={cn(
-                  'relative z-10 px-5 py-1 text-sm rounded-full transition-colors duration-300 min-w-[60px] text-center',
-                  view === 'week' 
-                    ? 'text-[hsl(0,0%,8%)] font-medium' 
-                    : 'text-[hsl(40,20%,92%)]/50 hover:text-[hsl(40,20%,92%)]/80'
-                )}
-                onClick={() => setView('week')}
-              >
-                Week
-              </button>
               <button
                 className={cn(
                   'relative z-10 px-5 py-1 text-sm rounded-full transition-colors duration-300 min-w-[60px] text-center',
@@ -129,6 +118,17 @@ export function ScheduleHeader({
                 onClick={() => setView('day')}
               >
                 Day
+              </button>
+              <button
+                className={cn(
+                  'relative z-10 px-5 py-1 text-sm rounded-full transition-colors duration-300 min-w-[60px] text-center',
+                  view === 'week' 
+                    ? 'text-[hsl(0,0%,8%)] font-medium' 
+                    : 'text-[hsl(40,20%,92%)]/50 hover:text-[hsl(40,20%,92%)]/80'
+                )}
+                onClick={() => setView('week')}
+              >
+                Week
               </button>
             </div>
           </div>
