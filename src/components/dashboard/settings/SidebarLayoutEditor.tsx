@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -499,7 +500,7 @@ function SectionContainer({
                 <span className="text-xs text-muted-foreground">Bulk:</span>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.inline}
                   className="h-6 text-xs gap-1"
                   onClick={() => onBulkToggleLinks(true)}
                   disabled={allVisible}
@@ -509,7 +510,7 @@ function SectionContainer({
                 </Button>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.inline}
                   className="h-6 text-xs gap-1"
                   onClick={() => onBulkToggleLinks(false)}
                   disabled={allHidden}
@@ -1050,7 +1051,7 @@ export function SidebarLayoutEditor({ externalSelectedRole }: SidebarLayoutEdito
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              size="sm"
+              size={tokens.button.card}
               onClick={handleReset}
               disabled={updateLayout.isPending}
               className="gap-1.5"
@@ -1059,7 +1060,7 @@ export function SidebarLayoutEditor({ externalSelectedRole }: SidebarLayoutEdito
               Reset
             </Button>
             <Button
-              size="sm"
+              size={tokens.button.card}
               onClick={handleSave}
               disabled={!hasChanges || updateLayout.isPending}
               className="gap-1.5"
@@ -1133,7 +1134,7 @@ export function SidebarLayoutEditor({ externalSelectedRole }: SidebarLayoutEdito
                 </p>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.inline}
                   className="h-6 text-xs gap-1 shrink-0"
                   onClick={() => handleResetRoleToGlobal(selectedRole)}
                   disabled={!localRoleVisibility[selectedRole]?.hiddenSections?.length && 
@@ -1156,7 +1157,7 @@ export function SidebarLayoutEditor({ externalSelectedRole }: SidebarLayoutEdito
             </p>
             <Button
               variant="outline"
-              size="sm"
+              size={tokens.button.inline}
               className="h-6 text-xs gap-1 shrink-0"
               onClick={() => handleResetRoleToGlobal(selectedRole)}
               disabled={!localRoleVisibility[selectedRole]?.hiddenSections?.length && 
@@ -1179,7 +1180,7 @@ export function SidebarLayoutEditor({ externalSelectedRole }: SidebarLayoutEdito
                 {/* Expand/Collapse All buttons */}
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.inline}
                   onClick={handleExpandAllSections}
                   disabled={expandedSections.size === localSectionOrder.length}
                   className="gap-1.5 text-xs"
@@ -1189,7 +1190,7 @@ export function SidebarLayoutEditor({ externalSelectedRole }: SidebarLayoutEdito
                 </Button>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.inline}
                   onClick={handleCollapseAllSections}
                   disabled={expandedSections.size === 0}
                   className="gap-1.5 text-xs"
@@ -1202,7 +1203,7 @@ export function SidebarLayoutEditor({ externalSelectedRole }: SidebarLayoutEdito
                 {selectedRole === 'global' && !isAddingSection ? (
                   <Button
                     variant="outline"
-                    size="sm"
+                    size={tokens.button.inline}
                     onClick={() => setIsAddingSection(true)}
                     className="gap-1.5 text-xs"
                   >

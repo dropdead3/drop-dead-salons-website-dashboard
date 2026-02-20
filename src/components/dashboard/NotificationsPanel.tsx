@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -363,7 +364,7 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
             {unreadCount > 0 && (
               <Button
                 variant="ghost"
-                size="sm"
+                size={tokens.button.inline}
                 className="h-7 text-xs"
                 onClick={() => markAllAsReadMutation.mutate()}
                 disabled={markAllAsReadMutation.isPending}
@@ -574,13 +575,13 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
 
         <div className="p-2 border-t border-border grid grid-cols-2 gap-1">
           <Link to="/dashboard/notifications">
-            <Button variant="ghost" size="sm" className="w-full justify-start text-xs h-8">
+            <Button variant="ghost" size={tokens.button.inline} className="w-full justify-start text-xs h-8">
               <Settings className="w-3 h-3 mr-1" />
               Preferences
             </Button>
           </Link>
           <Link to="/dashboard/changelog">
-            <Button variant="ghost" size="sm" className="w-full justify-end text-xs h-8">
+            <Button variant="ghost" size={tokens.button.inline} className="w-full justify-end text-xs h-8">
               View updates
               <ExternalLink className="w-3 h-3 ml-1" />
             </Button>

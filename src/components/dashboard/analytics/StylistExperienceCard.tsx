@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -315,7 +316,7 @@ export function StylistExperienceCard({ locationId, dateRange = '30days' }: Styl
             {scores.length > 3 && (
               <Button
                 variant="ghost"
-                size="sm"
+                size={tokens.button.inline}
                 className="w-full mt-2"
                 onClick={() => setExpanded(!expanded)}
               >

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { format, subDays } from 'date-fns';
 import { Users, DollarSign } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -58,7 +59,7 @@ export function AssistantActivityCard() {
           <div className="flex items-center gap-1">
             <Button
               variant={period === 30 ? 'secondary' : 'ghost'}
-              size="sm"
+              size={tokens.button.inline}
               className="h-7 text-xs"
               onClick={() => setPeriod(30)}
             >
@@ -66,7 +67,7 @@ export function AssistantActivityCard() {
             </Button>
             <Button
               variant={period === 90 ? 'secondary' : 'ghost'}
-              size="sm"
+              size={tokens.button.inline}
               className="h-7 text-xs"
               onClick={() => setPeriod(90)}
             >
@@ -128,7 +129,7 @@ export function AssistantActivityCard() {
         {summaries.length > 5 && (
           <Button
             variant="ghost"
-            size="sm"
+            size={tokens.button.inline}
             className="w-full text-xs"
             onClick={() => setExpanded(!expanded)}
           >
