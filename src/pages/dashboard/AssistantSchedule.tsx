@@ -8,7 +8,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger, TabsList } from '@/components/ui/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -558,7 +558,7 @@ export default function AssistantSchedule() {
         {/* List / Tabs View */}
         {(isAdmin || viewMode === 'list') && (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <ResponsiveTabsList onTabChange={setActiveTab}>
+            <TabsList>
               {/* Stylist tab */}
               {isStylist && <TabsTrigger value="my-requests">My Requests</TabsTrigger>}
               
@@ -586,7 +586,7 @@ export default function AssistantSchedule() {
                   </TabsTrigger>
                 </>
               )}
-            </ResponsiveTabsList>
+            </TabsList>
 
             {/* ===== ADMIN: Overview Tab ===== */}
             {isAdmin && (
