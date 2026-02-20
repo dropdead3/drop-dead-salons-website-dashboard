@@ -15,6 +15,10 @@ export interface TimeOffRequest {
   request_type: TimeOffRequestType;
   start_date: string;
   end_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  is_full_day: boolean;
+  blocks_online_booking: boolean;
   notes: string | null;
   status: TimeOffStatus;
   reviewed_by: string | null;
@@ -36,6 +40,21 @@ export interface CreateTimeOffInput {
   start_date: string;
   end_date: string;
   notes?: string;
+}
+
+export type BreakType = 'break' | 'personal' | 'sick' | 'vacation' | 'other';
+
+export interface CreateBreakInput {
+  user_id: string;
+  organization_id: string;
+  start_date: string;
+  end_date: string;
+  start_time?: string;
+  end_time?: string;
+  is_full_day: boolean;
+  reason: BreakType;
+  notes?: string;
+  blocks_online_booking?: boolean;
 }
 
 export function useMyTimeOffRequests() {
@@ -208,7 +227,7 @@ export function useReviewTimeOffRequest() {
         ...request,
         request_type: request.request_type as TimeOffRequestType,
         status: request.status as TimeOffStatus,
-        requester: profile,
+        requester: profile ? { ...profile, photo_url: null } : undefined,
       } as TimeOffRequest;
     },
     onSuccess: (_, variables) => {
@@ -253,8 +272,56 @@ export const TIME_OFF_TYPE_LABELS: Record<TimeOffRequestType, string> = {
   other: 'Other',
 };
 
+export const BREAK_TYPE_LABELS: Record<BreakType, string> = {
+  break: 'Break',
+  personal: 'Personal',
+  sick: 'Sick',
+  vacation: 'Vacation',
+  other: 'Other',
+};
+
 export const TIME_OFF_STATUS_COLORS: Record<TimeOffStatus, string> = {
   pending: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
   approved: 'bg-green-500/10 text-green-600 border-green-500/20',
   denied: 'bg-red-500/10 text-red-600 border-red-500/20',
 };
+
+export function useCreateBreakRequest() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: CreateBreakInput) => {
+      const { data, error } = await supabase
+        .rpc('create_break_request', {
+          p_user_id: input.user_id,
+          p_organization_id: input.organization_id,
+          p_start_date: input.start_date,
+          p_end_date: input.end_date,
+          p_start_time: input.start_time || null,
+          p_end_time: input.end_time || null,
+          p_is_full_day: input.is_full_day,
+          p_reason: input.reason,
+          p_notes: input.notes || null,
+          p_blocks_online_booking: input.blocks_online_booking ?? true,
+        });
+
+      if (error) throw error;
+      return data as unknown as { request_id: string; status: string; appointment_id: string | null }[];
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['time-off-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['schedule'] });
+      const result = data?.[0];
+      if (result?.status === 'approved') {
+        toast.success('Break scheduled');
+      } else {
+        toast.success('Time off request submitted for approval');
+      }
+    },
+    onError: (error) => {
+      console.error('Failed to create break:', error);
+      toast.error('Failed to schedule break');
+    },
+  });
+}

@@ -20,6 +20,7 @@ import {
   Clock, 
   DollarSign,
   Check,
+  Coffee,
   Loader2,
   UserPlus,
   X,
@@ -46,6 +47,7 @@ import { useBookingLevelPricing } from '@/hooks/useServiceLevelPricing';
 import { useQualifiedStaffForServices } from '@/hooks/useStaffServiceQualifications';
 import { useStaffQualifiedServices } from '@/hooks/useStaffServiceQualifications';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
+import { AddBreakForm } from './AddBreakForm';
 import { BannedClientWarningDialog } from '@/components/dashboard/clients/BannedClientWarningDialog';
 
 type QuickBookingMode = 'popover' | 'panel';
@@ -133,6 +135,7 @@ export function QuickBookingPopover({
   const [pendingBannedClient, setPendingBannedClient] = useState<PhorestClient | null>(null);
   const [bookingNotes, setBookingNotes] = useState('');
   const [showNotes, setShowNotes] = useState(false);
+  const [showBreakForm, setShowBreakForm] = useState(false);
 
   // Stylist-first mode state
   const [stylistFirstMode, setStylistFirstMode] = useState(false);
@@ -448,6 +451,7 @@ export function QuickBookingPopover({
     setViewingClientProfile(null);
     setBookingNotes('');
     setShowNotes(false);
+    setShowBreakForm(false);
     // Reset stylist-first mode
     setStylistFirstMode(false);
     setPreSelectedStylistId(null);
@@ -860,6 +864,19 @@ export function QuickBookingPopover({
       {/* Step: Service Selection */}
       {step === 'service' && (
         <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
+          {showBreakForm ? (
+            <AddBreakForm
+              date={date}
+              time={time}
+              onBack={() => setShowBreakForm(false)}
+              onComplete={() => {
+                setShowBreakForm(false);
+                onOpenChange(false);
+              }}
+              defaultStylistId={preSelectedStylistId || defaultStylistId}
+            />
+          ) : (
+            <>
           {stylistFirstMode && preSelectedStylistId && !selectedCategory && (
             <div className="px-3 pt-3 pb-0">
               <div className="flex items-center gap-2.5 p-2 rounded-lg bg-accent/50 border border-accent">
@@ -1109,10 +1126,20 @@ export function QuickBookingPopover({
                 + Add service from another category
               </Button>
             )}
+            <Button
+              variant="outline"
+              className="w-full h-9 gap-2"
+              onClick={() => setShowBreakForm(true)}
+            >
+              <Coffee className="h-4 w-4" />
+              Add Break
+            </Button>
             <Button className="w-full h-9" onClick={handleServicesComplete}>
               {selectedServices.length === 0 ? 'Skip Services' : 'Continue'}
             </Button>
           </div>
+            </>
+          )}
         </div>
       )}
 

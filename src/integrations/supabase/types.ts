@@ -8150,6 +8150,7 @@ export type Database = {
           stripe_subscription_id: string | null
           subscription_status: string | null
           subscription_tier: string | null
+          time_off_requires_approval: boolean
           timezone: string | null
           trial_ends_at: string | null
           twilio_account_sid: string | null
@@ -8202,6 +8203,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           subscription_status?: string | null
           subscription_tier?: string | null
+          time_off_requires_approval?: boolean
           timezone?: string | null
           trial_ends_at?: string | null
           twilio_account_sid?: string | null
@@ -8254,6 +8256,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           subscription_status?: string | null
           subscription_tier?: string | null
+          time_off_requires_approval?: boolean
           timezone?: string | null
           trial_ends_at?: string | null
           twilio_account_sid?: string | null
@@ -15321,44 +15324,56 @@ export type Database = {
       }
       time_off_requests: {
         Row: {
+          blocks_online_booking: boolean
           calendar_event_id: string | null
           created_at: string | null
           end_date: string
+          end_time: string | null
           id: string
+          is_full_day: boolean
           notes: string | null
           organization_id: string
           request_type: string
           reviewed_at: string | null
           reviewed_by: string | null
           start_date: string
+          start_time: string | null
           status: string | null
           user_id: string
         }
         Insert: {
+          blocks_online_booking?: boolean
           calendar_event_id?: string | null
           created_at?: string | null
           end_date: string
+          end_time?: string | null
           id?: string
+          is_full_day?: boolean
           notes?: string | null
           organization_id: string
           request_type: string
           reviewed_at?: string | null
           reviewed_by?: string | null
           start_date: string
+          start_time?: string | null
           status?: string | null
           user_id: string
         }
         Update: {
+          blocks_online_booking?: boolean
           calendar_event_id?: string | null
           created_at?: string | null
           end_date?: string
+          end_time?: string | null
           id?: string
+          is_full_day?: boolean
           notes?: string | null
           organization_id?: string
           request_type?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
           start_date?: string
+          start_time?: string | null
           status?: string | null
           user_id?: string
         }
@@ -16623,6 +16638,25 @@ export type Database = {
           appointment_id: string
           error_message: string
           success: boolean
+        }[]
+      }
+      create_break_request: {
+        Args: {
+          p_blocks_online_booking?: boolean
+          p_end_date: string
+          p_end_time?: string
+          p_is_full_day?: boolean
+          p_notes?: string
+          p_organization_id: string
+          p_reason?: string
+          p_start_date: string
+          p_start_time?: string
+          p_user_id: string
+        }
+        Returns: {
+          appointment_id: string
+          request_id: string
+          status: string
         }[]
       }
       current_user_is_coach: { Args: never; Returns: boolean }
