@@ -16,6 +16,17 @@ interface CreateClientRequest {
   notes?: string;
   birthday?: string;
   client_since?: string;
+  gender?: string;
+  landline?: string;
+  client_category?: string;
+  referred_by?: string;
+  external_client_id?: string;
+  address_line1?: string;
+  address_line2?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country?: string;
 }
 
 async function phorestRequest(
@@ -82,7 +93,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Get credentials from environment
     const phorestUsername = Deno.env.get("PHOREST_USERNAME");
     const phorestPassword = Deno.env.get("PHOREST_API_KEY");
     const phorestBusinessId = Deno.env.get("PHOREST_BUSINESS_ID");
@@ -92,7 +102,6 @@ Deno.serve(async (req) => {
     if (!phorestUsername || !phorestPassword || !phorestBusinessId) {
       throw new Error("Missing Phorest API credentials");
     }
-
     if (!supabaseUrl || !supabaseKey) {
       throw new Error("Missing Supabase credentials");
     }
@@ -100,13 +109,13 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
     const body: CreateClientRequest = await req.json();
     
-    const { branch_id, first_name, last_name, email, phone, notes, birthday, client_since } = body;
+    const { branch_id, first_name, last_name, email, phone, notes, birthday, client_since,
+            gender, landline, client_category, referred_by, external_client_id,
+            address_line1, address_line2, city, state, zip, country } = body;
 
     if (!branch_id || !first_name || !last_name) {
       throw new Error("branch_id, first_name, and last_name are required");
     }
-
-    // Require at least email or phone
     if (!email && !phone) {
       throw new Error("Either email or phone is required");
     }
@@ -119,19 +128,14 @@ Deno.serve(async (req) => {
       lastName: last_name,
     };
 
-    if (email) {
-      phorestClient.email = email;
-    }
-
+    if (email) phorestClient.email = email;
     if (phone) {
-      // Clean phone number - remove non-numeric except + at start
       const cleanedPhone = phone.replace(/[^\d+]/g, '').replace(/^\+?/, '+1');
       phorestClient.mobile = cleanedPhone;
     }
-
-    if (notes) {
-      phorestClient.notes = notes;
-    }
+    if (landline) phorestClient.landline = landline;
+    if (notes) phorestClient.notes = notes;
+    if (gender) phorestClient.gender = gender;
 
     // Create client in Phorest
     const phorestResponse = await phorestRequest(
@@ -146,7 +150,6 @@ Deno.serve(async (req) => {
     console.log("Phorest response:", JSON.stringify(phorestResponse, null, 2));
 
     const phorestClientId = phorestResponse.clientId || phorestResponse.id;
-    
     if (!phorestClientId) {
       throw new Error("Failed to get client ID from Phorest response");
     }
@@ -158,10 +161,12 @@ Deno.serve(async (req) => {
       .eq("phorest_branch_id", branch_id)
       .single();
 
-    // Create local record in phorest_clients table
-    const clientRecord = {
+    // Create local record
+    const clientRecord: Record<string, any> = {
       phorest_client_id: phorestClientId,
       name: `${first_name} ${last_name}`,
+      first_name,
+      last_name,
       email: email || null,
       phone: phone || null,
       notes: notes || null,
@@ -172,6 +177,17 @@ Deno.serve(async (req) => {
       total_spend: 0,
       birthday: birthday || null,
       client_since: client_since || new Date().toISOString().split('T')[0],
+      gender: gender || null,
+      landline: landline || null,
+      client_category: client_category || null,
+      referred_by: referred_by || null,
+      external_client_id: external_client_id || null,
+      address_line1: address_line1 || null,
+      address_line2: address_line2 || null,
+      city: city || null,
+      state: state || null,
+      zip: zip || null,
+      country: country || null,
     };
 
     const { data: insertedClient, error: insertError } = await supabase
@@ -182,7 +198,6 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       console.error("Error inserting client locally:", insertError);
-      // Don't fail - client was created in Phorest
     }
 
     return new Response(
