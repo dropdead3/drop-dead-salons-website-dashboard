@@ -11,6 +11,7 @@ import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useLocations } from '@/hooks/useLocations';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -118,7 +119,7 @@ export function ScheduleRequestsCard() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
-                    size="sm"
+                    size={tokens.button.inline}
                     variant="ghost"
                     className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
                     onClick={() => {
@@ -129,7 +130,7 @@ export function ScheduleRequestsCard() {
                     <Check className="w-4 h-4" />
                   </Button>
                   <Button
-                    size="sm"
+                    size={tokens.button.inline}
                     variant="ghost"
                     className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                     onClick={() => {

@@ -49,6 +49,7 @@ import {
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { tokens } from '@/lib/design-tokens';
 import { ApplicantDetailSheet } from "@/components/dashboard/ApplicantDetailSheet";
 import { BentoGrid } from '@/components/ui/bento-grid';
 
@@ -253,7 +254,7 @@ export default function RecruitingPipeline() {
                 </Select>
                 <Button
                   variant={showArchived ? "secondary" : "outline"}
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={() => setShowArchived(!showArchived)}
                 >
                   <Archive className="h-4 w-4 mr-2" />

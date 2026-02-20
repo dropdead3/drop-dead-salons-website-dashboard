@@ -488,6 +488,7 @@ function LocationSeatsTab({ organizationId }: { organizationId: string }) {
           variant="secondary" 
           size="sm"
           onClick={() => navigate(`/dashboard/platform/accounts/${organizationId}?tab=billing`)}
+
         >
           <CreditCard className="h-4 w-4 mr-2" />
           Adjust Seats in Billing

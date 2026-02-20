@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { useTriggerPhorestSync } from '@/hooks/usePhorestSync';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 interface PhorestSyncButtonProps {
   syncType?: 'appointments' | 'sales' | 'staff' | 'clients' | 'reports' | 'services' | 'all';

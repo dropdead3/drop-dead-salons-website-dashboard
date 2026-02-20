@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, Clock, CalendarCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePaySchedule } from '@/hooks/usePaySchedule';
+import { tokens } from '@/lib/design-tokens';
 
 interface PayPeriodStepProps {
   payPeriodStart: string | null;
@@ -107,7 +108,7 @@ export function PayPeriodStep({
         {/* Pay Schedule Preset - Primary */}
         <Button
           variant="default"
-          size="sm"
+          size={tokens.button.card}
           onClick={applyPaySchedulePreset}
         >
           <CalendarCheck className="h-3 w-3 mr-1" />
@@ -118,7 +119,7 @@ export function PayPeriodStep({
           <Button
             key={preset.label}
             variant="outline"
-            size="sm"
+            size={tokens.button.card}
             onClick={() => applyPreset(preset)}
           >
             <Clock className="h-3 w-3 mr-1" />

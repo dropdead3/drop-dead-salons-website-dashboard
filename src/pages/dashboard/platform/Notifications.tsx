@@ -77,7 +77,7 @@ export default function NotificationsPage() {
           unreadCount > 0 && (
             <PlatformButton 
               variant="outline" 
-              size="sm" 
+              size="sm"
               onClick={handleMarkAllRead}
               disabled={markAllRead.isPending}
             >
