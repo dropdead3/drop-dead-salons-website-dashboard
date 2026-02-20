@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { User, X, Search, DollarSign } from 'lucide-react';
 import { useClientSearch } from '@/hooks/useClientsData';
@@ -88,7 +89,7 @@ export function RegisterClientSelect({
                         {formatCurrency(balance.salon_credit_balance)}
                       </span>
                       {appliedCredit === 0 && (
-                        <Button size="sm" variant="outline" className="h-7" onClick={handleApplyCredit}>
+                        <Button size={tokens.button.inline} variant="outline" className="h-7" onClick={handleApplyCredit}>
                           <DollarSign className="h-3 w-3 mr-1" />
                           Apply
                         </Button>
@@ -138,7 +139,7 @@ export function RegisterClientSelect({
                     ))}
                   </div>
                 )}
-                <Button variant="ghost" size="sm" onClick={() => setShowSearch(false)} className="w-full">
+                <Button variant="ghost" size={tokens.button.inline} onClick={() => setShowSearch(false)} className="w-full">
                   Cancel
                 </Button>
               </div>

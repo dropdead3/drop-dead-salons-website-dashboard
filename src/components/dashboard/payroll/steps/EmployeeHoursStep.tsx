@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Clock, Users } from 'lucide-react';
@@ -101,7 +102,7 @@ export function EmployeeHoursStep({ employees, hours, onHoursChange }: EmployeeH
             />
             <span className="text-sm">hours to all hourly employees</span>
           </div>
-          <Button size="sm" variant="secondary" onClick={applyStandardHours}>
+          <Button size={tokens.button.inline} variant="secondary" onClick={applyStandardHours}>
             Apply
           </Button>
         </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -149,7 +150,7 @@ export function VoucherQRCode({
 
   return (
     <>
-      <Button variant="outline" size="sm" onClick={() => setIsOpen(true)}>
+      <Button variant="outline" size={tokens.button.card} onClick={() => setIsOpen(true)}>
         <QrCode className="h-4 w-4 mr-2" />
         QR Code
       </Button>
@@ -182,7 +183,7 @@ export function VoucherQRCode({
                   <code className="bg-muted px-3 py-1.5 rounded font-mono text-lg">
                     {voucherCode}
                   </code>
-                  <Button size="sm" variant="ghost" onClick={handleCopyCode}>
+                  <Button size={tokens.button.inline} variant="ghost" onClick={handleCopyCode}>
                     {copied ? (
                       <Check className="h-4 w-4 text-green-500" />
                     ) : (
