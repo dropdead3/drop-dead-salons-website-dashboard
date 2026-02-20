@@ -4,6 +4,8 @@ import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageCont
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { AccountabilityOverview } from '@/components/coaching/AccountabilityOverview';
+import { tokens } from '@/lib/design-tokens';
+import { cn } from '@/lib/utils';
 
 export default function Commitments() {
   return (
@@ -17,10 +19,10 @@ export default function Commitments() {
                 Back to Meetings Hub
               </Button>
             </Link>
-            <h1 className="font-display text-3xl lg:text-4xl">My Commitments</h1>
-            <p className="text-muted-foreground mt-1">
-              Track promises and accountability items made to team members.
-            </p>
+             <h1 className={tokens.heading.page}>My Commitments</h1>
+             <p className={cn(tokens.body.muted, "mt-1")}>
+               Track promises and accountability items made to team members.
+             </p>
           </div>
 
           <AccountabilityOverview />

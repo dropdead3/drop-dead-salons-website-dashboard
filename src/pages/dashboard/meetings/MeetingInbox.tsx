@@ -7,6 +7,8 @@ import { ManagerMeetingRequest } from '@/components/coaching/ManagerMeetingReque
 import { PendingMeetingRequests } from '@/components/coaching/PendingMeetingRequests';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
+import { tokens } from '@/lib/design-tokens';
+import { cn } from '@/lib/utils';
 
 export default function MeetingInbox() {
   const { user } = useAuth();
@@ -24,10 +26,10 @@ export default function MeetingInbox() {
                 Back to Meetings Hub
               </Button>
             </Link>
-            <h1 className="font-display text-3xl lg:text-4xl">Meeting Inbox</h1>
-            <p className="text-muted-foreground mt-1">
-              Manager-initiated meeting requests and your pending requests.
-            </p>
+             <h1 className={tokens.heading.page}>Meeting Inbox</h1>
+             <p className={cn(tokens.body.muted, "mt-1")}>
+               Manager-initiated meeting requests and your pending requests.
+             </p>
           </div>
 
           <div className="space-y-4">

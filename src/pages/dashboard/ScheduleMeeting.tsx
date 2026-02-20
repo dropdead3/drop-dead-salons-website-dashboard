@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { ManagerMeetingRequest } from '@/components/coaching/ManagerMeetingRequest';
 import { TeamMeetingOverview } from '@/components/coaching/TeamMeetingOverview';
+import { tokens } from '@/lib/design-tokens';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface StatCardProps {
   icon: React.ComponentType<{ className?: string }>;
@@ -35,12 +37,12 @@ function StatCard({ icon: Icon, value, label, colorClass }: StatCardProps) {
   return (
     <Card className="p-4">
       <div className="flex items-center gap-3">
-        <div className={cn("w-10 h-10 flex items-center justify-center rounded-lg", colorClass)}>
+        <div className={cn(tokens.card.iconBox, colorClass)}>
           <Icon className="w-5 h-5" />
         </div>
         <div>
-          <p className="text-2xl font-display font-medium tabular-nums text-foreground">{value}</p>
-          <p className="text-xs text-muted-foreground">{label}</p>
+          <p className={cn(tokens.kpi.value, "tabular-nums text-foreground")}>{value}</p>
+          <p className={cn(tokens.body.muted, "text-xs")}>{label}</p>
         </div>
       </div>
     </Card>
@@ -218,8 +220,8 @@ export default function ScheduleMeeting() {
           {/* Header with Quick Actions */}
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
-              <h1 className="font-display text-3xl lg:text-4xl">Meetings & Accountability</h1>
-              <p className="text-muted-foreground mt-1">
+              <h1 className={tokens.heading.page}>Meetings & Accountability</h1>
+              <p className={cn(tokens.body.muted, "mt-1")}>
                 Schedule 1:1 meetings, track commitments, and manage meeting requests.
               </p>
             </div>
@@ -282,11 +284,11 @@ export default function ScheduleMeeting() {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                  <Calendar className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="font-display text-base tracking-wide">UPCOMING MEETINGS</CardTitle>
+                 <div className={tokens.card.iconBox}>
+                   <Calendar className={tokens.card.icon} />
+                 </div>
+                 <div>
+                   <CardTitle className={tokens.card.title}>UPCOMING MEETINGS</CardTitle>
                   <CardDescription>Scheduled sessions awaiting you</CardDescription>
                 </div>
               </div>
@@ -298,9 +300,9 @@ export default function ScheduleMeeting() {
                     <div key={meeting.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                       <div className="flex items-center gap-3">
                         <div className="flex flex-col">
-                          <span className="font-medium text-sm">
-                            {formatMeetingDate(meeting.meeting_date, formatDate)} at {formatTime(meeting.start_time, formatDate)}
-                          </span>
+                          <span className={tokens.body.emphasis}>
+                             {formatMeetingDate(meeting.meeting_date, formatDate)} at {formatTime(meeting.start_time, formatDate)}
+                           </span>
                           <span className="text-xs text-muted-foreground capitalize">
                             {meeting.meeting_type?.replace('_', ' ') || 'Meeting'}
                           </span>
@@ -318,9 +320,11 @@ export default function ScheduleMeeting() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground py-4 text-center">
-                  No upcoming meetings scheduled
-                </p>
+                <EmptyState
+                   icon={Calendar}
+                   title="No upcoming meetings"
+                   description="Schedule a 1:1 to get started"
+                 />
               )}
               <Link to="/dashboard/schedule-meeting/my-meetings">
                 <Button variant="ghost" className="w-full mt-4 text-muted-foreground hover:text-foreground">
@@ -337,11 +341,11 @@ export default function ScheduleMeeting() {
               <Card>
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                      <Inbox className="w-5 h-5 text-chart-4" />
-                    </div>
-                    <div>
-                      <CardTitle className="font-display text-base tracking-wide">PENDING REQUESTS</CardTitle>
+                     <div className={tokens.card.iconBox}>
+                       <Inbox className="w-5 h-5 text-chart-4" />
+                     </div>
+                     <div>
+                       <CardTitle className={tokens.card.title}>PENDING REQUESTS</CardTitle>
                       <CardDescription>Meeting requests awaiting your response</CardDescription>
                     </div>
                   </div>
@@ -352,9 +356,9 @@ export default function ScheduleMeeting() {
                       {data.pendingRequests.map((request) => (
                         <div key={request.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                           <div className="flex flex-col">
-                            <span className="font-medium text-sm">
-                              {request.requester?.display_name || request.requester?.full_name || 'Team Member'}
-                            </span>
+                             <span className={tokens.body.emphasis}>
+                               {request.requester?.display_name || request.requester?.full_name || 'Team Member'}
+                             </span>
                             <span className="text-xs text-muted-foreground capitalize">
                               {request.meeting_type?.replace('_', ' ') || 'Meeting'}
                             </span>
@@ -367,9 +371,11 @@ export default function ScheduleMeeting() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground py-4 text-center">
-                      No pending requests
-                    </p>
+                     <EmptyState
+                       icon={Inbox}
+                       title="No pending requests"
+                       description="All meeting requests have been addressed"
+                     />
                   )}
                   <Link to="/dashboard/schedule-meeting/requests">
                     <Button variant="ghost" className="w-full mt-4 text-muted-foreground hover:text-foreground">
@@ -383,11 +389,11 @@ export default function ScheduleMeeting() {
               <Card>
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                      <ClipboardList className="w-5 h-5 text-chart-3" />
-                    </div>
-                    <div>
-                      <CardTitle className="font-display text-base tracking-wide">ACTIVE COMMITMENTS</CardTitle>
+                     <div className={tokens.card.iconBox}>
+                       <ClipboardList className="w-5 h-5 text-chart-3" />
+                     </div>
+                     <div>
+                       <CardTitle className={tokens.card.title}>ACTIVE COMMITMENTS</CardTitle>
                       <CardDescription>Open action items from coaching sessions</CardDescription>
                     </div>
                   </div>
@@ -400,7 +406,7 @@ export default function ScheduleMeeting() {
                         return (
                           <div key={item.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                             <div className="flex flex-col">
-                              <span className="font-medium text-sm line-clamp-1">{item.title}</span>
+                              <span className={cn(tokens.body.emphasis, "line-clamp-1")}>{item.title}</span>
                               <span className="text-xs text-muted-foreground">
                                 For {item.teamMember?.display_name || item.teamMember?.full_name || 'Team Member'}
                               </span>
@@ -424,9 +430,11 @@ export default function ScheduleMeeting() {
                       })}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground py-4 text-center">
-                      No active commitments
-                    </p>
+                     <EmptyState
+                       icon={ClipboardList}
+                       title="No active commitments"
+                       description="Commitments from coaching sessions will appear here"
+                     />
                   )}
                   <Link to="/dashboard/schedule-meeting/commitments">
                     <Button variant="ghost" className="w-full mt-4 text-muted-foreground hover:text-foreground">
