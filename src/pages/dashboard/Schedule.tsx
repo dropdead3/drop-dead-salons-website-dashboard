@@ -444,7 +444,7 @@ export default function Schedule() {
   );
 
   return (
-    <DashboardLayout>
+    <DashboardLayout hideFooter>
       <div className="flex flex-col h-[calc(100vh-4rem)]">
         {/* Header */}
         <div className="px-4 pt-4">
