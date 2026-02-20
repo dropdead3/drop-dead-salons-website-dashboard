@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -236,7 +237,7 @@ function ActionItemsSection({ actionItems }: { actionItems: CardActionItem[] }) 
                     {!isAdded && (
                       <Button
                         variant="outline"
-                        size="sm"
+                        size={tokens.button.inline}
                         className="h-7 px-3 text-[11px] font-medium gap-1"
                         onClick={() => handleAddTask(item, i)}
                       >
@@ -246,7 +247,7 @@ function ActionItemsSection({ actionItems }: { actionItems: CardActionItem[] }) 
                     )}
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size={tokens.button.inline}
                       className="h-7 px-3 text-[11px] font-medium gap-1 text-muted-foreground"
                       onClick={() => toggleExpand(i)}
                     >

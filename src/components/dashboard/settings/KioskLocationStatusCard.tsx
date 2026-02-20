@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { UserCheck, ClipboardCheck, CalendarPlus, FileSignature, Upload, Loader2, Tablet, ChevronDown, Eye } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -169,7 +170,7 @@ export function KioskLocationStatusCard({ orgId }: KioskLocationStatusCardProps)
             {hasOverrides && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm" disabled={pushToAll.isPending}>
+                  <Button variant="outline" size={tokens.button.card} disabled={pushToAll.isPending}>
                     {pushToAll.isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
                     ) : (
@@ -285,7 +286,7 @@ export function KioskLocationStatusCard({ orgId }: KioskLocationStatusCardProps)
                           <TooltipTrigger asChild>
                             <Button
                               variant="ghost"
-                              size="sm"
+                              size={tokens.button.inline}
                               className="h-7 w-7 p-0"
                               onClick={() => {
                                 const locSettings = allSettings.find(s => s.location_id === row.locationId) || orgDefault;

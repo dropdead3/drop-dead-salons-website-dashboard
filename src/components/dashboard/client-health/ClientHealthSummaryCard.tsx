@@ -1,4 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { HeartPulse, ChevronRight, CalendarX, AlertTriangle, UserX, TrendingDown } from 'lucide-react';
@@ -49,7 +50,7 @@ export function ClientHealthSummaryCard() {
               <p className="text-xs text-muted-foreground">Clients needing attention</p>
             </div>
           </div>
-          <Button variant="ghost" size="sm" asChild className="gap-1 text-xs">
+          <Button variant="ghost" size={tokens.button.card} asChild className="gap-1 text-xs">
             <Link to="/dashboard/admin/client-health">
               View Hub <ChevronRight className="h-3 w-3" />
             </Link>

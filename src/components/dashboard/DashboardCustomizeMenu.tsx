@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { 
   Sheet, 
@@ -633,7 +634,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                     />
                   ))}
                 </div>
-                <Button variant="ghost" size="sm" className="w-full gap-2 mt-4" asChild>
+                <Button variant="ghost" size={tokens.button.card} className="w-full gap-2 mt-4" asChild>
                   <Link to="/dashboard/admin/analytics" onClick={() => setIsOpen(false)}>
                     <BarChart3 className="w-4 h-4" />
                     View All in Analytics Hub

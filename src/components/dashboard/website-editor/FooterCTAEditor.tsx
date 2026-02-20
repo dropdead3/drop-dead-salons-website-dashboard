@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -58,7 +59,7 @@ export function FooterCTAEditor() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-4 border-b">
           <CardTitle className="text-lg">Footer CTA Section</CardTitle>
-          <Button variant="ghost" size="sm" onClick={handleReset} className="text-muted-foreground gap-1.5">
+          <Button variant="ghost" size={tokens.button.card} onClick={handleReset} className="text-muted-foreground gap-1.5">
             <RotateCcw className="h-3.5 w-3.5" />
             Reset
           </Button>

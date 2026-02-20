@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Progress } from '@/components/ui/progress';
 import { Target, TrendingUp, TrendingDown, Loader2, ListChecks, Settings, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -315,7 +316,7 @@ export function SalesGoalProgress({
               <span>Behind pace · <BlurredAmount>{formatCurrencyWhole(Math.round(neededPerDay))}/day</BlurredAmount> needed ({daysLeft} open day{daysLeft !== 1 ? 's' : ''} left)</span>
               <Button
                 variant="ghost"
-                size="sm"
+                size={tokens.button.inline}
                 onClick={handleGetBackOnTrack}
                 disabled={loading}
                 className="h-auto py-0.5 px-2 text-[11px] text-muted-foreground hover:text-foreground ml-1 gap-1"

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Bookmark, Bell, Rocket, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -122,7 +123,7 @@ export function RecoveryPlanActions({
       {/* Save Plan */}
       <Button
         variant="outline"
-        size="sm"
+        size={tokens.button.card}
         onClick={handleSavePlan}
         disabled={saving || saved || !content}
         className="flex-1 gap-1.5 text-xs border-border/50"
@@ -142,7 +143,7 @@ export function RecoveryPlanActions({
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            size="sm"
+            size={tokens.button.card}
             disabled={reminderSaving || reminderSet || !content}
             className="flex-1 gap-1.5 text-xs border-border/50"
           >
@@ -164,7 +165,7 @@ export function RecoveryPlanActions({
                 <Button
                   key={days}
                   variant="ghost"
-                  size="sm"
+                  size={tokens.button.inline}
                   className="text-xs h-7"
                   onClick={() => handleSetReminder(addDays(new Date(), days))}
                 >
@@ -186,7 +187,7 @@ export function RecoveryPlanActions({
       {/* Let's Implement */}
       <Button
         variant="outline"
-        size="sm"
+        size={tokens.button.card}
         disabled={!content}
         onClick={() => setImplementOpen(true)}
         className="flex-1 gap-1.5 text-xs border-border/50"

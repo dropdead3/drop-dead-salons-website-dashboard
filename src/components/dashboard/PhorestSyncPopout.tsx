@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -246,7 +247,7 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
             onClick={handleSyncNow} 
             disabled={isSyncing}
             className="w-full"
-            size="sm"
+            size={tokens.button.card}
           >
             {isSyncing ? (
               <>

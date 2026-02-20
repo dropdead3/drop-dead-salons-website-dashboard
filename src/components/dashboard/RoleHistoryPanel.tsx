@@ -1,4 +1,5 @@
 import { History, UserPlus, UserMinus, Shield, ShieldOff, Crown, Check, X } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import {
   Collapsible,
@@ -55,7 +56,7 @@ export function RoleHistoryPanel({ userId, isOpen, onToggle }: RoleHistoryPanelP
   return (
     <Collapsible open={isOpen} onOpenChange={onToggle}>
       <CollapsibleTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground">
+        <Button variant="ghost" size={tokens.button.inline} className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground">
           <History className="w-3 h-3" />
           {isOpen ? 'Hide History' : 'View History'}
         </Button>

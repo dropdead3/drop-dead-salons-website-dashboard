@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { 
   Table, 
@@ -82,7 +83,7 @@ export function TransactionList({
   const SortHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <Button
       variant="ghost"
-      size="sm"
+      size={tokens.button.inline}
       className="-ml-3 h-8 font-medium hover:bg-transparent"
       onClick={() => handleSort(field)}
     >

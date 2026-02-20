@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { format, addDays } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import {
@@ -520,7 +521,7 @@ export function NewBookingSheet({
                     <Label>Available Times</Label>
                     <Button 
                       variant="outline" 
-                      size="sm" 
+                      size={tokens.button.card} 
                       onClick={handleCheckAvailability}
                       disabled={isCheckingAvailability}
                     >
@@ -538,7 +539,7 @@ export function NewBookingSheet({
                         <Button
                           key={slot.start_time}
                           variant={selectedTime === slot.start_time ? 'default' : 'outline'}
-                          size="sm"
+                          size={tokens.button.inline}
                           onClick={() => setSelectedTime(slot.start_time)}
                         >
                           {formatTime12h(slot.start_time)}

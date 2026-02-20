@@ -1,4 +1,5 @@
 import { memo, useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, X, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -95,7 +96,7 @@ function AnomalyAlertBannerComponent({ className }: AnomalyAlertBannerProps) {
 
               <div className="flex items-center gap-2">
                 <Button
-                  size="sm"
+                  size={tokens.button.inline}
                   variant="ghost"
                   onClick={(e) => handleAcknowledge(topAnomaly.id, e)}
                   disabled={acknowledgeAnomaly.isPending}
