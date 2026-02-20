@@ -309,7 +309,7 @@ export function AIInsightsCard() {
                   </div>
                   <CardTitle className="text-base font-display tracking-wide">ZURA BUSINESS INSIGHTS</CardTitle>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="gap-1.5 text-xs h-8">
+                <Button variant="ghost" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="gap-1.5 text-xs h-8">
                   <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
                   {cooldown > 0 ? `${cooldown}s` : isRefreshing ? 'Analyzing...' : 'Refresh'}
                 </Button>
@@ -386,7 +386,7 @@ export function AIInsightsCard() {
                       <div className="text-center py-8">
                         <ZuraAvatar size="md" className="mx-auto mb-3 opacity-40" />
                         <p className="text-sm text-muted-foreground mb-3">No insights generated yet</p>
-                        <Button variant="outline" size="sm" onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5">
+                        <Button variant="outline" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5">
                           <Brain className="w-3.5 h-3.5" />
                           Generate Insights
                         </Button>

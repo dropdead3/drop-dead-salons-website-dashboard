@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Brain, X } from 'lucide-react';
@@ -101,7 +102,7 @@ export function InsightsNudgeBanner({ userId, isLeadership }: InsightsNudgeBanne
             </p>
           </div>
           <Link to="/dashboard">
-            <Button size="sm" variant="outline" className="flex-shrink-0 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50">
+            <Button size={tokens.button.card} variant="outline" className="flex-shrink-0 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50">
               View Insights
             </Button>
           </Link>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -78,7 +79,7 @@ function SortableParagraph({ id, index, value, onChange, onRemove, canRemove }: 
           <Button
             type="button"
             variant="ghost"
-            size="sm"
+            size={tokens.button.inline}
             onClick={onRemove}
             className="h-8 text-destructive hover:text-destructive"
           >
@@ -174,7 +175,7 @@ export function BrandStatementEditor() {
       <Card className="overflow-auto">
         <CardHeader className="flex flex-row items-center justify-between pb-4 sticky top-0 bg-card z-10 border-b">
           <CardTitle className="text-lg">Brand Statement</CardTitle>
-          <Button variant="ghost" size="sm" onClick={handleReset} className="text-muted-foreground gap-1.5">
+          <Button variant="ghost" size={tokens.button.card} onClick={handleReset} className="text-muted-foreground gap-1.5">
             <RotateCcw className="h-3.5 w-3.5" />
             Reset
           </Button>
@@ -250,7 +251,7 @@ export function BrandStatementEditor() {
                   <p className="text-xs text-muted-foreground mt-0.5">Drag to reorder. These appear below the headline.</p>
                 </div>
                 {localConfig.paragraphs.length < 5 && (
-                  <Button type="button" variant="outline" size="sm" onClick={addParagraph}>
+                  <Button type="button" variant="outline" size={tokens.button.card} onClick={addParagraph}>
                     <Plus className="h-4 w-4 mr-1" />
                     Add
                   </Button>

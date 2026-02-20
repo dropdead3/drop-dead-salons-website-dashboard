@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { 
   usePromotionVariants, 
   useCreatePromotionVariant, 
@@ -86,7 +87,7 @@ export function PromotionVariantManager({ promotionId, promotionName }: Promotio
 
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button size="sm">
+            <Button size={tokens.button.card}>
               <Plus className="h-4 w-4 mr-2" />
               Add Variant
             </Button>
@@ -277,7 +278,7 @@ export function PromotionVariantManager({ promotionId, promotionName }: Promotio
                   <div className="flex items-center gap-2">
                     {!variant.is_control && (
                       <Button
-                        size="sm"
+                        size={tokens.button.inline}
                         variant="outline"
                         onClick={() => handleSetControl(variant.id)}
                       >
@@ -285,7 +286,7 @@ export function PromotionVariantManager({ promotionId, promotionName }: Promotio
                       </Button>
                     )}
                     <Button
-                      size="sm"
+                      size={tokens.button.inline}
                       variant="ghost"
                       onClick={() => handleDelete(variant.id)}
                     >
@@ -311,7 +312,7 @@ export function PromotionVariantManager({ promotionId, promotionName }: Promotio
               <CardContent className="flex flex-col items-center justify-center py-8">
                 <FlaskConical className="h-8 w-8 text-muted-foreground mb-2" />
                 <p className="text-muted-foreground">No test variants yet</p>
-                <Button size="sm" variant="link" onClick={() => setIsCreateOpen(true)}>
+                <Button size={tokens.button.card} variant="link" onClick={() => setIsCreateOpen(true)}>
                   Create your first variant
                 </Button>
               </CardContent>

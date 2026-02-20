@@ -1,4 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { tokens } from '@/lib/design-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
@@ -31,7 +32,7 @@ export function OperationalHealthCard({
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>Failed to load operational data.</span>
           </div>
-          <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>
+          <Button variant="outline" size={tokens.button.card} className="mt-3" onClick={() => refetch()}>
             Retry
           </Button>
         </CardContent>

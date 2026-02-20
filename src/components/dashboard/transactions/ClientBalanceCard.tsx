@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CreditCard, Gift, Plus, Loader2 } from 'lucide-react';
@@ -64,7 +65,7 @@ export function ClientBalanceCard({
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium">Account Balance</CardTitle>
           {showActions && onIssueCredit && (
-            <Button variant="ghost" size="sm" onClick={onIssueCredit}>
+            <Button variant="ghost" size={tokens.button.card} onClick={onIssueCredit}>
               <Plus className="w-4 h-4 mr-1" />
               Add
             </Button>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -123,7 +124,7 @@ export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleE
             {merged.text_color_override && (
               <Button
                 variant="ghost"
-                size="sm"
+                size={tokens.button.inline}
                 className="h-8 text-xs"
                 onClick={() => update('text_color_override', '')}
               >
@@ -190,7 +191,7 @@ export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleE
         {hasOverrides && (
           <Button
             variant="outline"
-            size="sm"
+            size={tokens.button.card}
             className="w-full text-xs"
             onClick={() => onChange({})}
           >

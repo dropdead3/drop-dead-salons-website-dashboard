@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -90,7 +91,7 @@ export function AnnouncementBarContent() {
             Customize the promotional banner displayed above the header on the public website.
           </p>
         </div>
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="outline" size={tokens.button.card} asChild>
           <a href="/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2">
             <ExternalLink className="h-4 w-4" />
             Preview Website

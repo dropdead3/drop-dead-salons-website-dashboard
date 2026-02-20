@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -509,7 +510,7 @@ function ThemeTab() {
         {/* Editor header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => setMode('overview')} className="gap-2">
+            <Button variant="ghost" size={tokens.button.card} onClick={() => setMode('overview')} className="gap-2">
               <ArrowLeft className="w-4 h-4" />
               Back to Themes
             </Button>
@@ -524,7 +525,7 @@ function ThemeTab() {
           <div className="flex items-center gap-2">
             <Button
               variant={showPreview ? 'default' : 'outline'}
-              size="sm"
+              size={tokens.button.card}
               onClick={() => setShowPreview(!showPreview)}
             >
               {showPreview ? (
@@ -533,7 +534,7 @@ function ThemeTab() {
                 <><PanelRightOpen className="h-4 w-4 mr-1" />Preview</>
               )}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => window.open('/', '_blank')}>
+            <Button variant="outline" size={tokens.button.card} onClick={() => window.open('/', '_blank')}>
               <ExternalLink className="h-4 w-4 mr-1" />
               Open Site
             </Button>
@@ -872,7 +873,7 @@ function RetailTab() {
                 </div>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.inline}
                   className="h-7 text-xs gap-1.5"
                   onClick={() => {
                     const canvas = document.querySelector('#store-qr-code canvas') as HTMLCanvasElement;
@@ -1090,13 +1091,13 @@ export function WebsiteSettingsContent() {
           </TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size={tokens.button.card} asChild>
             <a href="/dashboard/admin/website-sections">
               <ExternalLink className="w-4 h-4 mr-1.5" />
               Editor
             </a>
           </Button>
-          <Button variant="outline" size="sm" onClick={() => window.open('/', '_blank')}>
+          <Button variant="outline" size={tokens.button.card} onClick={() => window.open('/', '_blank')}>
             <Eye className="w-4 h-4 mr-1.5" />
             Preview
           </Button>

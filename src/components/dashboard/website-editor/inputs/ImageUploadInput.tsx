@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -76,10 +77,10 @@ export function ImageUploadInput({
         <div className="relative group rounded-lg overflow-hidden border bg-muted/30">
           <img src={value} alt="Uploaded" className="w-full h-32 object-cover" />
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-            <Button size="sm" variant="secondary" onClick={() => fileInputRef.current?.click()}>
+            <Button size={tokens.button.inline} variant="secondary" onClick={() => fileInputRef.current?.click()}>
               Replace
             </Button>
-            <Button size="sm" variant="destructive" onClick={handleRemove}>
+            <Button size={tokens.button.inline} variant="destructive" onClick={handleRemove}>
               <X className="h-3 w-3" />
             </Button>
           </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Monitor, Smartphone, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -91,7 +92,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
           <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
             <Button
               variant="ghost"
-              size="sm"
+              size={tokens.button.inline}
               className={cn(
                 "h-7 px-2",
                 viewMode === 'desktop' && "bg-background shadow-sm"
@@ -102,7 +103,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
             </Button>
             <Button
               variant="ghost"
-              size="sm"
+              size={tokens.button.inline}
               className={cn(
                 "h-7 px-2",
                 viewMode === 'mobile' && "bg-background shadow-sm"
@@ -116,7 +117,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
           {/* Refresh Button */}
           <Button
             variant="ghost"
-            size="sm"
+            size={tokens.button.inline}
             onClick={handleRefresh}
             className="h-7 w-7 p-0"
           >

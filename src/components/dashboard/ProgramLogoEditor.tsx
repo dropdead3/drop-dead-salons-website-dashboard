@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -272,7 +273,7 @@ export function ProgramLogoEditor({
                 <Button
                   key={preset.label}
                   variant={size === preset.value ? 'default' : 'outline'}
-                  size="sm"
+                  size={tokens.button.inline}
                   onClick={() => {
                     setSize(preset.value);
                     onSizeChange(preset.value);
@@ -294,7 +295,7 @@ export function ProgramLogoEditor({
             {color && (
               <Button
                 variant="ghost"
-                size="sm"
+                size={tokens.button.inline}
                 onClick={() => handleColorSelect(null)}
                 className="ml-auto h-6 px-2 text-xs text-muted-foreground"
               >
@@ -355,7 +356,7 @@ export function ProgramLogoEditor({
                 />
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.inline}
                   onClick={handleCustomColorApply}
                   className="h-9"
                 >
