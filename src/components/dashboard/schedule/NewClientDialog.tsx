@@ -65,6 +65,7 @@ export function NewClientDialog({
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [gender, setGender] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [notes, setNotes] = useState('');
@@ -76,6 +77,7 @@ export function NewClientDialog({
   const resetForm = () => {
     setFirstName('');
     setLastName('');
+    setGender('');
     setEmail('');
     setPhone('');
     setNotes('');
@@ -96,6 +98,7 @@ export function NewClientDialog({
           branch_id: location.phorest_branch_id,
           first_name: firstName.trim(),
           last_name: lastName.trim(),
+          gender: gender || undefined,
           email: email.trim() || undefined,
           phone: phone.replace(/\D/g, '').trim() || undefined,
           notes: notes.trim() || undefined,
@@ -165,6 +168,21 @@ export function NewClientDialog({
                 required
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="gender">Gender</Label>
+            <Select value={gender} onValueChange={setGender}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select gender (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Male">Male</SelectItem>
+                <SelectItem value="Female">Female</SelectItem>
+                <SelectItem value="Non-Binary">Non-Binary</SelectItem>
+                <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {defaultLocationId && !showLocationSelector ? (
