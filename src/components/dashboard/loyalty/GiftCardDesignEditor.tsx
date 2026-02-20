@@ -11,6 +11,7 @@ import { Save, Loader2, Plus, X, Printer, Download } from 'lucide-react';
 import { useGiftCardSettings, useUpdateGiftCardSettings, GiftCardSettings } from '@/hooks/useGiftCardSettings';
 import { GiftCardPreview } from './GiftCardPreview';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 interface GiftCardDesignEditorProps {
   organizationId?: string;
@@ -79,11 +80,11 @@ export function GiftCardDesignEditor({ organizationId }: GiftCardDesignEditorPro
             code="ABCD-1234-EFGH-5678"
           />
           <div className="flex gap-2 mt-4">
-            <Button variant="outline" size="sm" className="flex-1">
+            <Button variant="outline" size={tokens.button.card} className="flex-1">
               <Printer className="h-4 w-4 mr-2" />
               Print Preview
             </Button>
-            <Button variant="outline" size="sm" className="flex-1">
+            <Button variant="outline" size={tokens.button.card} className="flex-1">
               <Download className="h-4 w-4 mr-2" />
               Download PDF
             </Button>
@@ -243,7 +244,7 @@ export function GiftCardDesignEditor({ organizationId }: GiftCardDesignEditorPro
                 onKeyDown={(e) => e.key === 'Enter' && handleAddAmount()}
                 className="w-32"
               />
-              <Button size="sm" variant="outline" onClick={handleAddAmount}>
+              <Button size={tokens.button.inline} variant="outline" onClick={handleAddAmount}>
                 <Plus className="h-4 w-4" />
               </Button>
             </div>

@@ -7,6 +7,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Layers, AlertCircle } from 'lucide-react';
 import { useServiceMix } from '@/hooks/useSalesData';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 export interface ServiceMixCardProps {
@@ -29,7 +30,7 @@ export function ServiceMixCard({ filterContext, dateFrom, dateTo, locationId }: 
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>Failed to load service mix.</span>
           </div>
-          <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>
+          <Button variant="outline" size={tokens.button.card} className="mt-3" onClick={() => refetch()}>
             Retry
           </Button>
         </CardContent>

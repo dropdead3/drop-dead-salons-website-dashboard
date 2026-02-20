@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { 
   useEmployeePayrollSettings, 
   EmployeePayrollSettings,
@@ -156,7 +157,7 @@ function EmployeeRow({ settings, onEdit, onToggleActive, onDelete }: EmployeeRow
         {/* Actions Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <Button variant="ghost" size={tokens.button.inline} className="h-8 w-8 p-0">
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>

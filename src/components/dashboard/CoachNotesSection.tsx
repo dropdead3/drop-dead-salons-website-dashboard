@@ -37,6 +37,7 @@ import {
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 interface CoachNote {
   id: string;
@@ -199,7 +200,7 @@ export function CoachNotesSection({ enrollmentId, participantName }: CoachNotesS
         {!isAdding && (
           <Button
             variant="ghost"
-            size="sm"
+            size={tokens.button.inline}
             onClick={() => setIsAdding(true)}
             className="h-7 text-xs"
           >
@@ -238,7 +239,7 @@ export function CoachNotesSection({ enrollmentId, participantName }: CoachNotesS
           <div className="flex justify-end gap-2">
             <Button
               variant="ghost"
-              size="sm"
+              size={tokens.button.inline}
               onClick={() => {
                 setIsAdding(false);
                 setNewNoteText('');
@@ -248,7 +249,7 @@ export function CoachNotesSection({ enrollmentId, participantName }: CoachNotesS
               Cancel
             </Button>
             <Button
-              size="sm"
+              size={tokens.button.inline}
               onClick={() => addNoteMutation.mutate()}
               disabled={!newNoteText.trim() || addNoteMutation.isPending}
             >
@@ -351,7 +352,7 @@ export function CoachNotesSection({ enrollmentId, participantName }: CoachNotesS
                     <div className="flex justify-end gap-2">
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size={tokens.button.inline}
                         onClick={cancelEdit}
                         className="h-7"
                       >
@@ -359,7 +360,7 @@ export function CoachNotesSection({ enrollmentId, participantName }: CoachNotesS
                         Cancel
                       </Button>
                       <Button
-                        size="sm"
+                        size={tokens.button.inline}
                         onClick={() => saveEdit(note.id)}
                         disabled={!editText.trim() || updateNoteMutation.isPending}
                         className="h-7"

@@ -15,6 +15,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 interface StylistProfile {
   id: string;
@@ -214,7 +215,7 @@ export function EditStylistCardDialog({ open, onOpenChange, stylist }: EditStyli
             <p className="text-xs text-muted-foreground mb-2">Button Preview:</p>
             <Button
               type="button"
-              size="sm"
+              size={tokens.button.card}
               variant={formData.is_booking ? "default" : "secondary"}
               className={cn(!formData.is_booking && "opacity-60")}
               disabled

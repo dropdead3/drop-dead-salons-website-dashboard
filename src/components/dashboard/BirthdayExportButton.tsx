@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { toast } from 'sonner';
 import { ROLE_LABELS } from '@/hooks/useUserRoles';
+import { tokens } from '@/lib/design-tokens';
 
 interface BirthdayPerson {
   id: string;
@@ -141,7 +142,7 @@ export function BirthdayExportButton({ birthdays }: BirthdayExportButtonProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" disabled={isExporting}>
+        <Button variant="outline" size={tokens.button.card} disabled={isExporting}>
           {isExporting ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
           ) : (
