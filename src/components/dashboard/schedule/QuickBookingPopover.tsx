@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import {
@@ -47,13 +48,17 @@ import { useStaffQualifiedServices } from '@/hooks/useStaffServiceQualifications
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
 import { BannedClientWarningDialog } from '@/components/dashboard/clients/BannedClientWarningDialog';
 
+type QuickBookingMode = 'popover' | 'panel';
+
 interface QuickBookingPopoverProps {
   date: Date;
   time: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   defaultLocationId?: string;
+  mode?: QuickBookingMode;
+  defaultStylistId?: string;
 }
 
 import { ClientProfileView, ExtendedPhorestClient } from './booking/ClientProfileView';
@@ -96,6 +101,8 @@ export function QuickBookingPopover({
   onOpenChange,
   children,
   defaultLocationId,
+  mode = 'popover',
+  defaultStylistId,
 }: QuickBookingPopoverProps) {
   const queryClient = useQueryClient();
   const { user, roles } = useAuth();
@@ -635,437 +642,289 @@ export function QuickBookingPopover({
     return stylist?.employee_profiles?.display_name || stylist?.employee_profiles?.full_name || '';
   };
 
-  return (
+  // ─── Shared inner content (header + steps) ─────────────────────
+  const innerContent = (
     <>
-      {/* Backdrop overlay with blur */}
-      {open && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
-          onClick={() => onOpenChange(false)}
-          aria-hidden="true"
-        />
-      )}
-      
-      {/* Hidden popover just for trigger logic */}
-      <Popover open={open} onOpenChange={onOpenChange}>
-        <PopoverTrigger asChild>
-          {children}
-        </PopoverTrigger>
-      </Popover>
+      {/* Header */}
+      <div className="bg-card border-b border-border rounded-t-xl">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-2">
+            {step !== 'service' || viewingClientProfile || (stylistFirstMode && step === 'service') ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={() => {
+                  if (viewingClientProfile) {
+                    setViewingClientProfile(null);
+                  } else {
+                    handleBack();
+                  }
+                }}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            ) : (
+              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                <CalendarPlus className="h-4 w-4 text-muted-foreground" />
+              </div>
+            )}
+            <div>
+              {viewingClientProfile ? (
+                <>
+                  <h2 className="font-medium text-sm truncate max-w-[180px]">{viewingClientProfile.name}</h2>
+                  <p className="text-xs text-muted-foreground">Client Profile</p>
+                </>
+              ) : (
+                <>
+                  <h2 className="font-medium text-sm">New Booking</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDateLocale(date, 'EEE, MMM d')} at {formatTime12h(time)}
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            {canGoForward && !viewingClientProfile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={handleForward}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full hover:bg-muted"
+              onClick={handleClose}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
 
-      {/* Centered modal content - rendered independently */}
-      {open && (
-        <div 
-          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[440px] p-0 shadow-xl border border-border rounded-xl overflow-hidden bg-popover animate-enter"
-        >
-          {/* Header */}
-          <div className="bg-card border-b border-border">
-            <div className="flex items-center justify-between px-4 py-3">
-              <div className="flex items-center gap-2">
-                {step !== 'service' || viewingClientProfile || (stylistFirstMode && step === 'service') ? (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-full"
-                    onClick={() => {
-                      if (viewingClientProfile) {
-                        setViewingClientProfile(null);
-                      } else {
-                        handleBack();
-                      }
-                    }}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                    <CalendarPlus className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                )}
-                <div>
-                  {viewingClientProfile ? (
-                    <>
-                      <h2 className="font-medium text-sm truncate max-w-[180px]">{viewingClientProfile.name}</h2>
-                      <p className="text-xs text-muted-foreground">Client Profile</p>
-                    </>
-                  ) : (
-                    <>
-                      <h2 className="font-medium text-sm">New Booking</h2>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDateLocale(date, 'EEE, MMM d')} at {formatTime12h(time)}
-                      </p>
-                    </>
+        {/* Progress bar */}
+        <div className="flex px-4 pb-3 gap-1">
+          {STEPS.map((s, i) => {
+            const isClickable = i <= highestStepReached && i !== currentStepIndex;
+            const stepLabel = s.charAt(0).toUpperCase() + s.slice(1);
+            const isCurrent = i === currentStepIndex;
+            const isCompleted = isStepCompleted(s);
+            const isVisited = i <= highestStepReached;
+            const isStylistPreFilled = stylistFirstMode && s === 'stylist' && preSelectedStylistId;
+            
+            const getSegmentStyle = () => {
+              if (isStylistPreFilled && !isCurrent) return 'bg-primary/50';
+              if (isCurrent) return 'bg-primary';
+              if (i < currentStepIndex && isCompleted) return 'bg-primary';
+              if (i > currentStepIndex && isVisited && isCompleted) return 'bg-primary/50';
+              if (isVisited && !isCompleted) return 'bg-primary/30';
+              return 'bg-muted';
+            };
+            
+            return (
+              <div key={s} className="flex-1 group relative">
+                <button
+                  onClick={() => isClickable && setStep(s)}
+                  disabled={!isClickable}
+                  className={cn(
+                    'w-full h-1.5 rounded-full transition-all',
+                    getSegmentStyle(),
+                    isClickable && 'cursor-pointer hover:opacity-70 hover:scale-y-150',
+                    !isClickable && 'cursor-default'
                   )}
+                />
+                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                  <span className="text-[10px] font-medium text-muted-foreground bg-popover px-1.5 py-0.5 rounded shadow-sm border border-border whitespace-nowrap flex items-center gap-1">
+                    {stepLabel}
+                    {isStylistPreFilled && <Check className="h-2.5 w-2.5 text-green-500" />}
+                    {isVisited && isCompleted && !isStylistPreFilled && (
+                      <Check className="h-2.5 w-2.5 text-green-500" />
+                    )}
+                  </span>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
-                {canGoForward && !viewingClientProfile && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-full"
-                    onClick={handleForward}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                )}
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Step: Client Selection */}
+      {step === 'client' && (
+        viewingClientProfile ? (
+          <ClientProfileView
+            client={viewingClientProfile}
+            onBack={() => setViewingClientProfile(null)}
+            onSelect={(client) => {
+              setViewingClientProfile(null);
+              handleSelectClient(client);
+            }}
+          />
+        ) : (
+          <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
+            <div className="p-3 border-b border-border">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search clients..."
+                    value={clientSearch}
+                    onChange={(e) => setClientSearch(e.target.value)}
+                    className="pl-9 h-9 bg-muted/50 border-0 focus-visible:ring-1"
+                  />
+                </div>
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="icon"
-                  className="h-8 w-8 rounded-full hover:bg-muted"
-                  onClick={handleClose}
+                  className="h-9 w-9 shrink-0"
+                  onClick={() => setShowNewClientDialog(true)}
                 >
-                  <X className="h-4 w-4" />
+                  <UserPlus className="h-4 w-4" />
                 </Button>
               </div>
             </div>
-
-            {/* Progress bar - clickable segments for visited steps */}
-            <div className="flex px-4 pb-3 gap-1">
-              {STEPS.map((s, i) => {
-                const isClickable = i <= highestStepReached && i !== currentStepIndex;
-                const stepLabel = s.charAt(0).toUpperCase() + s.slice(1);
-                
-                const isCurrent = i === currentStepIndex;
-                const isCompleted = isStepCompleted(s);
-                const isVisited = i <= highestStepReached;
-                
-                // In stylist-first mode, mark the stylist segment as pre-filled
-                const isStylistPreFilled = stylistFirstMode && s === 'stylist' && preSelectedStylistId;
-                
-                const getSegmentStyle = () => {
-                  if (isStylistPreFilled && !isCurrent) return 'bg-primary/50';
-                  if (isCurrent) return 'bg-primary';
-                  if (i < currentStepIndex && isCompleted) return 'bg-primary';
-                  if (i > currentStepIndex && isVisited && isCompleted) return 'bg-primary/50';
-                  if (isVisited && !isCompleted) return 'bg-primary/30';
-                  return 'bg-muted';
-                };
-                
-                return (
-                  <div key={s} className="flex-1 group relative">
-                    <button
-                      onClick={() => isClickable && setStep(s)}
-                      disabled={!isClickable}
-                      className={cn(
-                        'w-full h-1.5 rounded-full transition-all',
-                        getSegmentStyle(),
-                        isClickable && 'cursor-pointer hover:opacity-70 hover:scale-y-150',
-                        !isClickable && 'cursor-default'
-                      )}
-                    />
-                    <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                      <span className="text-[10px] font-medium text-muted-foreground bg-popover px-1.5 py-0.5 rounded shadow-sm border border-border whitespace-nowrap flex items-center gap-1">
-                        {stepLabel}
-                        {isStylistPreFilled && <Check className="h-2.5 w-2.5 text-green-500" />}
-                        {isVisited && isCompleted && !isStylistPreFilled && (
-                          <Check className="h-2.5 w-2.5 text-green-500" />
+            <ScrollArea className="flex-1">
+              <div className="p-2">
+                {isLoadingClients ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : clients.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground text-sm">
+                      {clientSearch ? 'No clients found' : 'Start typing to search'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-0.5">
+                    {clients.map((client) => (
+                      <div
+                        key={client.id}
+                        className={cn(
+                          'flex items-center gap-2 p-2.5 rounded-lg',
+                          'hover:bg-muted/70 transition-colors',
+                          client.is_banned && 'border border-destructive/30 bg-destructive/5'
                         )}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Step: Client Selection */}
-          {step === 'client' && (
-            viewingClientProfile ? (
-              <ClientProfileView
-                client={viewingClientProfile}
-                onBack={() => setViewingClientProfile(null)}
-                onSelect={(client) => {
-                  setViewingClientProfile(null);
-                  handleSelectClient(client);
-                }}
-              />
-            ) : (
-              <div className="flex flex-col" style={{ height: '550px' }}>
-                {/* Search bar */}
-                <div className="p-3 border-b border-border">
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search clients..."
-                        value={clientSearch}
-                        onChange={(e) => setClientSearch(e.target.value)}
-                        className="pl-9 h-9 bg-muted/50 border-0 focus-visible:ring-1"
-                      />
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9 shrink-0"
-                      onClick={() => setShowNewClientDialog(true)}
-                    >
-                      <UserPlus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Client list */}
-                <ScrollArea className="flex-1">
-                  <div className="p-2">
-                    {isLoadingClients ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                      </div>
-                    ) : clients.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-muted-foreground text-sm">
-                          {clientSearch ? 'No clients found' : 'Start typing to search'}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-0.5">
-                        {clients.map((client) => (
-                          <div
-                            key={client.id}
-                            className={cn(
-                              'flex items-center gap-2 p-2.5 rounded-lg',
-                              'hover:bg-muted/70 transition-colors',
-                              client.is_banned && 'border border-destructive/30 bg-destructive/5'
-                            )}
-                          >
-                            <button
-                              className="flex items-center gap-3 flex-1 min-w-0 text-left"
-                              onClick={() => handleSelectClient(client)}
-                            >
-                              <Avatar className="h-9 w-9 bg-muted shrink-0">
-                                <AvatarFallback className="text-xs font-medium text-muted-foreground bg-muted">
-                                  {getInitials(client.name)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium text-sm truncate">{client.name}</span>
-                                  {client.is_banned && <BannedClientBadge />}
-                                </div>
-                                <div className="text-xs text-muted-foreground truncate">
-                                  {formatPhone(client.phone) || client.email || 'No contact info'}
-                                </div>
-                              </div>
-                            </button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setViewingClientProfile(client);
-                              }}
-                            >
-                              <Info className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-              </div>
-            )
-          )}
-
-          {/* Step: Service Selection (Category → Services) */}
-          {step === 'service' && (
-            <div className="flex flex-col" style={{ height: '550px' }}>
-              {/* Pre-selected stylist indicator */}
-              {stylistFirstMode && preSelectedStylistId && !selectedCategory && (
-                <div className="px-3 pt-3 pb-0">
-                  <div className="flex items-center gap-2.5 p-2 rounded-lg bg-accent/50 border border-accent">
-                    <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarImage src={preSelectedStylistPhoto || undefined} />
-                      <AvatarFallback className="bg-muted text-xs font-medium">
-                        {preSelectedStylistName.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">{preSelectedStylistName}</div>
-                      {preSelectedStylistLevel && (
-                        <div className="text-[10px] text-muted-foreground">{preSelectedStylistLevel}</div>
-                      )}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
-                      onClick={clearPreSelectedStylist}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Sticky Back to Categories Header */}
-              {selectedCategory && (
-                <div className="sticky top-0 z-10 bg-popover border-b border-border px-3 py-2">
-                  <button
-                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    onClick={() => setSelectedCategory(null)}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    <span>Back to categories</span>
-                  </button>
-                </div>
-              )}
-              
-              {/* Category or Services View */}
-              <ScrollArea className="flex-1">
-                <div className="p-3">
-                  {isLoadingServices ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : !selectedCategory ? (
-                    // Category selection view
-                    <>
-                      {/* Search bar */}
-                      <div className="relative mb-3">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Search for a service"
-                          value={serviceSearch}
-                          onChange={(e) => setServiceSearch(e.target.value)}
-                          className="pl-9 h-9 bg-muted/50 border border-border"
-                        />
-                      </div>
-
-                      {/* "Know your stylist?" link — only in normal mode */}
-                      {!stylistFirstMode && !serviceSearch && (
+                      >
                         <button
-                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-3"
-                          onClick={() => {
-                            setStylistFirstMode(true);
-                            navigateToStep('stylist');
+                          className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                          onClick={() => handleSelectClient(client)}
+                        >
+                          <Avatar className="h-9 w-9 bg-muted shrink-0">
+                            <AvatarFallback className="text-xs font-medium text-muted-foreground bg-muted">
+                              {getInitials(client.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm truncate">{client.name}</span>
+                              {client.is_banned && <BannedClientBadge />}
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              {formatPhone(client.phone) || client.email || 'No contact info'}
+                            </div>
+                          </div>
+                        </button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setViewingClientProfile(client);
                           }}
                         >
-                          <User className="h-3.5 w-3.5" />
-                          <span>Know your stylist? Select first</span>
-                        </button>
-                      )}
-                      
-                      {serviceSearch ? (
-                        // Show filtered services across all categories
-                        <div className="space-y-1">
-                          {services
-                            .filter(s => s.name.toLowerCase().includes(serviceSearch.toLowerCase()))
-                            .slice(0, 15)
-                            .map((service) => {
-                              const isSelected = selectedServices.includes(service.phorest_service_id);
-                              const isQualified = isServiceQualifiedForPreSelected(service.phorest_service_id);
-                              return (
-                                <button
-                                  key={service.id}
-                                  className={cn(
-                                    'w-full flex items-center justify-between p-2.5 rounded-lg text-left transition-all',
-                                    isSelected
-                                      ? 'bg-primary/10 ring-1 ring-primary/30'
-                                      : 'hover:bg-muted/70',
-                                    !isQualified && !isSelected && 'opacity-40'
-                                  )}
-                                  onClick={() => handleServiceToggle(service.phorest_service_id)}
-                                >
-                                  <div className="flex-1 min-w-0 mr-2">
-                                    <div className="font-medium text-sm truncate">{service.name}</div>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                      <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
-                                        <Clock className="h-3 w-3" />
-                                        {service.duration_minutes}m
-                                      </span>
-                                      {service.price !== null && (
-                                        <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
-                                          {formatCurrencyWhole(service.price)}
-                                        </span>
-                                      )}
-                                      {!isQualified && (
-                                        <span className="text-[10px] text-destructive">
-                                          Not offered by {preSelectedStylistName.split(' ')[0]}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div
-                                    className={cn(
-                                      'w-4.5 h-4.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
-                                      isSelected
-                                        ? 'bg-primary border-primary text-primary-foreground'
-                                        : 'border-muted-foreground/30'
-                                    )}
-                                  >
-                                    {isSelected && <Check className="h-2.5 w-2.5" />}
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          {services.filter(s => s.name.toLowerCase().includes(serviceSearch.toLowerCase())).length === 0 && (
-                            <div className="text-center py-4 text-muted-foreground text-sm">
-                              No services match "{serviceSearch}"
-                            </div>
-                          )}
-                        </div>
-                      ) : servicesByCategory && Object.keys(servicesByCategory).length > 0 ? (
-                        // Category list
-                        <div className="space-y-1">
-                          {Object.keys(servicesByCategory).map((category) => {
-                            const catColor = getCategoryColor(category, categoryColors);
-                            const isGradient = isGradientMarker(catColor.bg);
-                            const gradient = isGradient ? getGradientFromMarker(catColor.bg) : null;
-                            const selectedCount = (servicesByCategory[category] || []).filter(
-                              s => selectedServices.includes(s.phorest_service_id)
-                            ).length;
-                            return (
-                              <button
-                                key={category}
-                                className="w-full flex items-center gap-3 text-left transition-all -mx-3 w-[calc(100%+1.5rem)] px-4 py-3 hover:bg-muted/60"
-                                onClick={() => setSelectedCategory(category)}
-                              >
-                                <div 
-                                  className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium shrink-0"
-                                  style={{
-                                    background: gradient ? gradient.background : catColor.bg,
-                                    color: gradient ? gradient.textColor : catColor.text,
-                                  }}
-                                >
-                                  {catColor.abbr}
-                                </div>
-                                <div className="flex flex-col min-w-0 flex-1">
-                                  <span className="text-sm font-medium truncate">{category}</span>
-                                </div>
-                                {selectedCount > 0 && (
-                                  <span className="shrink-0 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-medium">
-                                    {selectedCount} selected
-                                  </span>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="text-center py-6 space-y-2">
-                          <Scissors className="h-8 w-8 mx-auto text-muted-foreground/50" />
-                          <p className="text-muted-foreground text-sm">No services synced yet</p>
-                          <p className="text-xs text-muted-foreground/70">
-                            Services will appear after syncing from Phorest
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    // Services within selected category
-                    <>
-
-                      <div className="bg-muted -mx-3 px-3 py-1.5 mb-2">
-                        <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                          {selectedCategory}
-                        </h4>
+                          <Info className="h-4 w-4" />
+                        </Button>
                       </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+        )
+      )}
 
-                      <div className="space-y-1">
-                        {servicesByCategory?.[selectedCategory]?.map((service) => {
+      {/* Step: Service Selection */}
+      {step === 'service' && (
+        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
+          {stylistFirstMode && preSelectedStylistId && !selectedCategory && (
+            <div className="px-3 pt-3 pb-0">
+              <div className="flex items-center gap-2.5 p-2 rounded-lg bg-accent/50 border border-accent">
+                <Avatar className="h-8 w-8 shrink-0">
+                  <AvatarImage src={preSelectedStylistPhoto || undefined} />
+                  <AvatarFallback className="bg-muted text-xs font-medium">
+                    {preSelectedStylistName.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{preSelectedStylistName}</div>
+                  {preSelectedStylistLevel && (
+                    <div className="text-[10px] text-muted-foreground">{preSelectedStylistLevel}</div>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
+                  onClick={clearPreSelectedStylist}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          )}
+          {selectedCategory && (
+            <div className="sticky top-0 z-10 bg-popover border-b border-border px-3 py-2">
+              <button
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setSelectedCategory(null)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span>Back to categories</span>
+              </button>
+            </div>
+          )}
+          <ScrollArea className="flex-1">
+            <div className="p-3">
+              {isLoadingServices ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : !selectedCategory ? (
+                <>
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search for a service"
+                      value={serviceSearch}
+                      onChange={(e) => setServiceSearch(e.target.value)}
+                      className="pl-9 h-9 bg-muted/50 border border-border"
+                    />
+                  </div>
+                  {!stylistFirstMode && !serviceSearch && (
+                    <button
+                      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-3"
+                      onClick={() => {
+                        setStylistFirstMode(true);
+                        navigateToStep('stylist');
+                      }}
+                    >
+                      <User className="h-3.5 w-3.5" />
+                      <span>Know your stylist? Select first</span>
+                    </button>
+                  )}
+                  {serviceSearch ? (
+                    <div className="space-y-1">
+                      {services
+                        .filter(s => s.name.toLowerCase().includes(serviceSearch.toLowerCase()))
+                        .slice(0, 15)
+                        .map((service) => {
                           const isSelected = selectedServices.includes(service.phorest_service_id);
                           const isQualified = isServiceQualifiedForPreSelected(service.phorest_service_id);
                           return (
@@ -1073,9 +932,7 @@ export function QuickBookingPopover({
                               key={service.id}
                               className={cn(
                                 'w-full flex items-center justify-between p-2.5 rounded-lg text-left transition-all',
-                                isSelected
-                                  ? 'bg-primary/10 ring-1 ring-primary/30'
-                                  : 'hover:bg-muted/70',
+                                isSelected ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-muted/70',
                                 !isQualified && !isSelected && 'opacity-40'
                               )}
                               onClick={() => handleServiceToggle(service.phorest_service_id)}
@@ -1084,8 +941,7 @@ export function QuickBookingPopover({
                                 <div className="font-medium text-sm truncate">{service.name}</div>
                                 <div className="flex items-center gap-2 mt-0.5">
                                   <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
-                                    <Clock className="h-3 w-3" />
-                                    {service.duration_minutes}m
+                                    <Clock className="h-3 w-3" />{service.duration_minutes}m
                                   </span>
                                   {service.price !== null && (
                                     <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
@@ -1099,486 +955,536 @@ export function QuickBookingPopover({
                                   )}
                                 </div>
                               </div>
-                              <div
-                                className={cn(
-                                  'w-4.5 h-4.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
-                                  isSelected
-                                    ? 'bg-primary border-primary text-primary-foreground'
-                                    : 'border-muted-foreground/30'
-                                )}
-                              >
+                              <div className={cn(
+                                'w-4.5 h-4.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
+                                isSelected ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/30'
+                              )}>
                                 {isSelected && <Check className="h-2.5 w-2.5" />}
                               </div>
                             </button>
                           );
                         })}
-                      </div>
-                    </>
+                      {services.filter(s => s.name.toLowerCase().includes(serviceSearch.toLowerCase())).length === 0 && (
+                        <div className="text-center py-4 text-muted-foreground text-sm">
+                          No services match "{serviceSearch}"
+                        </div>
+                      )}
+                    </div>
+                  ) : servicesByCategory && Object.keys(servicesByCategory).length > 0 ? (
+                    <div className="space-y-1">
+                      {Object.keys(servicesByCategory).map((category) => {
+                        const catColor = getCategoryColor(category, categoryColors);
+                        const isGradient = isGradientMarker(catColor.bg);
+                        const gradient = isGradient ? getGradientFromMarker(catColor.bg) : null;
+                        const selectedCount = (servicesByCategory[category] || []).filter(
+                          s => selectedServices.includes(s.phorest_service_id)
+                        ).length;
+                        return (
+                          <button
+                            key={category}
+                            className="w-full flex items-center gap-3 text-left transition-all -mx-3 w-[calc(100%+1.5rem)] px-4 py-3 hover:bg-muted/60"
+                            onClick={() => setSelectedCategory(category)}
+                          >
+                            <div 
+                              className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium shrink-0"
+                              style={{
+                                background: gradient ? gradient.background : catColor.bg,
+                                color: gradient ? gradient.textColor : catColor.text,
+                              }}
+                            >
+                              {catColor.abbr}
+                            </div>
+                            <div className="flex flex-col min-w-0 flex-1">
+                              <span className="text-sm font-medium truncate">{category}</span>
+                            </div>
+                            {selectedCount > 0 && (
+                              <span className="shrink-0 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-medium">
+                                {selectedCount} selected
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 space-y-2">
+                      <Scissors className="h-8 w-8 mx-auto text-muted-foreground/50" />
+                      <p className="text-muted-foreground text-sm">No services synced yet</p>
+                      <p className="text-xs text-muted-foreground/70">
+                        Services will appear after syncing from Phorest
+                      </p>
+                    </div>
                   )}
-                </div>
-              </ScrollArea>
-
-              {/* Footer */}
-              <div className="p-3 border-t border-border bg-card space-y-2">
-                {selectedServices.length > 0 && (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="rounded-full text-[10px] px-2 py-0">
-                          {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
-                        </Badge>
-                        <span className="text-muted-foreground">{totalDuration}m</span>
-                      </div>
-                      <span className="font-medium">{formatCurrencyWhole(totalPrice)}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedServiceDetails.map(s => (
-                        <Badge key={s.id} variant="outline" className="text-[10px] font-normal px-1.5 py-0">
-                          {s.name}
-                        </Badge>
-                      ))}
-                    </div>
-                </div>
-                )}
-                {selectedCategory && selectedServices.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    className="w-full h-9 text-xs text-muted-foreground border border-dashed border-border hover:bg-muted/50 hover:text-foreground"
-                    onClick={() => setSelectedCategory(null)}
-                  >
-                    + Add service from another category
-                  </Button>
-                )}
-                <Button
-                  className="w-full h-9"
-                  onClick={handleServicesComplete}
-                >
-                  {selectedServices.length === 0 ? 'Skip Services' : 'Continue'}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Step: Location Selection */}
-          {step === 'location' && (
-            <div className="flex flex-col" style={{ height: '550px' }}>
-              <ScrollArea className="flex-1">
-                <div className="p-3">
-                  <div className="flex items-center gap-2 mb-3">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Select Location</span>
+                </>
+              ) : (
+                <>
+                  <div className="bg-muted -mx-3 px-3 py-1.5 mb-2">
+                    <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                      {selectedCategory}
+                    </h4>
                   </div>
-                  
                   <div className="space-y-1">
-                    {/* Filter locations if stylist-first mode and stylist is pre-selected */}
-                    {(stylistFirstMode && preSelectedStylistLocations.length > 0
-                      ? preSelectedStylistLocations
-                      : locations
-                    ).map((loc) => {
-                      const isSelected = selectedLocation === loc.id;
+                    {servicesByCategory?.[selectedCategory]?.map((service) => {
+                      const isSelected = selectedServices.includes(service.phorest_service_id);
+                      const isQualified = isServiceQualifiedForPreSelected(service.phorest_service_id);
                       return (
                         <button
-                          key={loc.id}
+                          key={service.id}
                           className={cn(
-                            'w-full flex items-center justify-between p-3 rounded-lg text-left transition-all',
-                            isSelected
-                              ? 'bg-primary/10 ring-1 ring-primary/30'
-                              : 'hover:bg-muted/70'
+                            'w-full flex items-center justify-between p-2.5 rounded-lg text-left transition-all',
+                            isSelected ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-muted/70',
+                            !isQualified && !isSelected && 'opacity-40'
                           )}
-                          onClick={() => setSelectedLocation(loc.id)}
+                          onClick={() => handleServiceToggle(service.phorest_service_id)}
                         >
                           <div className="flex-1 min-w-0 mr-2">
-                            <div className="font-medium text-sm">{loc.name}</div>
-                            <div className="text-xs text-muted-foreground mt-0.5">
-                              {loc.city}
-                            </div>
-                          </div>
-                          <div
-                            className={cn(
-                              'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
-                              isSelected
-                                ? 'bg-primary border-primary text-primary-foreground'
-                                : 'border-muted-foreground/30'
-                            )}
-                          >
-                            {isSelected && <Check className="h-3 w-3" />}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </ScrollArea>
-
-              {/* Footer */}
-              <div className="p-3 border-t border-border bg-card space-y-2">
-                {selectedServices.length > 0 && (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="rounded-full text-[10px] px-2 py-0">
-                          {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
-                        </Badge>
-                        <span className="text-muted-foreground">{totalDuration}m</span>
-                      </div>
-                      <span className="font-medium">{formatCurrencyWhole(totalPrice)}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedServiceDetails.map(s => (
-                        <Badge key={s.id} variant="outline" className="text-[10px] font-normal px-1.5 py-0">
-                          {s.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <Button
-                  className="w-full h-9"
-                  disabled={!selectedLocation}
-                  onClick={() => {
-                    // In stylist-first mode, after location go to services
-                    if (stylistFirstMode && preSelectedStylistId) {
-                      navigateToStep('service');
-                    } else {
-                      navigateToStep('client');
-                    }
-                  }}
-                >
-                  Confirm location
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Step: Stylist Selection */}
-          {step === 'stylist' && (
-            <div className="flex flex-col" style={{ height: '550px' }}>
-              <ScrollArea className="flex-1">
-                <div className="p-4">
-                  {/* Previous stylist notice (normal mode only) */}
-                  {!stylistFirstMode && autoSelectReason === 'previous' && selectedClient && (
-                    <div className="flex items-center gap-2 p-2.5 mb-3 bg-accent/50 text-accent-foreground rounded-lg text-xs border border-accent">
-                      <Clock className="h-3.5 w-3.5 shrink-0" />
-                      <span>Auto-selected {selectedClient.name.split(' ')[0]}'s previous stylist</span>
-                    </div>
-                  )}
-
-                  {/* Stylist-first mode hint */}
-                  {stylistFirstMode && (
-                    <div className="flex items-center gap-2 p-2.5 mb-3 bg-accent/50 text-accent-foreground rounded-lg text-xs border border-accent">
-                      <User className="h-3.5 w-3.5 shrink-0" />
-                      <span>Select your stylist first — we'll filter locations and services for you</span>
-                    </div>
-                  )}
-                  
-                  <h4 className="text-sm font-display font-medium text-foreground uppercase tracking-wider mb-4">
-                    {stylistFirstMode ? 'All Stylists' : 'Available Stylists'}
-                    {!stylistFirstMode && qualificationData?.hasQualificationData && selectedServices.length > 0 && (
-                      <span className="text-xs font-normal text-muted-foreground ml-2">
-                        ({filteredStylists.length} qualified)
-                      </span>
-                    )}
-                  </h4>
-                  <div className="flex flex-col gap-3">
-                    {/* Show all stylists in stylist-first mode, filtered stylists in normal mode */}
-                    {(stylistFirstMode ? uniqueAllStylists : filteredStylists).map((stylist) => {
-                      const fullName = stylist.employee_profiles?.display_name || stylist.employee_profiles?.full_name || 'Unknown';
-                      const nameParts = fullName.split(' ');
-                      const firstName = nameParts[0];
-                      const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1].charAt(0) + '.' : '';
-                      const displayName = `${firstName} ${lastInitial}`.trim();
-                      const isSelected = stylistFirstMode 
-                        ? preSelectedStylistId === stylist.user_id 
-                        : selectedStylist === stylist.user_id;
-                      const isPreviousStylist = selectedClient?.preferred_stylist_id === stylist.user_id;
-                      const stylistLevelNum = getLevelNumber(stylist.employee_profiles?.stylist_level);
-                      const stylistLevelSlug = getLevelSlug(stylist.employee_profiles?.stylist_level);
-                      
-                      // Calculate this stylist's total price (only in normal mode with services)
-                      const stylistTotalPrice = !stylistFirstMode && stylistLevelSlug 
-                        ? selectedServiceDetails.reduce((sum, service) => {
-                            const levelPrice = getLevelPrice(service.id, stylistLevelSlug);
-                            return sum + (levelPrice ?? service.price ?? 0);
-                          }, 0)
-                        : totalPrice;
-                      
-                      return (
-                        <button
-                          key={stylist.user_id}
-                          className={cn(
-                            'flex items-center gap-3 p-3 rounded-xl transition-all text-left',
-                            isSelected
-                              ? 'bg-primary/10 ring-2 ring-primary shadow-sm'
-                              : 'bg-muted/40 hover:bg-muted/70'
-                          )}
-                          onClick={() => {
-                            if (stylistFirstMode) {
-                              handleStylistFirstSelect(stylist);
-                            } else {
-                              setSelectedStylist(stylist.user_id);
-                            }
-                          }}
-                        >
-                          <div className="relative flex-shrink-0">
-                            <Avatar className="h-12 w-12 ring-2 ring-background shadow-md">
-                              <AvatarImage src={stylist.employee_profiles?.photo_url || undefined} />
-                              <AvatarFallback className="bg-muted text-sm font-medium">
-                                {fullName.slice(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            {isSelected && (
-                              <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-success flex items-center justify-center ring-2 ring-success-foreground/50">
-                                <Check className="h-3 w-3 text-success-foreground" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-sm font-medium text-foreground truncate">
-                                {displayName}
+                            <div className="font-medium text-sm truncate">{service.name}</div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                                <Clock className="h-3 w-3" />{service.duration_minutes}m
                               </span>
-                              {!stylistFirstMode && isPreviousStylist && (
-                                <Badge 
-                                  variant="outline" 
-                                  className="text-[9px] px-1.5 py-0 font-normal bg-accent/50 text-accent-foreground border-accent shrink-0"
-                                >
-                                  Previously Seen
-                                </Badge>
+                              {service.price !== null && (
+                                <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                                  {formatCurrencyWhole(service.price)}
+                                </span>
+                              )}
+                              {!isQualified && (
+                                <span className="text-[10px] text-destructive">
+                                  Not offered by {preSelectedStylistName.split(' ')[0]}
+                                </span>
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 shrink-0 pr-2 justify-end">
-                            {stylistLevelNum && (
-                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-normal whitespace-nowrap">
-                                Level {stylistLevelNum}
-                              </Badge>
-                            )}
-                            {!stylistFirstMode && selectedServices.length > 0 && (
-                              <span className="text-sm font-medium text-foreground tabular-nums min-w-[70px] text-right">
-                                {formatCurrency(stylistTotalPrice)}
-                              </span>
-                            )}
+                          <div className={cn(
+                            'w-4.5 h-4.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
+                            isSelected ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/30'
+                          )}>
+                            {isSelected && <Check className="h-2.5 w-2.5" />}
                           </div>
                         </button>
                       );
                     })}
                   </div>
-                </div>
-              </ScrollArea>
-
-              {/* Footer */}
-              <div className="p-3 border-t border-border bg-card space-y-2">
-                {!stylistFirstMode && selectedServices.length > 0 && selectedStylist && selectedLevelNumber && (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="rounded-full text-[10px] px-2 py-0">
-                          {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
-                        </Badge>
-                        <span className="text-muted-foreground">{totalDuration}m</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-medium">{formatCurrencyWhole(levelBasedTotalPrice)}</span>
-                        <span className="text-muted-foreground ml-1.5">• Level {selectedLevelNumber}</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedServiceDetails.map(s => (
-                        <Badge key={s.id} variant="outline" className="text-[10px] font-normal px-1.5 py-0">
-                          {s.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <Button
-                  className="w-full h-10"
-                  disabled={stylistFirstMode ? !preSelectedStylistId : !selectedStylist}
-                  onClick={() => {
-                    if (stylistFirstMode) {
-                      handleStylistFirstContinue();
-                    } else {
-                      navigateToStep('confirm');
-                    }
-                  }}
-                >
-                  Continue
-                </Button>
-              </div>
+                </>
+              )}
             </div>
-          )}
+          </ScrollArea>
 
-          {/* Step: Confirmation */}
-          {step === 'confirm' && (
-            <div className="flex flex-col" style={{ height: '550px' }}>
-              <ScrollArea className="flex-1">
-                <div className="p-3 space-y-3">
-                  {/* Client */}
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <div className="flex items-center gap-2.5">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                          {selectedClient?.name.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium text-sm">{selectedClient?.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {selectedClient?.phone || selectedClient?.email}
-                        </div>
-                      </div>
-                    </div>
+          {/* Footer */}
+          <div className="p-3 border-t border-border bg-card space-y-2">
+            {selectedServices.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="rounded-full text-[10px] px-2 py-0">
+                      {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
+                    </Badge>
+                    <span className="text-muted-foreground">{totalDuration}m</span>
                   </div>
-
-                  {/* Details */}
-                  <div className="bg-card border border-border rounded-lg divide-y divide-border">
-                    <div className="flex items-center gap-2.5 p-2.5">
-                      <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center">
-                        <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <div className="text-[10px] text-muted-foreground">Location</div>
-                        <div className="font-medium text-xs">{locations.find(l => l.id === selectedLocation)?.name}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2.5 p-2.5">
-                      <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center">
-                        <CalendarPlus className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <div className="text-[10px] text-muted-foreground">Date & Time</div>
-                        <div className="font-medium text-xs">{formatDateLocale(date, 'EEE, MMM d')} at {formatTime12h(time)}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2.5 p-2.5">
-                      <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center">
-                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <div className="text-[10px] text-muted-foreground">Duration</div>
-                        <div className="font-medium text-xs">{totalDuration} minutes</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Services */}
-                  <div>
-                    <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
-                      Services
-                    </h4>
-                    <div className="bg-card border border-border rounded-lg divide-y divide-border">
-                      {selectedServiceDetails.map((service) => (
-                        <div key={service.id} className="flex items-center justify-between p-2.5">
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
-                              <Scissors className="h-3 w-3 text-primary" />
-                            </div>
-                            <div>
-                              <div className="font-medium text-xs">{service.name}</div>
-                              <div className="text-[10px] text-muted-foreground">{service.duration_minutes}m</div>
-                            </div>
-                          </div>
-                          {service.price !== null && (
-                            <span className="font-medium text-xs">{formatCurrencyWhole(service.price)}</span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Stylist */}
-                  <div>
-                    <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
-                      Stylist
-                    </h4>
-                    <div className="bg-card border border-border rounded-lg p-2.5">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={
-                            preSelectedStylistPhoto || 
-                            stylists.find(s => s.user_id === selectedStylist)?.employee_profiles?.photo_url || 
-                            undefined
-                          } />
-                          <AvatarFallback className="bg-muted text-xs">
-                            {getStylistName().slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium text-sm">{getStylistName()}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Notes */}
-                  <div>
-                    {!showNotes ? (
-                      <button
-                        type="button"
-                        className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                        onClick={() => setShowNotes(true)}
-                      >
-                        + Add special notes
-                      </button>
-                    ) : (
-                      <div className="space-y-1.5">
-                        <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                          Notes
-                        </h4>
-                        <Textarea
-                          placeholder="Special instructions, pricing notes, promo codes..."
-                          value={bookingNotes}
-                          onChange={(e) => setBookingNotes(e.target.value)}
-                          className="min-h-[60px] text-xs resize-none"
-                        />
-                      </div>
-                    )}
-                  </div>
+                  <span className="font-medium">{formatCurrencyWhole(totalPrice)}</span>
                 </div>
-              </ScrollArea>
-
-              {/* Footer */}
-              <div className="p-3 border-t border-border bg-card space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Total</span>
-                  <span className="text-lg font-medium">{formatCurrency(totalPrice)}</span>
+                <div className="flex flex-wrap gap-1">
+                  {selectedServiceDetails.map(s => (
+                    <Badge key={s.id} variant="outline" className="text-[10px] font-normal px-1.5 py-0">
+                      {s.name}
+                    </Badge>
+                  ))}
                 </div>
-                <div className="space-y-0.5">
-                  <p className="text-[10px] text-muted-foreground/70">
-                    Any discounts or promotions will be calculated at checkout.
-                  </p>
-                  <div className="flex items-center gap-1">
-                    <p className="text-[10px] text-muted-foreground/70">
-                      Exact price may vary after overages & adjustments.
-                    </p>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="w-3 h-3 text-muted-foreground/50 cursor-help hover:text-muted-foreground transition-colors shrink-0" />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-[220px] text-xs">
-                        <p>Price may change due to product overages, timing adjustments, or additional services added during the appointment.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                </div>
-                <Button
-                  className="w-full h-10 font-medium"
-                  disabled={!canBook || createBooking.isPending}
-                  onClick={() => createBooking.mutate()}
-                >
-                  {createBooking.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Booking...
-                    </>
-                  ) : (
-                    'Confirm Booking'
-                  )}
-                </Button>
               </div>
-            </div>
-          )}
+            )}
+            {selectedCategory && selectedServices.length > 0 && (
+              <Button
+                variant="ghost"
+                className="w-full h-9 text-xs text-muted-foreground border border-dashed border-border hover:bg-muted/50 hover:text-foreground"
+                onClick={() => setSelectedCategory(null)}
+              >
+                + Add service from another category
+              </Button>
+            )}
+            <Button className="w-full h-9" onClick={handleServicesComplete}>
+              {selectedServices.length === 0 ? 'Skip Services' : 'Continue'}
+            </Button>
+          </div>
         </div>
       )}
 
+      {/* Step: Location Selection */}
+      {step === 'location' && (
+        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
+          <ScrollArea className="flex-1">
+            <div className="p-3">
+              <div className="flex items-center gap-2 mb-3">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Select Location</span>
+              </div>
+              <div className="space-y-1">
+                {(stylistFirstMode && preSelectedStylistLocations.length > 0
+                  ? preSelectedStylistLocations
+                  : locations
+                ).map((loc) => {
+                  const isSelected = selectedLocation === loc.id;
+                  return (
+                    <button
+                      key={loc.id}
+                      className={cn(
+                        'w-full flex items-center justify-between p-3 rounded-lg text-left transition-all',
+                        isSelected ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-muted/70'
+                      )}
+                      onClick={() => setSelectedLocation(loc.id)}
+                    >
+                      <div className="flex-1 min-w-0 mr-2">
+                        <div className="font-medium text-sm">{loc.name}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">{loc.city}</div>
+                      </div>
+                      <div className={cn(
+                        'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
+                        isSelected ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/30'
+                      )}>
+                        {isSelected && <Check className="h-3 w-3" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </ScrollArea>
+          <div className="p-3 border-t border-border bg-card space-y-2">
+            {selectedServices.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="rounded-full text-[10px] px-2 py-0">
+                      {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
+                    </Badge>
+                    <span className="text-muted-foreground">{totalDuration}m</span>
+                  </div>
+                  <span className="font-medium">{formatCurrencyWhole(totalPrice)}</span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {selectedServiceDetails.map(s => (
+                    <Badge key={s.id} variant="outline" className="text-[10px] font-normal px-1.5 py-0">
+                      {s.name}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            <Button
+              className="w-full h-9"
+              disabled={!selectedLocation}
+              onClick={() => {
+                if (stylistFirstMode && preSelectedStylistId) {
+                  navigateToStep('service');
+                } else {
+                  navigateToStep('client');
+                }
+              }}
+            >
+              Confirm location
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Step: Stylist Selection */}
+      {step === 'stylist' && (
+        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
+          <ScrollArea className="flex-1">
+            <div className="p-4">
+              {!stylistFirstMode && autoSelectReason === 'previous' && selectedClient && (
+                <div className="flex items-center gap-2 p-2.5 mb-3 bg-accent/50 text-accent-foreground rounded-lg text-xs border border-accent">
+                  <Clock className="h-3.5 w-3.5 shrink-0" />
+                  <span>Auto-selected {selectedClient.name.split(' ')[0]}'s previous stylist</span>
+                </div>
+              )}
+              {stylistFirstMode && (
+                <div className="flex items-center gap-2 p-2.5 mb-3 bg-accent/50 text-accent-foreground rounded-lg text-xs border border-accent">
+                  <User className="h-3.5 w-3.5 shrink-0" />
+                  <span>Select your stylist first — we'll filter locations and services for you</span>
+                </div>
+              )}
+              <h4 className="text-sm font-display font-medium text-foreground uppercase tracking-wider mb-4">
+                {stylistFirstMode ? 'All Stylists' : 'Available Stylists'}
+                {!stylistFirstMode && qualificationData?.hasQualificationData && selectedServices.length > 0 && (
+                  <span className="text-xs font-normal text-muted-foreground ml-2">
+                    ({filteredStylists.length} qualified)
+                  </span>
+                )}
+              </h4>
+              <div className="flex flex-col gap-3">
+                {(stylistFirstMode ? uniqueAllStylists : filteredStylists).map((stylist) => {
+                  const fullName = stylist.employee_profiles?.display_name || stylist.employee_profiles?.full_name || 'Unknown';
+                  const nameParts = fullName.split(' ');
+                  const firstName = nameParts[0];
+                  const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1].charAt(0) + '.' : '';
+                  const displayName = `${firstName} ${lastInitial}`.trim();
+                  const isSelected = stylistFirstMode 
+                    ? preSelectedStylistId === stylist.user_id 
+                    : selectedStylist === stylist.user_id;
+                  const isPreviousStylist = selectedClient?.preferred_stylist_id === stylist.user_id;
+                  const stylistLevelNum = getLevelNumber(stylist.employee_profiles?.stylist_level);
+                  const stylistLevelSlug = getLevelSlug(stylist.employee_profiles?.stylist_level);
+                  const stylistTotalPrice = !stylistFirstMode && stylistLevelSlug 
+                    ? selectedServiceDetails.reduce((sum, service) => {
+                        const levelPrice = getLevelPrice(service.id, stylistLevelSlug);
+                        return sum + (levelPrice ?? service.price ?? 0);
+                      }, 0)
+                    : totalPrice;
+                  
+                  return (
+                    <button
+                      key={stylist.user_id}
+                      className={cn(
+                        'flex items-center gap-3 p-3 rounded-xl transition-all text-left',
+                        isSelected ? 'bg-primary/10 ring-2 ring-primary shadow-sm' : 'bg-muted/40 hover:bg-muted/70'
+                      )}
+                      onClick={() => {
+                        if (stylistFirstMode) {
+                          handleStylistFirstSelect(stylist);
+                        } else {
+                          setSelectedStylist(stylist.user_id);
+                        }
+                      }}
+                    >
+                      <div className="relative flex-shrink-0">
+                        <Avatar className="h-12 w-12 ring-2 ring-background shadow-md">
+                          <AvatarImage src={stylist.employee_profiles?.photo_url || undefined} />
+                          <AvatarFallback className="bg-muted text-sm font-medium">
+                            {fullName.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        {isSelected && (
+                          <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-success flex items-center justify-center ring-2 ring-success-foreground/50">
+                            <Check className="h-3 w-3 text-success-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm font-medium text-foreground truncate">{displayName}</span>
+                          {!stylistFirstMode && isPreviousStylist && (
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 font-normal bg-accent/50 text-accent-foreground border-accent shrink-0">
+                              Previously Seen
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 pr-2 justify-end">
+                        {stylistLevelNum && (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-normal whitespace-nowrap">
+                            Level {stylistLevelNum}
+                          </Badge>
+                        )}
+                        {!stylistFirstMode && selectedServices.length > 0 && (
+                          <span className="text-sm font-medium text-foreground tabular-nums min-w-[70px] text-right">
+                            {formatCurrency(stylistTotalPrice)}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </ScrollArea>
+          <div className="p-3 border-t border-border bg-card space-y-2">
+            {!stylistFirstMode && selectedServices.length > 0 && selectedStylist && selectedLevelNumber && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="rounded-full text-[10px] px-2 py-0">
+                      {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
+                    </Badge>
+                    <span className="text-muted-foreground">{totalDuration}m</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-medium">{formatCurrencyWhole(levelBasedTotalPrice)}</span>
+                    <span className="text-muted-foreground ml-1.5">• Level {selectedLevelNumber}</span>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {selectedServiceDetails.map(s => (
+                    <Badge key={s.id} variant="outline" className="text-[10px] font-normal px-1.5 py-0">
+                      {s.name}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            <Button
+              className="w-full h-10"
+              disabled={stylistFirstMode ? !preSelectedStylistId : !selectedStylist}
+              onClick={() => {
+                if (stylistFirstMode) {
+                  handleStylistFirstContinue();
+                } else {
+                  navigateToStep('confirm');
+                }
+              }}
+            >
+              Continue
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Step: Confirmation */}
+      {step === 'confirm' && (
+        <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
+          <ScrollArea className="flex-1">
+            <div className="p-3 space-y-3">
+              <div className="bg-muted/50 rounded-lg p-3">
+                <div className="flex items-center gap-2.5">
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                      {selectedClient?.name.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="font-medium text-sm">{selectedClient?.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {selectedClient?.phone || selectedClient?.email}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-card border border-border rounded-lg divide-y divide-border">
+                <div className="flex items-center gap-2.5 p-2.5">
+                  <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center">
+                    <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-muted-foreground">Location</div>
+                    <div className="font-medium text-xs">{locations.find(l => l.id === selectedLocation)?.name}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5 p-2.5">
+                  <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center">
+                    <CalendarPlus className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-muted-foreground">Date & Time</div>
+                    <div className="font-medium text-xs">{formatDateLocale(date, 'EEE, MMM d')} at {formatTime12h(time)}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5 p-2.5">
+                  <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center">
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-muted-foreground">Duration</div>
+                    <div className="font-medium text-xs">{totalDuration} minutes</div>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Services</h4>
+                <div className="bg-card border border-border rounded-lg divide-y divide-border">
+                  {selectedServiceDetails.map((service) => (
+                    <div key={service.id} className="flex items-center justify-between p-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
+                          <Scissors className="h-3 w-3 text-primary" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-xs">{service.name}</div>
+                          <div className="text-[10px] text-muted-foreground">{service.duration_minutes}m</div>
+                        </div>
+                      </div>
+                      {service.price !== null && (
+                        <span className="font-medium text-xs">{formatCurrencyWhole(service.price)}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Stylist</h4>
+                <div className="bg-card border border-border rounded-lg p-2.5">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={
+                        preSelectedStylistPhoto || 
+                        stylists.find(s => s.user_id === selectedStylist)?.employee_profiles?.photo_url || 
+                        undefined
+                      } />
+                      <AvatarFallback className="bg-muted text-xs">
+                        {getStylistName().slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium text-sm">{getStylistName()}</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                {!showNotes ? (
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => setShowNotes(true)}
+                  >
+                    + Add special notes
+                  </button>
+                ) : (
+                  <div className="space-y-1.5">
+                    <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Notes</h4>
+                    <Textarea
+                      placeholder="Special instructions, pricing notes, promo codes..."
+                      value={bookingNotes}
+                      onChange={(e) => setBookingNotes(e.target.value)}
+                      className="min-h-[60px] text-xs resize-none"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </ScrollArea>
+          <div className="p-3 border-t border-border bg-card space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Total</span>
+              <span className="text-lg font-medium">{formatCurrency(totalPrice)}</span>
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-[10px] text-muted-foreground/70">
+                Any discounts or promotions will be calculated at checkout.
+              </p>
+              <div className="flex items-center gap-1">
+                <p className="text-[10px] text-muted-foreground/70">
+                  Exact price may vary after overages & adjustments.
+                </p>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="w-3 h-3 text-muted-foreground/50 cursor-help hover:text-muted-foreground transition-colors shrink-0" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[220px] text-xs">
+                    <p>Price may change due to product overages, timing adjustments, or additional services added during the appointment.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </div>
+            <Button
+              className="w-full h-10 font-medium"
+              disabled={!canBook || createBooking.isPending}
+              onClick={() => createBooking.mutate()}
+            >
+              {createBooking.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Booking...
+                </>
+              ) : (
+                'Confirm Booking'
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  // ─── Dialogs shared by both modes ─────────────────────────────
+  const dialogs = (
+    <>
       <NewClientDialog
         open={showNewClientDialog}
         onOpenChange={setShowNewClientDialog}
@@ -1595,8 +1501,6 @@ export function QuickBookingPopover({
           setShowNewClientDialog(false);
         }}
       />
-
-      {/* Banned Client Warning Dialog */}
       <BannedClientWarningDialog
         open={!!pendingBannedClient}
         onOpenChange={(open) => !open && setPendingBannedClient(null)}
@@ -1605,6 +1509,64 @@ export function QuickBookingPopover({
         onProceed={handleProceedWithBannedClient}
         onCancel={() => setPendingBannedClient(null)}
       />
+    </>
+  );
+
+  // ─── Panel mode (floating bento card) ─────────────────────────
+  if (mode === 'panel') {
+    return (
+      <>
+        <AnimatePresence>
+          {open && (
+            <>
+              <motion.div
+                className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={handleClose}
+                aria-hidden="true"
+              />
+              <motion.div
+                className="fixed z-50 top-3 right-3 bottom-3 w-full sm:max-w-md rounded-xl bg-card/80 backdrop-blur-xl border border-border shadow-2xl flex flex-col overflow-hidden"
+                initial={{ x: '100%', opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: '100%', opacity: 0 }}
+                transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              >
+                {innerContent}
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+        {dialogs}
+      </>
+    );
+  }
+
+  // ─── Popover mode (centered modal — original) ─────────────────
+  return (
+    <>
+      {open && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+          onClick={() => onOpenChange(false)}
+          aria-hidden="true"
+        />
+      )}
+      <Popover open={open} onOpenChange={onOpenChange}>
+        <PopoverTrigger asChild>
+          {children}
+        </PopoverTrigger>
+      </Popover>
+      {open && (
+        <div 
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[440px] p-0 shadow-xl border border-border rounded-xl overflow-hidden bg-popover animate-enter"
+        >
+          {innerContent}
+        </div>
+      )}
+      {dialogs}
     </>
   );
 }
