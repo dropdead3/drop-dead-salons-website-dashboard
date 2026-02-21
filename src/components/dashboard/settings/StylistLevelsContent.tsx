@@ -63,6 +63,8 @@ export function StylistLevelsContent() {
   const [levels, setLevels] = useState<LocalStylistLevel[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [newLevelName, setNewLevelName] = useState('');
+  const [newServiceRate, setNewServiceRate] = useState('');
+  const [newRetailRate, setNewRetailRate] = useState('');
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -199,12 +201,14 @@ export function StylistLevelsContent() {
       label: newLevelName.trim(),
       clientLabel: `Level ${levels.length + 1}`,
       description: '',
-      serviceCommissionRate: '',
-      retailCommissionRate: '',
+      serviceCommissionRate: newServiceRate || '',
+      retailCommissionRate: newRetailRate || '',
     };
     
     setLevels([...levels, newLevel]);
     setNewLevelName('');
+    setNewServiceRate('');
+    setNewRetailRate('');
     setIsAddingNew(false);
     setHasChanges(true);
   };
@@ -455,16 +459,44 @@ export function StylistLevelsContent() {
               <Input
                 value={newLevelName}
                 onChange={(e) => setNewLevelName(e.target.value)}
-                placeholder="New level name..."
+                placeholder="Level name..."
                 className="flex-1"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleAddNew();
-                  if (e.key === 'Escape') { setIsAddingNew(false); setNewLevelName(''); }
+                  if (e.key === 'Escape') { setIsAddingNew(false); setNewLevelName(''); setNewServiceRate(''); setNewRetailRate(''); }
+                }}
+              />
+              <Input
+                type="number"
+                value={newServiceRate}
+                onChange={(e) => setNewServiceRate(e.target.value)}
+                placeholder="Svc %"
+                className="w-20"
+                min={0}
+                max={100}
+                autoCapitalize="off"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddNew();
+                  if (e.key === 'Escape') { setIsAddingNew(false); setNewLevelName(''); setNewServiceRate(''); setNewRetailRate(''); }
+                }}
+              />
+              <Input
+                type="number"
+                value={newRetailRate}
+                onChange={(e) => setNewRetailRate(e.target.value)}
+                placeholder="Retail %"
+                className="w-20"
+                min={0}
+                max={100}
+                autoCapitalize="off"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddNew();
+                  if (e.key === 'Escape') { setIsAddingNew(false); setNewLevelName(''); setNewServiceRate(''); setNewRetailRate(''); }
                 }}
               />
               <Button size={tokens.button.inline} onClick={handleAddNew} disabled={!newLevelName.trim()}>Add</Button>
-              <Button size={tokens.button.inline} variant="ghost" onClick={() => { setIsAddingNew(false); setNewLevelName(''); }}>Cancel</Button>
+              <Button size={tokens.button.inline} variant="ghost" onClick={() => { setIsAddingNew(false); setNewLevelName(''); setNewServiceRate(''); setNewRetailRate(''); }}>Cancel</Button>
             </div>
           ) : null}
         </CardContent>
