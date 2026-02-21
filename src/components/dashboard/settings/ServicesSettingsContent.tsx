@@ -418,18 +418,6 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
           </CardContent>
         </Card>
 
-        {/* Service Add-Ons Library */}
-        {resolvedOrgId && <ServiceAddonsLibrary organizationId={resolvedOrgId} />}
-
-        {/* Booking Add-On Recommendations (assignments) */}
-        {resolvedOrgId && (
-          <ServiceAddonAssignmentsCard
-            organizationId={resolvedOrgId}
-            categories={localOrder}
-            servicesByCategory={servicesByCategory}
-          />
-        )}
-
         {/* Services Section */}
         <Card>
           <CardHeader>
@@ -560,6 +548,18 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
             )}
           </CardContent>
         </Card>
+
+        {/* Service Add-Ons Library */}
+        {resolvedOrgId && <ServiceAddonsLibrary organizationId={resolvedOrgId} />}
+
+        {/* Booking Add-On Recommendations (assignments) */}
+        {resolvedOrgId && (
+          <ServiceAddonAssignmentsCard
+            organizationId={resolvedOrgId}
+            categories={localOrder}
+            servicesByCategory={servicesByCategory}
+          />
+        )}
 
         {/* Unified Service Editor Dialog (create + edit) */}
         <ServiceEditorDialog
