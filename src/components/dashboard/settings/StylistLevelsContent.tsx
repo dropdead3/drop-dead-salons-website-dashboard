@@ -27,6 +27,7 @@ import {
   Info,
   Loader2,
   RefreshCw,
+  Layers,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -279,9 +280,14 @@ export function StylistLevelsContent() {
 
       {/* Levels List */}
       <Card>
-        <CardHeader>
-          <CardTitle className="font-display text-lg">EXPERIENCE LEVELS</CardTitle>
-          <CardDescription>Define experience tiers with default commission rates.</CardDescription>
+        <CardHeader className="flex flex-row items-center space-y-0 gap-3">
+          <div className={tokens.card.iconBox}>
+            <Layers className={tokens.card.icon} />
+          </div>
+          <div>
+            <CardTitle className={tokens.card.title}>EXPERIENCE LEVELS</CardTitle>
+            <CardDescription>Define experience tiers with default commission rates.</CardDescription>
+          </div>
         </CardHeader>
         <CardContent className="space-y-2">
           {levels.map((level, index) => {

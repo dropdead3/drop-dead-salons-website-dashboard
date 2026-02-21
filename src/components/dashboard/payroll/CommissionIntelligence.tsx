@@ -19,6 +19,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { DollarSign, TrendingUp, ShieldAlert, Settings2, Users, BarChart3 } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { usePayrollForecasting } from '@/hooks/usePayrollForecasting';
 import { useResolveCommission } from '@/hooks/useResolveCommission';
@@ -98,7 +99,7 @@ export function CommissionIntelligence() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-display tracking-wide">COMMISSION INTELLIGENCE</h2>
+            <h2 className={tokens.heading.card}>COMMISSION INTELLIGENCE</h2>
             <p className="text-sm text-muted-foreground">How your team's commissions are resolving this period.</p>
           </div>
           <Button
@@ -116,8 +117,8 @@ export function CommissionIntelligence() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-primary/10">
-                  <DollarSign className="h-6 w-6 text-primary" />
+                <div className={tokens.card.iconBox}>
+                  <DollarSign className={tokens.card.icon} />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Current Period Commissions</p>
@@ -132,12 +133,12 @@ export function CommissionIntelligence() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-emerald-500/10">
-                  <TrendingUp className="h-6 w-6 text-emerald-600" />
+                <div className={tokens.card.iconBox}>
+                  <TrendingUp className={tokens.card.icon} />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Avg Effective Service Rate</p>
-                  <p className="text-2xl font-medium text-emerald-600">
+                  <p className="text-2xl font-medium text-primary">
                     {formatPercent(stats.avgSvcRate)}
                   </p>
                   <p className="text-xs text-muted-foreground">across {rows.length} stylists</p>
@@ -149,8 +150,8 @@ export function CommissionIntelligence() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-amber-500/10">
-                  <ShieldAlert className="h-6 w-6 text-amber-600" />
+                <div className={tokens.card.iconBox}>
+                  <ShieldAlert className={tokens.card.icon} />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Active Overrides</p>
@@ -165,13 +166,17 @@ export function CommissionIntelligence() {
         {/* Team Breakdown Table */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Team Commission Breakdown
-            </CardTitle>
-            <CardDescription>
-              Resolved rates by stylist — click a row to configure in Settings.
-            </CardDescription>
+            <div className="flex items-center gap-3">
+              <div className={tokens.card.iconBox}>
+                <BarChart3 className={tokens.card.icon} />
+              </div>
+              <div>
+                <CardTitle className={tokens.card.title}>TEAM COMMISSION BREAKDOWN</CardTitle>
+                <CardDescription>
+                  Resolved rates by stylist — click a row to configure in Settings.
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {rows.length === 0 ? (
@@ -218,7 +223,7 @@ export function CommissionIntelligence() {
                     </TableRow>
                   ))}
                   {/* Total row */}
-                  <TableRow className="border-t-2 font-semibold">
+                  <TableRow className="border-t-2 font-medium">
                     <TableCell colSpan={5} className="text-right text-muted-foreground">Total</TableCell>
                     <TableCell className="text-right tabular-nums">
                       <BlurredAmount>{formatCurrencyWhole(stats.totalCommission)}</BlurredAmount>
