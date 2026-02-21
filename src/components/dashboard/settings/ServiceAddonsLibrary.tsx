@@ -76,7 +76,7 @@ function SortableAddonRow({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted/40 transition-colors group',
+        'flex items-center gap-2 px-3 py-2 rounded-lg border border-border/60 bg-card hover:bg-muted/30 transition-colors group',
         isDragging && 'opacity-50 bg-muted/60 shadow-md z-10'
       )}
     >
