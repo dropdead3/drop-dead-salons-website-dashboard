@@ -121,7 +121,7 @@ export function CommissionTiersEditor() {
             <div>
               <CardTitle className="font-display text-base tracking-wide">COMMISSION TIERS</CardTitle>
               <CardDescription className="text-xs">
-                Define commission brackets -- stylists earn higher rates as their revenue grows
+                Fallback revenue brackets — applied when a stylist has no level or override assigned.
               </CardDescription>
             </div>
           </div>

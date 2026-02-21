@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Users } from 'lucide-react';
+import { Users, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
@@ -41,6 +42,7 @@ const getLevelColor = (index: number, totalLevels: number) => {
 };
 
 export function TeamCommissionRoster({ orgId, levels }: TeamCommissionRosterProps) {
+  const navigate = useNavigate();
   const { data: team, isLoading } = useTeamDirectory(undefined, { organizationId: orgId });
   const { data: overrides } = useStylistCommissionOverrides(orgId);
   const bulkAssign = useBulkAssignStylistLevel();
@@ -169,19 +171,30 @@ export function TeamCommissionRoster({ orgId, levels }: TeamCommissionRosterProp
                 Manage level assignments and commission rates for your team. Click a stylist for details.
               </CardDescription>
             </div>
-            {locations.length > 1 && (
-              <Select value={locationFilter} onValueChange={setLocationFilter}>
-                <SelectTrigger className="w-[160px] h-9 text-sm">
-                  <SelectValue placeholder="Location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Locations</SelectItem>
-                  {locations.map(loc => (
-                    <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs"
+                onClick={() => navigate('/dashboard/admin/payroll?tab=commissions')}
+              >
+                <BarChart3 className="h-3.5 w-3.5 mr-1" />
+                View Analytics
+              </Button>
+              {locations.length > 1 && (
+                <Select value={locationFilter} onValueChange={setLocationFilter}>
+                  <SelectTrigger className="w-[160px] h-9 text-sm">
+                    <SelectValue placeholder="Location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Locations</SelectItem>
+                    {locations.map(loc => (
+                      <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-1">
