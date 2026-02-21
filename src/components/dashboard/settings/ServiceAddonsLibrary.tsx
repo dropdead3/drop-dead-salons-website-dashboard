@@ -18,7 +18,9 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useAllServicesByCategory } from '@/hooks/usePhorestServices';
 import { useCreateAddonAssignment } from '@/hooks/useServiceAddonAssignments';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { getServiceCategory } from '@/utils/serviceCategorization';
+import { ChevronDown } from 'lucide-react';
 
 // dnd-kit
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
@@ -181,7 +183,7 @@ export function ServiceAddonsLibrary({ organizationId, categories = [] }: Servic
   const [duration, setDuration] = useState('');
   const [linkedServiceId, setLinkedServiceId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [assignMode, setAssignMode] = useState<'none' | 'category' | 'service'>('none');
 
   const resetForm = () => {
@@ -193,7 +195,7 @@ export function ServiceAddonsLibrary({ organizationId, categories = [] }: Servic
     setCost('');
     setDuration('');
     setLinkedServiceId(null);
-    setSelectedCategoryId(null);
+    setSelectedCategoryIds([]);
     setAssignMode('none');
   };
 
@@ -221,21 +223,26 @@ export function ServiceAddonsLibrary({ organizationId, categories = [] }: Servic
 
     const onSuccessWithAssignment = (data: any) => {
       const addonId = data?.id;
-      // Auto-create assignment if category selected
-      if (addonId && selectedCategoryId && assignMode === 'category') {
-        createAssignment.mutate({
-          organization_id: organizationId,
-          addon_id: addonId,
-          target_type: 'category',
-          target_category_id: selectedCategoryId,
-        });
-      } else if (addonId && selectedCategoryId && assignMode === 'service' && linkedServiceId) {
-        createAssignment.mutate({
-          organization_id: organizationId,
-          addon_id: addonId,
-          target_type: 'service',
-          target_service_id: linkedServiceId,
-        });
+      if (addonId && selectedCategoryIds.length > 0) {
+        if (selectedCategoryIds.length === 1 && assignMode === 'service' && linkedServiceId) {
+          // Single category + specific service
+          createAssignment.mutate({
+            organization_id: organizationId,
+            addon_id: addonId,
+            target_type: 'service',
+            target_service_id: linkedServiceId,
+          });
+        } else {
+          // One or more categories — create one assignment per category
+          selectedCategoryIds.forEach(catId => {
+            createAssignment.mutate({
+              organization_id: organizationId,
+              addon_id: addonId,
+              target_type: 'category',
+              target_category_id: catId,
+            });
+          });
+        }
       }
       resetForm();
     };
@@ -290,40 +297,68 @@ export function ServiceAddonsLibrary({ organizationId, categories = [] }: Servic
 
   const isPending = createAddon.isPending || updateAddon.isPending;
 
+  // Build label for category multi-select trigger
+  const categoryLabel = (() => {
+    if (selectedCategoryIds.length === 0) return 'No assignment';
+    if (selectedCategoryIds.length === 1) {
+      const cat = categories.find(c => c.id === selectedCategoryIds[0]);
+      return cat?.category_name ?? '1 category';
+    }
+    return `${selectedCategoryIds.length} categories`;
+  })();
+
+  const handleCategoryToggle = (catId: string) => {
+    setSelectedCategoryIds(prev => {
+      const next = prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId];
+      // Reset service drill-down when selection changes
+      if (next.length !== 1) {
+        setAssignMode(next.length > 0 ? 'category' : 'none');
+        setLinkedServiceId(null);
+      } else {
+        setAssignMode('category');
+        setLinkedServiceId(null);
+      }
+      return next;
+    });
+  };
+
   const renderAssignmentPicker = () => (
     <div className="col-span-2 space-y-2">
       <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Apply to Category / Service</p>
-      <Select
-        value={selectedCategoryId || '_none'}
-        onValueChange={v => {
-          if (v === '_none') {
-            setSelectedCategoryId(null);
-            setAssignMode('none');
-            setLinkedServiceId(null);
-          } else {
-            setSelectedCategoryId(v);
-            setAssignMode('category');
-            setLinkedServiceId(null);
-          }
-        }}
-      >
-        <SelectTrigger className="h-9 text-sm">
-          <div className="flex items-center gap-1.5">
-            <FolderOpen className="h-3 w-3 text-muted-foreground" />
-            <SelectValue placeholder="Select a category" />
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            className="h-9 w-full justify-between text-sm font-normal"
+          >
+            <span className="flex items-center gap-1.5 truncate">
+              <FolderOpen className="h-3 w-3 text-muted-foreground shrink-0" />
+              <span className="truncate">{categoryLabel}</span>
+            </span>
+            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[280px] p-0" align="start">
+          <div className="max-h-[240px] overflow-y-auto p-2 space-y-0.5">
+            {categories.map(cat => (
+              <label
+                key={cat.id}
+                className="flex items-center gap-2 px-2 py-1.5 cursor-pointer rounded-md hover:bg-accent text-sm"
+              >
+                <Checkbox
+                  checked={selectedCategoryIds.includes(cat.id)}
+                  onCheckedChange={() => handleCategoryToggle(cat.id)}
+                />
+                {cat.category_name}
+              </label>
+            ))}
           </div>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="_none">No assignment</SelectItem>
-          {categories.map(cat => (
-            <SelectItem key={cat.id} value={cat.id}>
-              {cat.category_name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        </PopoverContent>
+      </Popover>
 
-      {selectedCategoryId && (
+      {/* Service drill-down: only when exactly 1 category selected */}
+      {selectedCategoryIds.length === 1 && (
         <Select
           value={assignMode === 'service' && linkedServiceId ? linkedServiceId : '_entire'}
           onValueChange={v => {
@@ -345,7 +380,7 @@ export function ServiceAddonsLibrary({ organizationId, categories = [] }: Servic
           <SelectContent>
             <SelectItem value="_entire">Entire Category</SelectItem>
             {(() => {
-              const catName = categories.find(c => c.id === selectedCategoryId)?.category_name;
+              const catName = categories.find(c => c.id === selectedCategoryIds[0])?.category_name;
               const filtered = catName ? (servicesByCategory[catName] || []) : [];
               return filtered.map(s => (
                 <SelectItem key={s.phorest_service_id} value={s.phorest_service_id}>
