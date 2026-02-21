@@ -8,6 +8,7 @@ export interface StaffQualification {
   is_active: boolean | null;
   location_id: string | null;
   custom_price: number | null;
+  custom_duration_minutes: number | null;
 }
 
 /**
@@ -20,7 +21,7 @@ export function useStaffQualifications(userId: string | undefined) {
       if (!userId) return [];
       const { data, error } = await supabase
         .from('staff_service_qualifications')
-        .select('id, user_id, service_id, is_active, location_id, custom_price')
+        .select('id, user_id, service_id, is_active, location_id, custom_price, custom_duration_minutes')
         .eq('user_id', userId);
       if (error) throw error;
       return (data || []) as StaffQualification[];
@@ -91,6 +92,62 @@ export function useBulkToggleCategoryQualifications() {
       qc.invalidateQueries({ queryKey: ['staff-service-qualifications-config', vars.userId] });
       qc.invalidateQueries({ queryKey: ['staff-service-qualifications'] });
       qc.invalidateQueries({ queryKey: ['staff-qualified-services'] });
+    },
+  });
+}
+
+/**
+ * Update custom_price and/or custom_duration_minutes on a qualification row.
+ */
+export function useUpdateStylistServiceOverride() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      serviceId,
+      customPrice,
+      customDurationMinutes,
+    }: {
+      userId: string;
+      serviceId: string;
+      customPrice?: number | null;
+      customDurationMinutes?: number | null;
+    }) => {
+      const updatePayload: Record<string, unknown> = {};
+      if (customPrice !== undefined) updatePayload.custom_price = customPrice;
+      if (customDurationMinutes !== undefined) updatePayload.custom_duration_minutes = customDurationMinutes;
+
+      const { error } = await supabase
+        .from('staff_service_qualifications')
+        .update(updatePayload)
+        .eq('user_id', userId)
+        .eq('service_id', serviceId);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['staff-service-qualifications-config', vars.userId] });
+      qc.invalidateQueries({ queryKey: ['staff-service-qualifications'] });
+    },
+  });
+}
+
+/**
+ * Reset overrides (custom_price + custom_duration_minutes) back to null.
+ */
+export function useResetStylistServiceOverride() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, serviceId }: { userId: string; serviceId: string }) => {
+      const { error } = await supabase
+        .from('staff_service_qualifications')
+        .update({ custom_price: null, custom_duration_minutes: null })
+        .eq('user_id', userId)
+        .eq('service_id', serviceId);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['staff-service-qualifications-config', vars.userId] });
+      qc.invalidateQueries({ queryKey: ['staff-service-qualifications'] });
     },
   });
 }

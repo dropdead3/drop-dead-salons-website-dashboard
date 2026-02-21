@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -7,7 +7,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { EmptyState } from '@/components/ui/empty-state';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Loader2, Users, UserCheck, MapPin } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Loader2, Users, UserCheck, MapPin, RotateCcw, DollarSign, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useUndoToast } from '@/hooks/useUndoToast';
@@ -17,7 +18,10 @@ import {
   useToggleServiceQualification,
   useBulkToggleCategoryQualifications,
   useActiveStylists,
+  useUpdateStylistServiceOverride,
+  useResetStylistServiceOverride,
 } from '@/hooks/useStaffServiceConfigurator';
+import type { StaffQualification } from '@/hooks/useStaffServiceConfigurator';
 import type { Service } from '@/hooks/useServicesData';
 import type { ServiceCategoryColor } from '@/hooks/useServiceCategoryColors';
 
@@ -39,7 +43,16 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
   const { data: qualifications, isLoading: qualsLoading } = useStaffQualifications(selectedUserId || undefined);
   const toggleService = useToggleServiceQualification();
   const bulkToggle = useBulkToggleCategoryQualifications();
+  const updateOverride = useUpdateStylistServiceOverride();
+  const resetOverride = useResetStylistServiceOverride();
   const showUndoToast = useUndoToast();
+
+  // Map qualifications by service_id for quick lookup
+  const qualMap = useMemo(() => {
+    const map = new Map<string, StaffQualification>();
+    qualifications?.forEach(q => map.set(q.service_id, q));
+    return map;
+  }, [qualifications]);
 
   // Client-side letter filter
   const filteredStylists = useMemo(() => {
@@ -290,6 +303,17 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                             {checkedCount}/{services.length}
                           </Badge>
+                          {(() => {
+                            const overrideCount = services.filter(s => {
+                              const q = qualMap.get(s.id);
+                              return q && (q.custom_price != null || q.custom_duration_minutes != null);
+                            }).length;
+                            return overrideCount > 0 ? (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/40 text-primary">
+                                {overrideCount} override{overrideCount !== 1 ? 's' : ''}
+                              </Badge>
+                            ) : null;
+                          })()}
                         </div>
                       </AccordionTrigger>
                     </div>
@@ -297,24 +321,95 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
                       <div className="space-y-1 pl-7">
                         {services.map(svc => {
                           const checked = isServiceChecked(svc.id);
+                          const qual = qualMap.get(svc.id);
+                          const hasOverride = qual && (qual.custom_price != null || qual.custom_duration_minutes != null);
                           return (
-                            <label
+                            <div
                               key={svc.id}
                               className={cn(
-                                'flex items-center gap-2.5 py-1.5 px-2 rounded-md cursor-pointer hover:bg-muted/40 transition-colors',
+                                'rounded-md px-2 py-1.5 transition-colors hover:bg-muted/40',
                                 !checked && 'opacity-50'
                               )}
                             >
-                              <Checkbox
-                                checked={checked}
-                                onCheckedChange={() => handleToggleService(svc, checked)}
-                                disabled={toggleService.isPending || bulkToggle.isPending}
-                              />
-                              <span className={cn(tokens.body.default, 'text-sm select-none')}>{svc.name}</span>
-                              {svc.duration_minutes && (
-                                <span className={cn(tokens.body.muted, 'text-[10px] ml-auto')}>{svc.duration_minutes}min</span>
+                              <label className="flex items-center gap-2.5 cursor-pointer">
+                                <Checkbox
+                                  checked={checked}
+                                  onCheckedChange={() => handleToggleService(svc, checked)}
+                                  disabled={toggleService.isPending || bulkToggle.isPending}
+                                />
+                                <span className={cn(tokens.body.default, 'text-sm select-none flex-1')}>{svc.name}</span>
+                                {hasOverride && (
+                                  <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" title="Has overrides" />
+                                )}
+                              </label>
+                              {/* Inline override inputs — only for enabled services */}
+                              {checked && (
+                                <div className="flex items-center gap-2 mt-1.5 ml-7">
+                                  <div className="flex items-center gap-1 flex-1 min-w-0">
+                                    <DollarSign className="w-3 h-3 text-muted-foreground shrink-0" />
+                                    <Input
+                                      type="number"
+                                      placeholder={svc.price != null ? `${svc.price}` : '--'}
+                                      value={qual?.custom_price ?? ''}
+                                      className="h-7 text-xs px-2 rounded-md w-20"
+                                      min={0}
+                                      step={1}
+                                      onChange={(e) => {
+                                        const val = e.target.value === '' ? null : Number(e.target.value);
+                                        updateOverride.mutate({
+                                          userId: selectedUserId,
+                                          serviceId: svc.id,
+                                          customPrice: val,
+                                        });
+                                      }}
+                                      autoCapitalize="off"
+                                    />
+                                    {svc.price != null && qual?.custom_price != null && (
+                                      <span className={cn(tokens.body.muted, 'text-[10px] whitespace-nowrap')}>
+                                        (salon: ${svc.price})
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-1 flex-1 min-w-0">
+                                    <Clock className="w-3 h-3 text-muted-foreground shrink-0" />
+                                    <Input
+                                      type="number"
+                                      placeholder={svc.duration_minutes ? `${svc.duration_minutes}` : '--'}
+                                      value={qual?.custom_duration_minutes ?? ''}
+                                      className="h-7 text-xs px-2 rounded-md w-20"
+                                      min={5}
+                                      step={5}
+                                      onChange={(e) => {
+                                        const val = e.target.value === '' ? null : Number(e.target.value);
+                                        updateOverride.mutate({
+                                          userId: selectedUserId,
+                                          serviceId: svc.id,
+                                          customDurationMinutes: val,
+                                        });
+                                      }}
+                                      autoCapitalize="off"
+                                    />
+                                    {svc.duration_minutes && qual?.custom_duration_minutes != null && (
+                                      <span className={cn(tokens.body.muted, 'text-[10px] whitespace-nowrap')}>
+                                        (salon: {svc.duration_minutes}m)
+                                      </span>
+                                    )}
+                                  </div>
+                                  {hasOverride && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 px-1.5 text-[10px] text-muted-foreground hover:text-foreground shrink-0"
+                                      onClick={() => resetOverride.mutate({ userId: selectedUserId, serviceId: svc.id })}
+                                      disabled={resetOverride.isPending}
+                                    >
+                                      <RotateCcw className="w-3 h-3 mr-0.5" />
+                                      Reset
+                                    </Button>
+                                  )}
+                                </div>
                               )}
-                            </label>
+                            </div>
                           );
                         })}
                       </div>
