@@ -1,12 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
+import { PLATFORM_NAME, PLATFORM_CATEGORY } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are a friendly, helpful product consultant for Zura—a comprehensive salon management platform. Your role is to understand potential customers' challenges and show them exactly how our software solves their problems.
+const SYSTEM_PROMPT = `You are a friendly, helpful product consultant for ${PLATFORM_NAME}—a ${PLATFORM_CATEGORY.toLowerCase()}. Your role is to understand potential customers' challenges and show them exactly how our software solves their problems.
 
 When users describe their challenges:
 1. Acknowledge their specific pain point empathetically

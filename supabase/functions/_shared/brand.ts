@@ -10,3 +10,4 @@ export const AI_ASSISTANT_NAME_DEFAULT = "Zura";
 export const PLATFORM_URL = "https://getzura.com";
 export const EXECUTIVE_BRIEF_NAME = "Zura Weekly Intelligence Brief";
 export const MARKETING_OS_NAME = "Zura Marketing OS";
+export const PLATFORM_CATEGORY = "Salon Intelligence Platform";
