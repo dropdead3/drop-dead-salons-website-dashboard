@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
@@ -84,6 +84,14 @@ export function NewClientDialog({
   const [clientSince, setClientSince] = useState<Date | undefined>(new Date());
   const [locationId, setLocationId] = useState(defaultLocationId || '');
   const [showLocationSelector, setShowLocationSelector] = useState(!defaultLocationId);
+
+  // Sync locationId when defaultLocationId changes (e.g. scheduler location toggle)
+  useEffect(() => {
+    if (defaultLocationId) {
+      setLocationId(defaultLocationId);
+      setShowLocationSelector(false);
+    }
+  }, [defaultLocationId]);
   const [preferredStylistId, setPreferredStylistId] = useState('');
 
   const debouncedEmail = useDebounce(email.trim(), 500);

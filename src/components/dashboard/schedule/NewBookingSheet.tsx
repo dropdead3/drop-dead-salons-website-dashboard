@@ -381,6 +381,7 @@ export function NewBookingSheet({
               <NewClientDialog
                 open={showNewClientDialog}
                 onOpenChange={setShowNewClientDialog}
+                defaultLocationId={selectedLocation}
                 onClientCreated={(client) => {
                   setSelectedClient({
                     id: client.id,
