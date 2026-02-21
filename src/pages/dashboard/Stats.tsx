@@ -345,14 +345,14 @@ export default function Stats() {
             {isAdmin && stylistAddonData && stylistAddonData.length > 0 && (
               <VisibilityGate
                 elementKey="stylist_addon_performance_card"
-                elementName="Stylist Add-On Performance"
+                elementName="Stylist Add-On & Extras Performance"
                 elementCategory="Stats"
               >
                 <Card className="p-6">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-2">
                       <TrendingUp className="w-5 h-5 text-primary" />
-                      <h2 className="font-display text-sm tracking-wide">STYLIST ADD-ON PERFORMANCE</h2>
+                      <h2 className="font-display text-sm tracking-wide">STYLIST ADD-ON & EXTRAS PERFORMANCE</h2>
                     </div>
                     <Badge variant="outline" className="text-xs">
                       Last 30 days

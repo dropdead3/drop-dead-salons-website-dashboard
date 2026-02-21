@@ -422,7 +422,7 @@ export function ServiceAddonsLibrary({ organizationId, categories = [] }: Servic
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Package className="w-5 h-5 text-primary" />
-            <CardTitle className={tokens.heading.section}>SERVICE ADD-ONS</CardTitle>
+            <CardTitle className={tokens.heading.section}>SERVICE ADD-ONS & EXTRAS</CardTitle>
             {addons.length > 0 && (
               <Badge variant="secondary" className="text-xs">{addons.length}</Badge>
             )}
