@@ -1,28 +1,28 @@
 
-## Show Full Address in Scheduling Wizard Location Step
+
+## Update Slot Time Hover Tooltip Colors
 
 ### What Changes
-In the QuickBookingPopover's "Select Location" step, the subtitle under each location name currently only shows the city (e.g., "Mesa, AZ 85203"). We will update it to show the full street address followed by the city.
-
-**Example:**
-- Before: "Mesa, AZ 85203"
-- After: "1234 E Main St, Mesa, AZ 85203"
+The hover time indicator (e.g., "12:30 PM") that appears when hovering over available time slots currently uses a fixed blue background with white text. We will update it to use theme-aware colors: white text on a dark background in dark mode, and black text on a light background in light mode.
 
 ### Technical Detail
 
-**File: `src/components/dashboard/schedule/QuickBookingPopover.tsx`** (line 1263)
+**File: `src/components/dashboard/schedule/DayView.tsx`** (line 164)
 
 Change:
-```tsx
-<div className="text-xs text-muted-foreground mt-0.5">{loc.city}</div>
+```
+bg-blue-500 text-white
 ```
 To:
-```tsx
-<div className="text-xs text-muted-foreground mt-0.5">
-  {[loc.address, loc.city].filter(Boolean).join(', ')}
-</div>
+```
+bg-foreground text-background
 ```
 
-This concatenates the `address` and `city` fields with a comma separator, gracefully handling cases where either might be empty.
+**File: `src/components/dashboard/schedule/WeekView.tsx`** (line 543)
 
-One file, one line changed.
+Same change: replace `bg-blue-500 text-white` with `bg-foreground text-background`.
+
+This uses the existing `foreground` and `background` semantic tokens, which automatically flip between light and dark mode -- producing a dark pill with white text in dark mode, and a light pill with black text in light mode.
+
+Note: The current-time indicator (red/blue line with timestamp) will remain unchanged as that serves a different purpose.
+
