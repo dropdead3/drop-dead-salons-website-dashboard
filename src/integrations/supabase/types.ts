@@ -14447,6 +14447,7 @@ export type Database = {
       staff_service_qualifications: {
         Row: {
           created_at: string | null
+          custom_duration_minutes: number | null
           custom_price: number | null
           external_id: string | null
           id: string
@@ -14459,6 +14460,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          custom_duration_minutes?: number | null
           custom_price?: number | null
           external_id?: string | null
           id?: string
@@ -14471,6 +14473,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          custom_duration_minutes?: number | null
           custom_price?: number | null
           external_id?: string | null
           id?: string
