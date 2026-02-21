@@ -192,7 +192,7 @@ export function TeamCommissionRoster({ orgId, levels }: TeamCommissionRosterProp
         </CardHeader>
         <CardContent className="space-y-1">
           {/* Column headers */}
-          <div className="grid grid-cols-[28px_1fr_140px_70px_70px_90px] gap-2 px-3 py-1.5 text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+          <div className={cn("grid grid-cols-[28px_1fr_140px_70px_70px_90px] gap-2 px-3 py-1.5", tokens.table.columnHeader)}>
             <div />
             <div>Stylist</div>
             <div>Level</div>
