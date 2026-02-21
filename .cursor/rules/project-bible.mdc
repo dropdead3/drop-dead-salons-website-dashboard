@@ -7,7 +7,7 @@ alwaysApply: true
 
 ## What Is Zura
 
-Zura is a multi-tenant SaaS salon management platform (branded "Drop Dead 75 Dashboard"). It provides a unified operating system for beauty brands -- covering analytics, team management, client engagement, AI insights, scheduling, POS, and payroll. Built on the Lovable platform.
+Zura is a multi-tenant SaaS salon management platform. Each tenant (Organization) has its own brand identity stored in `business_settings`. The platform brand is "Zura" -- see `src/lib/brand.ts` for tokens. It provides a unified operating system for beauty brands -- covering analytics, team management, client engagement, AI insights, scheduling, POS, and payroll. Built on the Lovable platform.
 
 ## Strategic direction: standalone
 

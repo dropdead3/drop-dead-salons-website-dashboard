@@ -106,7 +106,7 @@ export default function MyProfile() {
     stylist_level: '',
     specialties: [] as string[],
     highlighted_services: [] as string[],
-    dd_certified: false,
+    extensions_certified: false,
     emergency_contact: '',
     emergency_phone: '',
     bio: '',
@@ -150,7 +150,7 @@ export default function MyProfile() {
         stylist_level: profile.stylist_level || '',
         specialties: profile.specialties || [],
         highlighted_services: (profile as any).highlighted_services || [],
-        dd_certified: profile.dd_certified || false,
+        extensions_certified: profile.extensions_certified || false,
         emergency_contact: profile.emergency_contact || '',
         emergency_phone: profile.emergency_phone || '',
         bio: (profile as any).bio || '',
@@ -286,7 +286,7 @@ export default function MyProfile() {
       stylist_level: formData.stylist_level,
       specialties: formData.specialties,
       highlighted_services: formData.highlighted_services,
-      dd_certified: formData.dd_certified,
+      extensions_certified: formData.extensions_certified,
       emergency_contact: formData.emergency_contact,
       emergency_phone: formData.emergency_phone,
       bio: formData.bio,
@@ -1081,23 +1081,22 @@ export default function MyProfile() {
                 <div className="pt-4 border-t">
                   <div className="flex items-start gap-4">
                     <div className="flex-1">
-                      <Label htmlFor="dd_certified" className="flex items-center gap-2 cursor-pointer">
+                    <Label htmlFor="extensions_certified" className="flex items-center gap-2 cursor-pointer">
                         <img 
                           src="/assets/brand-icon.svg" 
                           alt="Certified" 
                           className="w-5 h-5"
-                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
                         />
                         Extensions Certified
                       </Label>
                       <p className="text-sm text-muted-foreground mt-1">
-                        I have completed the extensions training program.
+                        Completed the extensions training program.
                       </p>
                     </div>
                     <Switch
-                      id="dd_certified"
-                      checked={formData.dd_certified}
-                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, dd_certified: checked }))}
+                      id="extensions_certified"
+                      checked={formData.extensions_certified}
+                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, extensions_certified: checked }))}
                     />
                   </div>
                 </div>

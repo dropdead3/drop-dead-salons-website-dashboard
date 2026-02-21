@@ -14,14 +14,14 @@ When the user refers to what they're seeing in the browser ("this page", "what I
   "timestamp": "2026-02-12T10:30:00Z",
   "route": "/dashboard/admin/analytics",
   "user": {
-    "email": "eric@dropdeadsalons.com",
+    "email": "admin@example.com",
     "roles": ["super_admin"],
     "platformRoles": ["platform_owner"],
     "isPlatformUser": true
   },
   "organization": {
     "id": "...",
-    "name": "Drop Dead 75"
+    "name": "Example Salon"
   },
   "viewAs": {
     "isViewingAs": false
@@ -51,7 +51,7 @@ When the user refers to what they're seeing in the browser ("this page", "what I
 ## Important Notes
 
 - Only updates when the dev server is running (`npm run dev`)
-- Only captures state for the owner email (eric@dropdeadhair.com)
+- Only captures state for the owner email (configured in DevContextBridge)
 - Debounced at 2 seconds -- may lag slightly behind navigation
 - Query states show all cached TanStack Query keys and their status
 - File is NOT committed to git

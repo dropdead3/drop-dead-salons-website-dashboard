@@ -122,7 +122,7 @@ export default function ViewProfile() {
     stylist_level: '',
     specialties: [] as string[],
     highlighted_services: [] as string[],
-    dd_certified: false,
+    extensions_certified: false,
     emergency_contact: '',
     emergency_phone: '',
     bio: '',
@@ -167,7 +167,7 @@ export default function ViewProfile() {
         stylist_level: profile.stylist_level || '',
         specialties: profile.specialties || [],
         highlighted_services: (profile as any).highlighted_services || [],
-        dd_certified: profile.dd_certified || false,
+        extensions_certified: profile.extensions_certified || false,
         emergency_contact: profile.emergency_contact || '',
         emergency_phone: profile.emergency_phone || '',
         bio: (profile as any).bio || '',
@@ -263,7 +263,7 @@ export default function ViewProfile() {
       stylist_level: formData.stylist_level,
       specialties: formData.specialties,
       highlighted_services: formData.highlighted_services,
-      dd_certified: formData.dd_certified,
+      extensions_certified: formData.extensions_certified,
       emergency_contact: formData.emergency_contact,
       emergency_phone: formData.emergency_phone,
       bio: formData.bio,
@@ -834,15 +834,15 @@ export default function ViewProfile() {
                 <div className="pt-4 border-t">
                   <div className="flex items-start gap-4">
                     <div className="flex-1">
-                      <Label htmlFor="dd_certified" className="cursor-pointer">Extensions Certified</Label>
+                      <Label htmlFor="extensions_certified" className="cursor-pointer">Extensions Certified</Label>
                       <p className="text-sm text-muted-foreground mt-1">
                         Completed the extensions training program.
                       </p>
                     </div>
                     <Switch
-                      id="dd_certified"
-                      checked={formData.dd_certified}
-                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, dd_certified: checked }))}
+                      id="extensions_certified"
+                      checked={formData.extensions_certified}
+                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, extensions_certified: checked }))}
                     />
                   </div>
                 </div>
