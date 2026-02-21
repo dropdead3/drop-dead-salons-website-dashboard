@@ -603,7 +603,7 @@ export function DayView({
             {/* Stylist Headers - frosted glass sticky header */}
             <div className="flex border-b sticky top-0 z-10" style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
               {/* Week indicator */}
-              <div className="w-[70px] shrink-0 bg-muted/70 flex items-center justify-center text-xs text-muted-foreground font-medium border-r">
+              <div className="w-[70px] shrink-0 bg-sidebar flex items-center justify-center text-xs text-muted-foreground font-medium border-r">
                 W {weekNumber}
               </div>
               
@@ -630,7 +630,7 @@ export function DayView({
             {/* Time Grid */}
             <div className="flex relative">
               {/* Time Labels */}
-              <div className="w-[70px] shrink-0 border-r bg-muted/30">
+              <div className="w-[70px] shrink-0 border-r bg-sidebar">
                 {timeSlots.map(({ hour, minute, label, isHour, isHalf }) => (
                   <div 
                     key={`${hour}-${minute}`}
