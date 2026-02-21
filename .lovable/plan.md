@@ -1,38 +1,27 @@
 
-# Improve Birthday Date Picker for Fast Year Navigation
+# Replace Birthday Calendar with Three-Dropdown Date Picker
 
 ## Problem
-The current birthday selector uses a standard `Calendar` component that only allows navigating one month at a time. For a birthday field, users often need to go back 20-80 years, making this extremely tedious.
+The calendar-based birthday picker (even with dropdown navigation) is clunky for entering birthdates. Users want a simple, familiar month/day/year dropdown pattern.
 
 ## Solution
-Replace the birthday `Calendar` with a custom picker that includes **month and year dropdown selects** above the day grid, allowing users to jump directly to any year/month. The `react-day-picker` library (already installed) supports `captionLayout="dropdown"` mode natively, along with `fromYear` and `toYear` props to define the selectable range.
+Replace the Calendar + Popover birthday input with three inline `Select` dropdowns (Month, Day, Year) that construct a `Date` object from the selections.
 
-## Technical Details
+## Changes
 
-**File:** `src/components/dashboard/schedule/NewClientDialog.tsx` (lines 346-354)
+### File: `src/components/dashboard/schedule/NewClientDialog.tsx`
 
-Replace the current `Calendar` usage with dropdown caption mode:
+**Remove** the Calendar/Popover birthday section (lines 332-359) and replace with three `Select` dropdowns in a row:
 
-```tsx
-<Calendar
-  mode="single"
-  selected={birthday}
-  onSelect={setBirthday}
-  disabled={(date) => date > new Date()}
-  initialFocus
-  captionLayout="dropdown"
-  fromYear={1920}
-  toYear={new Date().getFullYear()}
-  className={cn("p-3 pointer-events-auto")}
-/>
-```
+- **Month dropdown**: January through December (values 0-11)
+- **Day dropdown**: 1-31, dynamically adjusted based on selected month/year (e.g. Feb shows 28 or 29 days)
+- **Year dropdown**: Current year down to 100 years ago, listed in descending order for fast selection
 
-**File:** `src/components/ui/calendar.tsx`
+The three selects will manage intermediate state (`birthMonth`, `birthDay`, `birthYear`) and update the existing `birthday` state (a `Date`) whenever all three are populated. On dialog open, if `birthday` is already set, the dropdowns pre-populate from it.
 
-Add styling for the dropdown elements that `react-day-picker` renders when `captionLayout="dropdown"` is used. The classNames config needs entries for:
-- `caption_dropdowns` -- container for the month/year selects
-- `vhidden` -- visually hidden labels (accessibility)
+**Layout**: The three dropdowns sit inside the existing grid cell, arranged as a flex row with Month taking more space than Day and Year.
 
-The dropdowns themselves are native `<select>` elements rendered by the library, styled via the `caption_dropdowns` class to sit inline within the calendar header.
+**Import cleanup**: Remove `Calendar` import (line 18) and `CalendarIcon` usage for the birthday field (the "Client Since" field still uses it). Keep all `Select` imports already present.
 
-This is a minimal change -- two files, no new dependencies, and the standard `Calendar` component continues to work normally everywhere else (the dropdown behavior only activates when `captionLayout="dropdown"` is passed).
+### No other files changed
+The `Select` component and all utilities (`cn`, `format`) are already imported. No new dependencies needed.
