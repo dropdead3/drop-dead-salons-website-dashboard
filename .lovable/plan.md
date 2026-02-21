@@ -1,41 +1,68 @@
 
-## Show Uncategorized Services After Category Deletion
 
-### The Problem
+## Archive and Restore for Categories and Services
 
-When you delete a service category, the services in it keep their old category name in the database, but the UI only renders services grouped by entries in the `service_category_colors` table. Since the color row is deleted, those services become invisible -- there's no way to find, reassign, or manage them.
+### What You Get
 
-### The Fix
+- **Archive button** replaces the current delete (trash) icon on categories and services
+- **Archived section** appears at the bottom of each card when archived items exist, with a muted/collapsed style
+- **Restore button** on each archived item to bring it back
+- **Permanent delete** button only visible to the account owner (primary owner) on archived items
+- Categories and their services archive together -- archiving a category also archives its services
+- Restoring a category restores it and its services back to the active list
 
-Add an "Uncategorized" section at the bottom of the Services Hub that automatically appears when any services exist whose category doesn't match a configured category.
+### Database Changes
 
-### How It Will Work
+Two new columns on each table:
 
-1. After the sortable category accordion, compute which services are "orphaned" (their `category` value doesn't match any `localOrder` category name)
-2. If any orphaned services exist, render an "Uncategorized" section with a muted style
-3. Each service row works the same as normal -- you can click to edit, reassign to a real category, toggle active/inactive, or delete
-4. The section disappears automatically once all orphaned services are reassigned or removed
+**`services` table:**
+- `is_archived` (boolean, default false)
+- `archived_at` (timestamptz, nullable)
 
-### Technical Details
+**`service_category_colors` table:**
+- `is_archived` (boolean, default false)
+- `archived_at` (timestamptz, nullable)
 
-**File: `ServicesSettingsContent.tsx`**
+### Hook Changes
 
-1. **Compute uncategorized services** (new `useMemo` after `servicesByCategory`):
-   ```
-   const uncategorizedServices = allServices that have a category
-   NOT matching any localOrder category_name, OR have null/empty category
-   ```
+**`useServicesData.ts`:**
+- Main query filters `is_archived = false` (in addition to existing `is_active = true`)
+- New `useArchivedServices()` hook to fetch archived services
+- New `useArchiveService()` mutation (sets `is_archived=true, archived_at=now()`)
+- New `useRestoreService()` mutation (sets `is_archived=false, archived_at=null`)
+- New `usePermanentlyDeleteService()` mutation (actual DELETE, not soft-delete)
 
-2. **Render section** after the `</DndContext>` block and before the add-on cards:
-   - A collapsible card/section styled with muted tones
-   - Header: "Uncategorized" with a count badge
-   - Lists orphaned services using the same service row pattern (name, price, margin badge, edit/delete actions)
-   - Each service is editable via the existing `ServiceEditorDialog`, allowing reassignment to an active category
+**`useServiceCategoryColors.ts`:**
+- Main query filters `is_archived != true`
+- New `useArchivedCategories()` hook
+- New `useArchiveCategory()` mutation (archives category + all its services)
+- New `useRestoreCategory()` mutation (restores category + its services)
+- Existing `useDeleteCategory` becomes permanent delete (only used by primary owner on archived items)
 
-3. **No database changes needed** -- this is purely a UI visibility fix
+### UI Changes
 
-### Changes
+**`ServicesSettingsContent.tsx`:**
 
-| File | What |
-|------|------|
-| `ServicesSettingsContent.tsx` | Add uncategorized services computation + render section below the category accordion |
+1. **Category card**: Trash icon becomes Archive icon. Confirmation dialog updated to say "Archive" instead of "Delete"
+2. **Service rows**: Trash icon becomes Archive icon with updated confirmation
+3. **Archived Categories section**: Collapsible section at bottom of categories card showing archived categories with Restore and (owner-only) Delete buttons
+4. **Archived Services section**: Collapsible section at bottom of services card showing archived services with Restore and (owner-only) Delete buttons
+5. Primary owner check uses existing `useIsPrimaryOwner()` hook to gate permanent delete
+
+### Access Control
+
+| Action | Who Can Do It |
+|--------|--------------|
+| Archive a category or service | Super Admin, Admin, Manager |
+| Restore an archived item | Super Admin, Admin, Manager |
+| Permanently delete archived data | Primary Owner only |
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| Migration SQL | Add `is_archived`, `archived_at` to `services` and `service_category_colors` |
+| `src/hooks/useServicesData.ts` | Add archive/restore/permanent-delete mutations, filter archived from main query |
+| `src/hooks/useServiceCategoryColors.ts` | Add archive/restore hooks, filter archived from main query |
+| `src/components/dashboard/settings/ServicesSettingsContent.tsx` | Replace delete with archive, add archived sections with restore + owner-only delete |
+
