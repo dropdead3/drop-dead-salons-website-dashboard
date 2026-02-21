@@ -1,65 +1,96 @@
 
 
-## Unify Schedule Settings and Services Settings
+## Clarify and Enhance Break vs Block Scheduling
 
 ### The Problem
 
-Two separate settings pages manage the same `service_category_colors` table independently:
+Right now there are two scheduling block types defined in settings — **Break** and **Block** — but:
 
-- **Schedule Settings** (`?category=schedule`): Category colors, drag-to-reorder, Theme Selector, Scheduling Blocks (Break/Block colors), Calendar Preview
-- **Services Settings** (`?category=services`): Category colors, drag-to-reorder, CRUD (create/rename/delete categories), Services accordion with full CRUD, Add-Ons Library, Add-On Recommendations, Redo Policy
+1. The UI only lets you create "Breaks" (via the Coffee icon in QuickBookingPopover and the right-click context menu)
+2. There is no way to create a "Block" (admin tasks, training, meetings, cleaning) from anywhere in the app
+3. The database function `create_break_request` hardcodes `service_category = 'Block'` for ALL entries, so even lunch breaks are stored as category "Block" — meaning the "Break" color in settings is never actually used on the calendar
+4. For payroll (Gusto), **breaks** (meal, rest) have legal tracking requirements while **blocks** (admin time, training) are just productive non-service hours — these must be distinguishable
 
-Changes made on one page are not reflected on the other until a hard refresh. More importantly, the Schedule page has a read-only view of categories while the Services page has full CRUD -- users don't know which is the "real" one.
+### What This Plan Does
 
-### The Solution
+**Rename and expand the AddBreakForm into a unified "Add Time Block" form** that lets admins choose between Break-type entries and Block-type entries, each with their own sub-reasons. Fix the database function so the correct `service_category` is written, and the calendar renders both types with their distinct colors.
 
-Merge everything into a single **Services and Schedule** settings section. The Services page is the superset, so we absorb the three unique Schedule features into it.
+### Detailed Changes
 
-### Unified Layout
+**1. Expand the type system**
 
-Row 1 (2-column grid):
-- **Left: Service Categories** -- existing card from Services, enhanced with the Theme Selector from Schedule added above the drag list
-- **Right: Services** -- existing accordion card (unchanged)
+Current `BreakType`: `break | personal | sick | vacation | other`
 
-Row 2 (2-column grid):
-- **Left: Add-Ons Library** -- unchanged
-- **Right: Add-On Recommendations** -- unchanged
+New approach — two top-level modes with sub-reasons:
 
-Row 3 (2-column grid):
-- **Left: Scheduling Blocks** -- moved from Schedule settings (Block/Break color pickers)
-- **Right: Calendar Preview** -- moved from Schedule settings (live preview of color choices)
+| Mode | service_category | Sub-reasons | Payroll relevance |
+|------|-----------------|-------------|-------------------|
+| Break | `Break` | Lunch, Rest Break, Personal Break | Tracked as break time (meal/rest period laws) |
+| Block | `Block` | Admin Tasks, Training, Meeting, Cleaning, Personal Time, Other | Tracked as non-service hours |
 
-Row 4 (full width):
-- **Redo and Adjustment Policy** -- unchanged
+**2. Update `AddBreakForm.tsx` -> rename to `AddTimeBlockForm.tsx`**
 
-### What Changes
+- Add a top-level toggle: "Break" vs "Block" (two large selectable cards)
+- When "Break" is selected, show break-specific sub-reasons (Lunch, Rest Break, Personal Break) and duration presets suited for breaks (15 min, 30 min, 1 hour)
+- When "Block" is selected, show block-specific sub-reasons (Admin Tasks, Training, Meeting, Cleaning, Personal Time, Other) and broader duration presets (30 min, 1 hour, 2 hours, Half Day, Full Day)
+- Update header icon: Coffee for breaks, Clock for blocks
+- Update submit button text: "Schedule Break" vs "Schedule Block"
 
-1. **ServicesSettingsContent.tsx**: Import and add three components from the Schedule page:
-   - `ThemeSelector` -- placed inside the Service Categories card, between the card description and the drag list
-   - Scheduling Blocks section -- rendered as a new card in row 3
-   - `CalendarColorPreview` -- rendered as a new card in row 3
+**3. Fix the DB function `create_break_request`**
 
-2. **ScheduleSettingsContent.tsx**: Kept as a thin redirect/alias. Its content will show a message: "These settings have moved" with a link to `?category=services`. This prevents confusion if anyone has bookmarked the old URL.
+Create a new migration that updates the function to accept a `p_block_mode` parameter (`'Break'` or `'Block'`):
 
-3. **ScheduleHeader.tsx**: Update the settings gear icon to navigate to `?category=services` instead of `?category=schedule`.
+```sql
+-- Currently hardcoded:
+'Block', INITCAP(p_reason)
 
-4. **Settings.tsx**: When `activeCategory === 'schedule'`, render a redirect notice pointing to the services tab (or auto-redirect).
+-- Will become:
+p_block_mode, INITCAP(p_reason)
+```
 
-### Technical Details
+This ensures the correct `service_category` is written to the `appointments` table so that calendar rendering uses the right color.
 
-**Files to modify:**
-- `src/components/dashboard/settings/ServicesSettingsContent.tsx` -- Add ThemeSelector import, CalendarColorPreview import, and Scheduling Blocks rendering logic. Build the `colorMap` (already exists in ScheduleSettingsContent) for the preview and theme selector. Add the scheduling categories filter (Block/Break) which currently only exists in ScheduleSettingsContent.
-- `src/components/dashboard/settings/ScheduleSettingsContent.tsx` -- Replace with a minimal redirect component pointing users to the services tab.
-- `src/components/dashboard/schedule/ScheduleHeader.tsx` -- Change navigation target from `?category=schedule` to `?category=services`.
-- `src/pages/dashboard/admin/Settings.tsx` -- Auto-redirect `schedule` category to `services`.
+**4. Update the hook (`useTimeOffRequests.ts`)**
 
-**No database changes required.** Both pages already read from the same `service_category_colors` table. This is purely a UI consolidation.
+- Add `block_mode: 'Break' | 'Block'` to `CreateBreakInput`
+- Pass it through to the RPC call as `p_block_mode`
+- Update toast messages to reflect the chosen mode
 
-**No new dependencies.** All components (ThemeSelector, CalendarColorPreview) already exist and just need to be imported into the unified page.
+**5. Update all entry points**
 
-### What the User Gains
+- **QuickBookingPopover**: The Coffee button text changes to "Add Break / Block". Show the updated form.
+- **Schedule.tsx context menu**: Rename "Add Break" to "Add Break / Block". Show the updated form.
+- **DayView.tsx / WeekView.tsx**: Already render both categories with the X-pattern overlay — no changes needed here since fixing the `service_category` write is what makes them display correctly.
 
-- Single source of truth for all service and scheduling configuration
-- Theme Selector and Calendar Preview are now next to the actual category CRUD controls
-- The gear icon on the Schedule page takes you directly to the right place
-- No more confusion about which page to use for color changes
+**6. Update settings card description**
+
+In `ServicesSettingsContent.tsx`, enhance the Scheduling Blocks card description for each type:
+- **Block**: "Non-service hours (admin tasks, training, meetings)"
+- **Break**: "Rest periods (lunch, rest breaks) — tracked for payroll compliance"
+
+### Build Sequence
+
+| # | Item | Complexity |
+|---|------|-----------|
+| 1 | New migration: update `create_break_request` to accept `p_block_mode` | Low |
+| 2 | Update `CreateBreakInput` and hook to pass `block_mode` | Trivial |
+| 3 | Rename and expand `AddBreakForm` to `AddTimeBlockForm` with mode toggle | Medium |
+| 4 | Update QuickBookingPopover and Schedule.tsx to use new component name and labels | Low |
+| 5 | Update settings card descriptions | Trivial |
+
+### Files Affected
+
+- `supabase/migrations/` — New migration to update `create_break_request` function
+- `src/components/dashboard/schedule/AddBreakForm.tsx` — Rename to `AddTimeBlockForm.tsx`, add mode toggle
+- `src/hooks/useTimeOffRequests.ts` — Add `block_mode` to input and RPC call
+- `src/components/dashboard/schedule/QuickBookingPopover.tsx` — Update import, button label
+- `src/pages/dashboard/Schedule.tsx` — Update import, context menu label, dialog title
+- `src/components/dashboard/settings/ServicesSettingsContent.tsx` — Enhanced descriptions
+
+### Payroll Integration Readiness
+
+Once this is in place, the `appointments` table will have clean data: `service_category = 'Break'` for legally tracked rest periods and `service_category = 'Block'` for productive non-service time. When Gusto integration lands, the payroll sync can:
+- Sum `Break` entries as "break hours" for labor law compliance reporting
+- Sum `Block` entries as "non-billable hours" for utilization calculations
+- Neither counts toward service revenue or commission
+
