@@ -1,0 +1,56 @@
+---
+description: Prevents tenant-specific branding from leaking into platform-level code. Enforces the boundary between Platform identity (Zura) and Organization identity (tenant data).
+alwaysApply: true
+---
+
+# Tenant Brand Guard
+
+## Core Rule
+
+**Platform code must be generic. Tenant identity lives in the database only.**
+
+- **Platform identity** resolves through `src/lib/brand.ts` tokens (PLATFORM_NAME, PLATFORM_URL, etc.)
+- **Tenant identity** resolves through `businessSettings`, `organizations`, or `site_settings` table lookups at runtime
+
+## Prohibited Patterns
+
+Never hardcode any of the following in `src/`, `public/`, or `supabase/functions/`:
+
+- Tenant business names (e.g., "Drop Dead", "Acme Salon")
+- Tenant URLs or domains (e.g., "dropdeadsalon.com")
+- Tenant email addresses (e.g., "contact@tenant.com")
+- Tenant social media handles (e.g., "@tenantbrand")
+- Tenant phone numbers
+- Tenant-specific taglines or marketing copy
+
+## Allowed Patterns
+
+- `PLATFORM_NAME` and other tokens from `src/lib/brand.ts` for platform-level UI
+- `useBusinessSettings()` hook for tenant-level business name, logo, contact info
+- `useSiteSettings()` hook for tenant-level website content (hero text, social links)
+- Database lookups from `organizations` table for org-level metadata
+- Generic placeholders in templates: `{{business_name}}`, `{{phone}}`, etc.
+
+## Entity Hierarchy Reminder
+
+```
+Platform (Zura) → Organization (tenant) → Location → User → Domain Objects
+```
+
+- Platform code = infrastructure shared by all tenants
+- Organization data = tenant-specific, stored in database
+- These layers must never be conflated
+
+## Schema Rules
+
+- Column names must not contain tenant branding (e.g., use `extensions_certified` not `dd_certified`)
+- Default values must be generic (e.g., `'My Business'` not a tenant name)
+- SMS/email templates must use template variables, not hardcoded tenant names
+
+## Build Gate Check
+
+Before shipping any feature, verify:
+- [ ] No hardcoded tenant names, URLs, emails, or social handles in source code
+- [ ] Platform identity uses `brand.ts` tokens
+- [ ] Tenant identity resolves from database at runtime
+- [ ] Template strings use `{{variables}}` for tenant-specific content

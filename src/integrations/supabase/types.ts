@@ -4521,12 +4521,12 @@ export type Database = {
           birthday: string | null
           chat_enabled: boolean | null
           created_at: string
-          dd_certified: boolean | null
           departure_notes: string | null
           display_name: string | null
           email: string | null
           emergency_contact: string | null
           emergency_phone: string | null
+          extensions_certified: boolean | null
           full_name: string
           hide_numbers: boolean
           highlighted_services: string[] | null
@@ -4568,12 +4568,12 @@ export type Database = {
           birthday?: string | null
           chat_enabled?: boolean | null
           created_at?: string
-          dd_certified?: boolean | null
           departure_notes?: string | null
           display_name?: string | null
           email?: string | null
           emergency_contact?: string | null
           emergency_phone?: string | null
+          extensions_certified?: boolean | null
           full_name: string
           hide_numbers?: boolean
           highlighted_services?: string[] | null
@@ -4615,12 +4615,12 @@ export type Database = {
           birthday?: string | null
           chat_enabled?: boolean | null
           created_at?: string
-          dd_certified?: boolean | null
           departure_notes?: string | null
           display_name?: string | null
           email?: string | null
           emergency_contact?: string | null
           emergency_phone?: string | null
+          extensions_certified?: boolean | null
           full_name?: string
           hide_numbers?: boolean
           highlighted_services?: string[] | null
