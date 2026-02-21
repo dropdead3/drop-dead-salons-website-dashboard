@@ -1,20 +1,28 @@
 
-
-## Remove Card Styling from Unselected "Today" Button
-
-### Problem
-The "Today" button always has a border and background (`bg-background border border-input`) even when another day is selected, making it look like a second selected item and confusing the user.
+## Move Red Closure Dots to the Left of Day Labels
 
 ### Change
 
-**File: `src/components/dashboard/schedule/ScheduleHeader.tsx`** (line 307)
+**File: `src/components/dashboard/schedule/ScheduleHeader.tsx`** (lines 336-357)
 
-Update the Today button's unselected state to match the other unselected day buttons -- plain text with no border or background, only gaining emphasis on hover.
+Currently the button layout is a vertical column (`flex-col items-center`):
+```
+  Sun
+   22
+   *      <-- red dot below
+```
 
-| State | Current | New |
-|-------|---------|-----|
-| Today selected | `bg-primary text-primary-foreground shadow-sm` | No change |
-| Today NOT selected | `bg-background border border-input text-foreground` | `text-muted-foreground hover:bg-accent hover:text-accent-foreground` |
+Change to: keep the vertical stack for label+date, but wrap the whole button content in a horizontal row so the red dot sits to the left of the label column:
+```
+ * Sun
+    22
+```
 
-This makes the unselected Today button visually identical to other unselected days (Sat, Sun, Tue, etc.), so only the truly selected day stands out.
+Specifically:
+1. Change the button's inner content from three stacked children to a horizontal `flex items-center gap-1` wrapper containing:
+   - The red dot (if closed) on the left
+   - A vertical `flex-col items-center` div with the day label and date number on the right
+2. Remove the old red dot that was below the date number
+3. Keep all existing className logic, tooltips, and closed-day opacity unchanged
 
+This is a ~5 line tweak to the button's inner JSX only.
