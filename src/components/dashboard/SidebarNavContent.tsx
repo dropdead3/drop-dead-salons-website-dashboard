@@ -334,7 +334,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                   {hasCustomIcon(true) ? (
                     <img 
                       src={getIcon(true)} 
-                      alt={businessSettings?.business_name || 'Drop Dead'} 
+                      alt={businessSettings?.business_name || 'Salon'} 
                       className="h-4 w-auto max-w-[32px] object-contain"
                     />
                   ) : (
@@ -343,17 +343,17 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                     </div>
                   )}
                 </TooltipTrigger>
-                <TooltipContent side="right">{businessSettings?.business_name || 'Drop Dead'}</TooltipContent>
+                <TooltipContent side="right">{businessSettings?.business_name || 'Salon'}</TooltipContent>
               </Tooltip>
             ) : hasCustomLogo() ? (
               <img
                 src={getLogo()} 
-                alt={businessSettings?.business_name || 'Drop Dead'} 
+                alt={businessSettings?.business_name || 'Salon'} 
                 className="h-3.5 w-auto max-w-[140px] object-contain" 
               />
             ) : (
               <span className="font-display text-sm uppercase tracking-wider text-foreground">
-                {businessSettings?.business_name || 'Drop Dead'}
+                {businessSettings?.business_name || 'Salon'}
               </span>
             )}
           </Link>

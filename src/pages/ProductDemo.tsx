@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
+import { PLATFORM_NAME } from '@/lib/brand';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { DemoChat } from '@/components/demo/DemoChat';
 import { useProductDemo } from '@/hooks/useProductDemo';
@@ -31,7 +32,7 @@ export default function ProductDemo() {
             </Button>
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
-              <span className="font-medium">Drop Dead Salon Software</span>
+              <span className="font-medium">{PLATFORM_NAME}</span>
             </div>
           </div>
           

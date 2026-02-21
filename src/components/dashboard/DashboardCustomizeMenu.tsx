@@ -124,7 +124,7 @@ const getSections = (): SectionConfig[] => [
     id: 'client_engine', 
     label: 'Client Engine', 
     icon: <Target className="w-4 h-4" />, 
-    description: 'Drop Dead 75 program',
+    description: 'Client growth program',
     isVisible: (ctx) => ctx.hasStylistRole,
   },
   { 

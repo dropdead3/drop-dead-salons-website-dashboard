@@ -7,7 +7,7 @@ const reviews = [
   {
     title: "Love this place!",
     author: "Lexi V.",
-    text: "I love Drop Dead! The owner picks literally THE BEST hair stylist and lash and brow artists. You really can't go wrong with going to anyone inside the studio, everyone is so welcoming and friendly.",
+    text: "I love this place! The owner picks literally THE BEST hair stylist and lash and brow artists. You really can't go wrong with going to anyone inside the studio, everyone is so welcoming and friendly.",
   },
   {
     title: "You won't be disappointed",
@@ -17,7 +17,7 @@ const reviews = [
   {
     title: "Best wefts ever!!",
     author: "Lexi K.",
-    text: "I have loved every product from Drop Dead so far. I wear them myself and I also use them on my clients. My clients love everything too!! These new SuperWefts are amazing. So comfortable, flat, customizable and easy to color!",
+    text: "I have loved every product so far. I wear them myself and I also use them on my clients. My clients love everything too!! These new SuperWefts are amazing. So comfortable, flat, customizable and easy to color!",
   },
   {
     title: "Best extensions",
@@ -27,7 +27,7 @@ const reviews = [
   {
     title: "Absolutely stunning results",
     author: "Morgan S.",
-    text: "I've been going to Drop Dead for over a year now and every single visit has been incredible. The attention to detail and care they put into every service is unmatched.",
+    text: "I've been going here for over a year now and every single visit has been incredible. The attention to detail and care they put into every service is unmatched.",
   },
   {
     title: "Hair transformation goals",

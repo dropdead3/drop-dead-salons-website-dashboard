@@ -162,7 +162,7 @@ const Stylists = () => {
   return (
     <Layout>
       <SEO
-        title="Our Stylists | Drop Dead Salon"
+        title="Our Stylists"
         description="Meet our talented team of hair stylists. From color specialists to extension experts, find the perfect stylist for your hair goals."
       />
 
@@ -190,7 +190,7 @@ const Stylists = () => {
           {/* Title with count */}
           <div className="mb-10 border-b border-border">
             <h1 className="pb-4 text-2xl md:text-3xl font-serif">
-              Drop Dead Salon Stylists
+              Our Stylists
               <span className="ml-3 text-lg text-muted-foreground font-sans">({stylistCount})</span>
             </h1>
           </div>

@@ -834,9 +834,9 @@ export default function ViewProfile() {
                 <div className="pt-4 border-t">
                   <div className="flex items-start gap-4">
                     <div className="flex-1">
-                      <Label htmlFor="dd_certified" className="cursor-pointer">Drop Dead Certified</Label>
+                      <Label htmlFor="dd_certified" className="cursor-pointer">Extensions Certified</Label>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Completed the Drop Dead Extensions training.
+                        Completed the extensions training program.
                       </p>
                     </div>
                     <Switch

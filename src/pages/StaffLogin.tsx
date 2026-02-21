@@ -205,7 +205,7 @@ export default function StaffLogin() {
           <div className="text-center">
             <img 
               src={Logo} 
-              alt="Drop Dead" 
+              alt="Salon" 
               className="h-6 w-auto mx-auto mb-8"
             />
             <h1 className="font-display text-2xl tracking-wide">

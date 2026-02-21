@@ -287,7 +287,7 @@ export default function PublicBooking() {
     return (
       <Layout>
         <SEO 
-          title="Booking Confirmed | Drop Dead Gorgeous"
+          title="Booking Confirmed"
           description="Your appointment has been booked"
         />
         <div className="min-h-[60vh] flex items-center justify-center px-4 py-16">
@@ -331,7 +331,7 @@ export default function PublicBooking() {
   return (
     <Layout>
       <SEO 
-        title="Book an Appointment | Drop Dead Gorgeous"
+        title="Book an Appointment"
         description="Book your next salon appointment online"
       />
       <div className="min-h-[60vh] px-4 py-8 md:py-16 max-w-4xl mx-auto">

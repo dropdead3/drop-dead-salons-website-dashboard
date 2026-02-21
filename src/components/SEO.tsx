@@ -10,10 +10,10 @@ interface SEOProps {
 
 // Salon business info - update with real details
 const BUSINESS_INFO = {
-  name: "Drop Dead Salon",
-  description: "Premier hair salon in Mesa & Gilbert, Arizona serving the entire Phoenix Valley. Specializing in color, extensions, cutting & styling with expert artistry.",
-  email: "contact@dropdeadsalon.com",
-  url: "https://dropdeadsalon.com",
+  name: "Salon",
+  description: "Premier hair salon specializing in color, extensions, cutting & styling with expert artistry.",
+  email: "contact@salon.com",
+  url: "https://salon.com",
   image: "/og-image.jpg",
   priceRange: "$$$",
   openingHours: [
@@ -23,7 +23,7 @@ const BUSINESS_INFO = {
   areaServed: ["Mesa", "Gilbert", "Chandler", "Tempe", "Scottsdale", "Phoenix", "Queen Creek", "Apache Junction"],
   locations: [
     {
-      name: "Drop Dead Salon - North Mesa",
+      name: "Salon - North Mesa",
       street: "2036 N Gilbert Rd Ste 1",
       city: "Mesa",
       state: "AZ",
@@ -33,7 +33,7 @@ const BUSINESS_INFO = {
       geo: { latitude: 33.4564, longitude: -111.7890 },
     },
     {
-      name: "Drop Dead Salon - Val Vista Lakes",
+      name: "Salon - Val Vista Lakes",
       street: "3641 E Baseline Rd Suite Q-103",
       city: "Gilbert",
       state: "AZ",
@@ -227,7 +227,7 @@ export function SEO({
       },
       {
         "@type": "Question",
-        name: "How do I book an appointment at Drop Dead Salon in Mesa or Gilbert?",
+        name: "How do I book an appointment?",
         acceptedAnswer: {
           "@type": "Answer",
           text: "You can book directly through our website by visiting the booking page, or reach out to us via email or phone. New clients should fill out our consultation form first so we can match you with the perfect stylist at our Mesa or Gilbert location.",
@@ -243,10 +243,10 @@ export function SEO({
       },
       {
         "@type": "Question",
-        name: "Where is Drop Dead Salon located in Arizona?",
+        name: "Where is the salon located?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Drop Dead Salon has two convenient locations in the Phoenix Valley: one in Mesa, Arizona and one in Gilbert, Arizona. We proudly serve clients from across the East Valley including Chandler, Tempe, Scottsdale, Queen Creek, and the greater Phoenix area.",
+          text: "We have two convenient locations in the Phoenix Valley: one in Mesa, Arizona and one in Gilbert, Arizona. We proudly serve clients from across the East Valley including Chandler, Tempe, Scottsdale, Queen Creek, and the greater Phoenix area.",
         },
       },
     ],
@@ -275,7 +275,7 @@ export function SEO({
         "@type": "Review",
         author: { "@type": "Person", name: "Lexi V." },
         datePublished: "2024-11-15",
-        reviewBody: "I love Drop Dead! The owner picks literally THE BEST hair stylist and lash and brow artists. You really can't go wrong with going to anyone inside the studio, everyone is so welcoming and friendly.",
+        reviewBody: "I love this place! The owner picks literally THE BEST hair stylist and lash and brow artists. You really can't go wrong with going to anyone inside the studio, everyone is so welcoming and friendly.",
         reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
       },
       {
@@ -289,14 +289,14 @@ export function SEO({
         "@type": "Review",
         author: { "@type": "Person", name: "Lexi K." },
         datePublished: "2024-09-18",
-        reviewBody: "I have loved every product from Drop Dead so far. I wear them myself and I also use them on my clients. My clients love everything too!! These new SuperWefts are amazing.",
+        reviewBody: "I have loved every product so far. I wear them myself and I also use them on my clients. My clients love everything too!! These new SuperWefts are amazing.",
         reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
       },
       {
         "@type": "Review",
         author: { "@type": "Person", name: "Morgan S." },
         datePublished: "2024-08-30",
-        reviewBody: "I've been going to Drop Dead for over a year now and every single visit has been incredible. The attention to detail and care they put into every service is unmatched.",
+        reviewBody: "I've been going here for over a year now and every single visit has been incredible. The attention to detail and care they put into every service is unmatched.",
         reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
       },
       {

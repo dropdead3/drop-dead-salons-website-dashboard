@@ -6,7 +6,7 @@ const extensionReviews = [
   {
     title: "Best wefts ever!!",
     author: "Lexi K.",
-    text: "I have loved every product from Drop Dead so far. I wear them myself and I also use them on my clients. My clients love everything too!! These new SuperWefts are amazing. So comfortable, flat, customizable and easy to color!",
+    text: "I have loved every product so far. I wear them myself and I also use them on my clients. My clients love everything too!! These new SuperWefts are amazing. So comfortable, flat, customizable and easy to color!",
   },
   {
     title: "Best extensions I've used.",
@@ -21,7 +21,7 @@ const extensionReviews = [
   {
     title: "Game changer for my salon",
     author: "Rachel M.",
-    text: "The Drop Dead Method has completely transformed how I approach extensions. My clients are happier, appointments are faster, and the results speak for themselves. Truly the best investment I've made.",
+    text: "The signature method has completely transformed how I approach extensions. My clients are happier, appointments are faster, and the results speak for themselves. Truly the best investment I've made.",
   },
   {
     title: "Finally found the one!",

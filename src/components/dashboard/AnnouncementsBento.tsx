@@ -204,7 +204,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
             </div>
           ) : (
             <div className="p-4 bg-muted/50 dark:bg-card border-l-4 border-foreground rounded-r-lg">
-              <p className="text-sm font-sans font-medium">Welcome to Drop Dead!</p>
+              <p className="text-sm font-sans font-medium">Welcome to your team!</p>
               <p className="text-xs text-muted-foreground mt-1">
                 Complete your onboarding to get started
               </p>

@@ -166,7 +166,7 @@ export function CheckoutSummarySheet({
     let y = 10;
 
     // Business name
-    const businessName = businessSettings?.business_name || 'Drop Dead';
+    const businessName = businessSettings?.business_name || 'Salon';
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.text(businessName, pageWidth / 2, y, { align: 'center' });

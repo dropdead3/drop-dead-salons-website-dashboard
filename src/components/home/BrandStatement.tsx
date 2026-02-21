@@ -92,7 +92,7 @@ export function BrandStatement() {
             transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
           >
             <Eyebrow className="text-background/60 mb-4">
-              Drop Dead is
+              We are
             </Eyebrow>
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]">
               Not Your
@@ -113,7 +113,7 @@ export function BrandStatement() {
             className="space-y-6"
           >
             <p className="text-base md:text-lg font-sans font-light leading-relaxed text-background/80">
-              Located in the heart of Mesa and Gilbert, Arizona, Drop Dead Salon has become the Phoenix Valley's destination for transformative hair experiences. Clients travel from Scottsdale, Chandler, Tempe, and across the East Valley to experience our artistry.
+              Located in the heart of Mesa and Gilbert, Arizona, our salon has become the Phoenix Valley's destination for transformative hair experiences. Clients travel from Scottsdale, Chandler, Tempe, and across the East Valley to experience our artistry.
             </p>
             <p className="text-base md:text-lg font-sans font-light leading-relaxed text-background/80">
               Experience an extensive range of innovative treatments meticulously crafted by our artist-led team—where science meets beauty in Arizona's premier luxury salon.

@@ -1077,21 +1077,21 @@ export default function MyProfile() {
                   </p>
                 </div>
 
-                {/* Drop Dead Certified */}
+                {/* Extensions Certified */}
                 <div className="pt-4 border-t">
                   <div className="flex items-start gap-4">
                     <div className="flex-1">
                       <Label htmlFor="dd_certified" className="flex items-center gap-2 cursor-pointer">
                         <img 
                           src="/assets/dd75-icon.svg" 
-                          alt="Drop Dead" 
+                          alt="Certified" 
                           className="w-5 h-5"
                           onError={(e) => { e.currentTarget.style.display = 'none'; }}
                         />
-                        Drop Dead Certified
+                        Extensions Certified
                       </Label>
                       <p className="text-sm text-muted-foreground mt-1">
-                        I have completed the Drop Dead Extensions training program.
+                        I have completed the extensions training program.
                       </p>
                     </div>
                     <Switch

@@ -16,7 +16,7 @@ const values = [
   {
     icon: Users,
     title: "Community Driven",
-    description: "We've built a family of stylists and clients who inspire each other. When you join Drop Dead, you join a movement.",
+    description: "We've built a family of stylists and clients who inspire each other. When you join us, you join a movement.",
   },
   {
     icon: Palette,

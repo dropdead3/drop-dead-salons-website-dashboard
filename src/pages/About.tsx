@@ -11,8 +11,8 @@ const About = () => {
   return (
     <Layout>
       <SEO 
-        title="About Us | Drop Dead Salon"
-        description="Learn about Drop Dead Salon, our story, and founder Kristi Day. Discover what makes us the Phoenix Valley's premier destination for expert hair color, extensions, and styling."
+        title="About Us"
+        description="Learn about our story and our team. Discover what makes us the premier destination for expert hair color, extensions, and styling."
       />
       <AboutHero />
       <FounderWelcome />
