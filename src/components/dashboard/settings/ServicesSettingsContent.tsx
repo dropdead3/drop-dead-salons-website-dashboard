@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { EmptyState } from '@/components/ui/empty-state';
 import { 
-  Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors, Search, Eye,
+  Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors, Search, Eye, Archive, ArchiveRestore, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
@@ -20,10 +20,11 @@ import {
   getCategoryAbbreviation,
   type ServiceCategoryColor,
 } from '@/hooks/useServiceCategoryColors';
-import { useCreateCategory, useRenameCategory, useDeleteCategory } from '@/hooks/useServiceCategoryColors';
+import { useCreateCategory, useRenameCategory, useDeleteCategory, useArchivedCategories, useArchiveCategory, useRestoreCategory } from '@/hooks/useServiceCategoryColors';
 import { CalendarColorPreview } from './CalendarColorPreview';
 import { ThemeSelector } from './ThemeSelector';
-import { useServicesData, useCreateService, useUpdateService, useDeleteService, type Service } from '@/hooks/useServicesData';
+import { useServicesData, useCreateService, useUpdateService, useDeleteService, useArchivedServices, useArchiveService, useRestoreService, usePermanentlyDeleteService, type Service } from '@/hooks/useServicesData';
+import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { CategoryFormDialog } from './CategoryFormDialog';
 import { ServiceEditorDialog } from './ServiceEditorDialog';
@@ -120,9 +121,17 @@ export function ServicesSettingsContent() {
   const createCategory = useCreateCategory();
   const renameCategory = useRenameCategory();
   const deleteCategory = useDeleteCategory();
+  const archiveCategory = useArchiveCategory();
+  const restoreCategory = useRestoreCategory();
+  const { data: archivedCategories } = useArchivedCategories();
   const createService = useCreateService();
   const updateService = useUpdateService();
   const deleteService = useDeleteService();
+  const archiveService = useArchiveService();
+  const restoreService = useRestoreService();
+  const permanentlyDeleteService = usePermanentlyDeleteService();
+  const { data: archivedServices } = useArchivedServices(resolvedOrgId);
+  const { data: isPrimaryOwner } = useIsPrimaryOwner();
   const { formatCurrency } = useFormatCurrency();
 
   const serviceCategories = useMemo(() => 
@@ -171,6 +180,8 @@ export function ServicesSettingsContent() {
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [categoryDialogMode, setCategoryDialogMode] = useState<'create' | 'rename'>('create');
   const [editingCategory, setEditingCategory] = useState<ServiceCategoryColor | null>(null);
+  const [archiveCategoryId, setArchiveCategoryId] = useState<string | null>(null);
+  const [archiveCategoryName, setArchiveCategoryName] = useState('');
   const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
   const [deleteCategoryName, setDeleteCategoryName] = useState('');
 
@@ -180,9 +191,15 @@ export function ServicesSettingsContent() {
   const [editorMode, setEditorMode] = useState<'create' | 'edit'>('edit');
   const [editorPresetCategory, setEditorPresetCategory] = useState('');
 
-  // Delete service confirmation
+  // Archive/delete service confirmation
+  const [archiveServiceId, setArchiveServiceId] = useState<string | null>(null);
+  const [archiveServiceName, setArchiveServiceName] = useState('');
   const [deleteServiceId, setDeleteServiceId] = useState<string | null>(null);
   const [deleteServiceName, setDeleteServiceName] = useState('');
+
+  // Archived sections expanded
+  const [showArchivedCategories, setShowArchivedCategories] = useState(false);
+  const [showArchivedServices, setShowArchivedServices] = useState(false);
 
   // Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -275,9 +292,23 @@ export function ServicesSettingsContent() {
     updateService.mutate({ id: service.id, is_active: !service.is_active });
   };
 
+  const handleArchiveCategory = () => {
+    if (!archiveCategoryId) return;
+    archiveCategory.mutate({ categoryId: archiveCategoryId, categoryName: archiveCategoryName }, {
+      onSuccess: () => { setArchiveCategoryId(null); setArchiveCategoryName(''); },
+    });
+  };
+
+  const handleArchiveService = () => {
+    if (!archiveServiceId) return;
+    archiveService.mutate(archiveServiceId, {
+      onSuccess: () => { setArchiveServiceId(null); setArchiveServiceName(''); },
+    });
+  };
+
   const handleDeleteService = () => {
     if (!deleteServiceId) return;
-    deleteService.mutate(deleteServiceId, {
+    permanentlyDeleteService.mutate(deleteServiceId, {
       onSuccess: () => { setDeleteServiceId(null); setDeleteServiceName(''); },
     });
   };
@@ -439,11 +470,11 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                             }}>
                               <Pencil className="w-3.5 h-3.5" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => {
-                              setDeleteCategoryId(cat.id);
-                              setDeleteCategoryName(cat.category_name);
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-amber-600" onClick={() => {
+                              setArchiveCategoryId(cat.id);
+                              setArchiveCategoryName(cat.category_name);
                             }}>
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Archive className="w-3.5 h-3.5" />
                             </Button>
                           </div>
                         </SortableCategoryRow>
@@ -452,6 +483,55 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                   </div>
                 </SortableContext>
               </DndContext>
+            )}
+
+            {/* Archived Categories */}
+            {(archivedCategories?.length || 0) > 0 && (
+              <div className="mt-4 border border-dashed border-muted-foreground/30 rounded-lg">
+                <button
+                  className="flex items-center justify-between w-full px-4 py-3 text-left"
+                  onClick={() => setShowArchivedCategories(!showArchivedCategories)}
+                >
+                  <div className="flex items-center gap-2">
+                    <Archive className="w-4 h-4 text-muted-foreground" />
+                    <span className={cn(tokens.body.emphasis, 'text-muted-foreground')}>Archived Categories</span>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{archivedCategories?.length}</Badge>
+                  </div>
+                  <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', showArchivedCategories && 'rotate-180')} />
+                </button>
+                {showArchivedCategories && (
+                  <div className="px-4 pb-3 space-y-2">
+                    {archivedCategories?.map(cat => (
+                      <div key={cat.id} className="flex items-center gap-3 p-2.5 rounded-md bg-muted/30">
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-sans font-medium opacity-50"
+                          style={{ backgroundColor: cat.color_hex, color: cat.text_color_hex }}
+                        >
+                          {getCategoryAbbreviation(cat.category_name)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={cn(tokens.body.emphasis, 'text-muted-foreground truncate')}>{cat.category_name}</p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => {
+                            restoreCategory.mutate({ categoryId: cat.id, categoryName: cat.category_name });
+                          }}>
+                            <ArchiveRestore className="w-3 h-3" /> Restore
+                          </Button>
+                          {isPrimaryOwner && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => {
+                              setDeleteCategoryId(cat.id);
+                              setDeleteCategoryName(cat.category_name);
+                            }}>
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>
@@ -557,12 +637,12 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                                       </TooltipTrigger>
                                       <TooltipContent><p className="text-xs">{svc.is_active !== false ? 'Active' : 'Inactive'}</p></TooltipContent>
                                     </Tooltip>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={(e) => {
+                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-amber-600" onClick={(e) => {
                                       e.stopPropagation();
-                                      setDeleteServiceId(svc.id);
-                                      setDeleteServiceName(svc.name);
+                                      setArchiveServiceId(svc.id);
+                                      setArchiveServiceName(svc.name);
                                     }}>
-                                      <Trash2 className="w-3 h-3" />
+                                      <Archive className="w-3 h-3" />
                                     </Button>
                                   </div>
                                 </div>
@@ -627,18 +707,64 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                             </TooltipTrigger>
                             <TooltipContent><p className="text-xs">{svc.is_active !== false ? 'Active' : 'Inactive'}</p></TooltipContent>
                           </Tooltip>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={(e) => {
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-amber-600" onClick={(e) => {
                             e.stopPropagation();
-                            setDeleteServiceId(svc.id);
-                            setDeleteServiceName(svc.name);
+                            setArchiveServiceId(svc.id);
+                            setArchiveServiceName(svc.name);
                           }}>
-                            <Trash2 className="w-3 h-3" />
+                            <Archive className="w-3 h-3" />
                           </Button>
                         </div>
                       </div>
                     );
                   })}
                 </div>
+              </div>
+            )}
+
+            {/* Archived Services */}
+            {(archivedServices?.length || 0) > 0 && (
+              <div className="mt-4 border border-dashed border-muted-foreground/30 rounded-lg">
+                <button
+                  className="flex items-center justify-between w-full px-4 py-3 text-left"
+                  onClick={() => setShowArchivedServices(!showArchivedServices)}
+                >
+                  <div className="flex items-center gap-2">
+                    <Archive className="w-4 h-4 text-muted-foreground" />
+                    <span className={cn(tokens.body.emphasis, 'text-muted-foreground')}>Archived Services</span>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{archivedServices?.length}</Badge>
+                  </div>
+                  <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', showArchivedServices && 'rotate-180')} />
+                </button>
+                {showArchivedServices && (
+                  <div className="px-4 pb-3 space-y-1">
+                    {archivedServices?.map(svc => (
+                      <div key={svc.id} className="flex items-center gap-3 p-2.5 rounded-md bg-muted/30">
+                        <div className="flex-1 min-w-0">
+                          <p className={cn(tokens.body.emphasis, 'text-muted-foreground truncate')}>{svc.name}</p>
+                          <div className={cn('flex items-center gap-3', tokens.body.muted)}>
+                            {svc.category && <span className="text-[10px] italic">was: {svc.category}</span>}
+                            {svc.duration_minutes && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{svc.duration_minutes}min</span>}
+                            {svc.price != null && <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />{formatCurrency(svc.price)}</span>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => restoreService.mutate(svc.id)}>
+                            <ArchiveRestore className="w-3 h-3" /> Restore
+                          </Button>
+                          {isPrimaryOwner && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => {
+                              setDeleteServiceId(svc.id);
+                              setDeleteServiceName(svc.name);
+                            }}>
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
@@ -789,39 +915,75 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
           existingCategories={serviceCategories.map(c => c.category_name)}
         />
 
-        {/* Delete category confirmation */}
-        <AlertDialog open={!!deleteCategoryId} onOpenChange={(open) => { if (!open) setDeleteCategoryId(null); }}>
+        {/* Archive category confirmation */}
+        <AlertDialog open={!!archiveCategoryId} onOpenChange={(open) => { if (!open) { setArchiveCategoryId(null); setArchiveCategoryName(''); } }}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete "{deleteCategoryName}"?</AlertDialogTitle>
+              <AlertDialogTitle>Archive "{archiveCategoryName}"?</AlertDialogTitle>
               <AlertDialogDescription>
-                {(servicesByCategory[deleteCategoryName]?.length || 0) > 0
-                  ? `This category has ${servicesByCategory[deleteCategoryName]?.length} services. They will become uncategorized.`
-                  : 'This category has no services and will be permanently removed.'}
+                {(servicesByCategory[archiveCategoryName]?.length || 0) > 0
+                  ? `This category and its ${servicesByCategory[archiveCategoryName]?.length} services will be archived. You can restore them later.`
+                  : 'This category will be archived. You can restore it later.'}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteCategory} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Delete
+              <AlertDialogAction onClick={handleArchiveCategory}>
+                Archive
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Delete service confirmation */}
+        {/* Permanently delete category confirmation (owner only) */}
+        <AlertDialog open={!!deleteCategoryId} onOpenChange={(open) => { if (!open) setDeleteCategoryId(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Permanently delete "{deleteCategoryName}"?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently remove this category. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteCategory} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete Permanently
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Archive service confirmation */}
+        <AlertDialog open={!!archiveServiceId} onOpenChange={(open) => { if (!open) { setArchiveServiceId(null); setArchiveServiceName(''); } }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Archive "{archiveServiceName}"?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This service will be archived and removed from your menu. You can restore it later.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleArchiveService}>
+                Archive
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Permanently delete service confirmation (owner only) */}
         <AlertDialog open={!!deleteServiceId} onOpenChange={(open) => { if (!open) { setDeleteServiceId(null); setDeleteServiceName(''); } }}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete "{deleteServiceName}"?</AlertDialogTitle>
+              <AlertDialogTitle>Permanently delete "{deleteServiceName}"?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will deactivate the service and remove it from your menu. This cannot be undone.
+                This will permanently remove this service. This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeleteService} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Delete
+                Delete Permanently
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

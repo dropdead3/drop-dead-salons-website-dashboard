@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export interface ServiceCategoryColor {
   id: string;
@@ -45,6 +46,7 @@ export function useServiceCategoryColors() {
       const { data, error } = await supabase
         .from('service_category_colors')
         .select('*')
+        .eq('is_archived', false)
         .order('display_order')
         .order('category_name');
       
@@ -234,6 +236,95 @@ export function useDeleteCategory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-category-colors'] });
+    },
+  });
+}
+
+/**
+ * Fetch archived categories
+ */
+export function useArchivedCategories() {
+  return useQuery({
+    queryKey: ['service-category-colors-archived'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('service_category_colors')
+        .select('*')
+        .eq('is_archived', true)
+        .order('archived_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as ServiceCategoryColor[];
+    },
+  });
+}
+
+/**
+ * Archive a category and all its services
+ */
+export function useArchiveCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ categoryId, categoryName }: { categoryId: string; categoryName: string }) => {
+      // Archive the category
+      const { error: catError } = await supabase
+        .from('service_category_colors')
+        .update({ is_archived: true, archived_at: new Date().toISOString() } as any)
+        .eq('id', categoryId);
+      if (catError) throw catError;
+
+      // Archive all services in this category
+      const { error: svcError } = await supabase
+        .from('services')
+        .update({ is_archived: true, archived_at: new Date().toISOString() } as any)
+        .eq('category', categoryName);
+      if (svcError) throw svcError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-category-colors'] });
+      queryClient.invalidateQueries({ queryKey: ['service-category-colors-archived'] });
+      queryClient.invalidateQueries({ queryKey: ['services-data'] });
+      queryClient.invalidateQueries({ queryKey: ['services-archived'] });
+      toast.success('Category and its services archived');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to archive category: ' + error.message);
+    },
+  });
+}
+
+/**
+ * Restore a category and its services
+ */
+export function useRestoreCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ categoryId, categoryName }: { categoryId: string; categoryName: string }) => {
+      // Restore the category
+      const { error: catError } = await supabase
+        .from('service_category_colors')
+        .update({ is_archived: false, archived_at: null } as any)
+        .eq('id', categoryId);
+      if (catError) throw catError;
+
+      // Restore all services in this category
+      const { error: svcError } = await supabase
+        .from('services')
+        .update({ is_archived: false, archived_at: null } as any)
+        .eq('category', categoryName);
+      if (svcError) throw svcError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-category-colors'] });
+      queryClient.invalidateQueries({ queryKey: ['service-category-colors-archived'] });
+      queryClient.invalidateQueries({ queryKey: ['services-data'] });
+      queryClient.invalidateQueries({ queryKey: ['services-archived'] });
+      toast.success('Category and its services restored');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to restore category: ' + error.message);
     },
   });
 }

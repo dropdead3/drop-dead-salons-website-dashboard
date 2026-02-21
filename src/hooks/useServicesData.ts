@@ -44,6 +44,7 @@ export function useServicesData(locationId?: string, organizationId?: string) {
         .from('services')
         .select('*')
         .eq('is_active', true)
+        .eq('is_archived', false)
         .order('category')
         .order('name');
 
@@ -90,6 +91,7 @@ export function useAllServicesData() {
         .from('services')
         .select('*')
         .eq('is_active', true)
+        .eq('is_archived', false)
         .order('category')
         .order('name');
       
@@ -287,6 +289,7 @@ export function useServiceCategories(locationId?: string) {
         .from('services')
         .select('category')
         .eq('is_active', true)
+        .eq('is_archived', false)
         .not('category', 'is', null);
 
       if (locationId) {
@@ -299,6 +302,108 @@ export function useServiceCategories(locationId?: string) {
       // Get unique categories
       const categories = [...new Set(data?.map(s => s.category).filter(Boolean) || [])];
       return categories.sort();
+    },
+  });
+}
+
+/**
+ * Fetch archived services
+ */
+export function useArchivedServices(organizationId?: string) {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = organizationId || effectiveOrganization?.id;
+
+  return useQuery({
+    queryKey: ['services-archived', orgId],
+    queryFn: async () => {
+      let query = supabase
+        .from('services')
+        .select('*')
+        .eq('is_archived', true)
+        .order('archived_at', { ascending: false });
+
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as Service[];
+    },
+  });
+}
+
+/**
+ * Archive a service (soft-archive, not delete)
+ */
+export function useArchiveService() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (serviceId: string) => {
+      const { error } = await supabase
+        .from('services')
+        .update({ is_archived: true, archived_at: new Date().toISOString() } as any)
+        .eq('id', serviceId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['services-data'] });
+      queryClient.invalidateQueries({ queryKey: ['services-archived'] });
+      toast.success('Service archived');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to archive service: ' + error.message);
+    },
+  });
+}
+
+/**
+ * Restore an archived service
+ */
+export function useRestoreService() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (serviceId: string) => {
+      const { error } = await supabase
+        .from('services')
+        .update({ is_archived: false, archived_at: null } as any)
+        .eq('id', serviceId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['services-data'] });
+      queryClient.invalidateQueries({ queryKey: ['services-archived'] });
+      toast.success('Service restored');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to restore service: ' + error.message);
+    },
+  });
+}
+
+/**
+ * Permanently delete a service (only for primary owner)
+ */
+export function usePermanentlyDeleteService() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (serviceId: string) => {
+      const { error } = await supabase
+        .from('services')
+        .delete()
+        .eq('id', serviceId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['services-data'] });
+      queryClient.invalidateQueries({ queryKey: ['services-archived'] });
+      toast.success('Service permanently deleted');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to delete service: ' + error.message);
     },
   });
 }
