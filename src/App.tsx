@@ -202,7 +202,7 @@ const App = () => (
                 <ViewAsProvider>
                   <HideNumbersProvider>
                     <SoundSettingsProvider>
-                      <TooltipProvider>
+                      <TooltipProvider delayDuration={0}>
                         <Toaster />
                         <Sonner />
                         <BrowserRouter>
