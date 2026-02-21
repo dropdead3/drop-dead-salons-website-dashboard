@@ -212,7 +212,7 @@ export function ApplicantDetailSheet({
                 <Sparkles className="h-4 w-4" />
                 Why Us?
               </h3>
-              <p className="text-sm">{applicant.why_drop_dead}</p>
+              <p className="text-sm">{applicant.why_join_us}</p>
             </div>
 
             {applicant.message && (
