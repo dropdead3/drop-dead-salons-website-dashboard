@@ -36,6 +36,7 @@ import {
   useSaveStylistLevels,
 } from '@/hooks/useStylistLevels';
 import { TeamCommissionRoster } from './TeamCommissionRoster';
+import { CommissionTiersEditor } from '@/components/dashboard/sales/CommissionTiersEditor';
 
 type LocalStylistLevel = {
   id: string;
@@ -479,6 +480,9 @@ export function StylistLevelsContent() {
       {orgId && dbLevels && dbLevels.length > 0 && (
         <TeamCommissionRoster orgId={orgId} levels={dbLevels} />
       )}
+
+      {/* Commission Tiers (Fallback) */}
+      <CommissionTiersEditor />
     </div>
   );
 }

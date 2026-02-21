@@ -23,8 +23,7 @@ import { EmployeePayrollList } from '@/components/dashboard/payroll/EmployeePayr
 import { PayScheduleCard } from '@/components/dashboard/payroll/PayScheduleCard';
 import { RunPayrollWizard } from '@/components/dashboard/payroll/RunPayrollWizard';
 import { PayrollOverview } from '@/components/dashboard/payroll/PayrollOverview';
-import { CommissionInsights } from '@/components/dashboard/payroll/CommissionInsights';
-import { CommissionTiersEditor } from '@/components/dashboard/sales/CommissionTiersEditor';
+import { CommissionIntelligence } from '@/components/dashboard/payroll/CommissionIntelligence';
 import { NewHireWizardContent } from '@/components/dashboard/payroll/NewHireWizardContent';
 import { PayrollReminderSettings } from '@/components/dashboard/payroll/PayrollReminderSettings';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -190,10 +189,7 @@ export default function Payroll() {
               </TabsContent>
 
               <TabsContent value="commissions">
-                <div className="space-y-6">
-                  <CommissionInsights />
-                  <CommissionTiersEditor />
-                </div>
+                <CommissionIntelligence />
               </TabsContent>
 
               <TabsContent value="settings">
