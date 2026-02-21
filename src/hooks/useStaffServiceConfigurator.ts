@@ -120,7 +120,7 @@ export function useActiveStylists(organizationId: string | undefined, locationId
       // 2. Fetch employee profiles filtered to those user_ids
       let query = supabase
         .from('employee_profiles')
-        .select('user_id, display_name, full_name, photo_url, location_id')
+        .select('user_id, display_name, full_name, photo_url, location_id, is_booking')
         .eq('organization_id', organizationId)
         .eq('is_active', true)
         .eq('is_approved', true)
