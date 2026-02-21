@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck } from 'lucide-react';
+import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck, Sparkles } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
@@ -63,9 +66,25 @@ export function CheckoutSummarySheet({
   const { formatCurrency, currency } = useFormatCurrency();
   const { formatDate: formatDateLocale } = useFormatDate();
 
+  // Fetch add-on events for this appointment
+  const { data: addonEvents = [] } = useQuery({
+    queryKey: ['checkout-addon-events', appointment?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('booking_addon_events' as any)
+        .select('addon_name, addon_price, addon_cost, status')
+        .eq('appointment_id', appointment!.id)
+        .eq('status', 'accepted');
+      if (error) return [];
+      return (data || []) as unknown as { addon_name: string; addon_price: number; addon_cost: number | null; status: string }[];
+    },
+    enabled: !!appointment?.id && open,
+  });
+
   if (!appointment) return null;
 
-  const subtotal = appointment.total_price || 0;
+  const addonTotal = addonEvents.reduce((sum, e) => sum + (e.addon_price || 0), 0);
+  const subtotal = (appointment.total_price || 0);
   const discount = appliedPromo?.calculated_discount || 0;
   const discountedSubtotal = subtotal - discount;
   const tax = discountedSubtotal * taxRate;
@@ -360,6 +379,48 @@ export function CheckoutSummarySheet({
               )}
             </div>
           </div>
+
+          {/* Add-On Breakdown */}
+          {addonEvents.length > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Add-Ons
+                </h3>
+                <div className="space-y-1.5">
+                  {addonEvents.map((event, idx) => {
+                    const margin = event.addon_cost != null && event.addon_price > 0
+                      ? Math.round(((event.addon_price - event.addon_cost) / event.addon_price) * 100)
+                      : null;
+                    return (
+                      <div key={idx} className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <span>{event.addon_name}</span>
+                          {margin != null && (
+                            <span className={cn(
+                              'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
+                              margin >= 50 ? 'text-emerald-600 bg-emerald-500/10' :
+                              margin >= 30 ? 'text-amber-600 bg-amber-500/10' :
+                              'text-red-600 bg-red-500/10'
+                            )}>
+                              {margin}%
+                            </span>
+                          )}
+                        </div>
+                        <span className="font-medium">{formatCurrency(event.addon_price)}</span>
+                      </div>
+                    );
+                  })}
+                  <div className="flex justify-between text-sm pt-1 border-t border-border/50">
+                    <span className="text-muted-foreground">Add-On Subtotal</span>
+                    <span className="font-medium">{formatCurrency(addonTotal)}</span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
 
           <Separator />
 

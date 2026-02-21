@@ -1163,14 +1163,21 @@ export function QuickBookingPopover({
               categoryName={selectedCategory || ''}
               suggestions={addonSuggestions}
               onAdd={(addonId) => {
-                // Find matching Phorest service by name to add to booking
                 const addon = addonSuggestions.find(a => a.id === addonId);
                 if (addon) {
-                  const matchedService = services.find(s => s.name === addon.name);
+                  // Try linked_service_id first, then fall back to name-matching
+                  let matchedService = addon.linked_service_id
+                    ? services.find(s => s.phorest_service_id === addon.linked_service_id)
+                    : null;
+                  if (!matchedService) {
+                    matchedService = services.find(s => s.name === addon.name);
+                  }
                   if (matchedService) {
                     handleServiceToggle(matchedService.phorest_service_id);
+                  } else {
+                    toast.warning(`Could not find matching service for "${addon.name}"`);
                   }
-                  // Record add-on acceptance event for per-stylist analytics
+                  // Record add-on acceptance event
                   const effectiveStylistId = preSelectedStylistId || selectedStylist;
                   if (effectiveOrganization?.id && effectiveStylistId) {
                     supabase.from('booking_addon_events' as any).insert({
@@ -1180,6 +1187,7 @@ export function QuickBookingPopover({
                       addon_name: addon.name,
                       addon_price: addon.price,
                       addon_cost: addon.cost,
+                      status: 'accepted',
                     });
                   }
                 }
@@ -1191,6 +1199,20 @@ export function QuickBookingPopover({
                 setShowAddonToast(false);
                 if (selectedCategory) {
                   setDismissedAddonCategories(prev => new Set(prev).add(selectedCategory));
+                }
+                // Log dismissed suggestions for attachment rate tracking
+                const effectiveStylistId = preSelectedStylistId || selectedStylist;
+                if (effectiveOrganization?.id && effectiveStylistId && addonSuggestions.length > 0) {
+                  const dismissEvents = addonSuggestions.map(addon => ({
+                    organization_id: effectiveOrganization.id,
+                    staff_user_id: effectiveStylistId,
+                    addon_id: addon.id,
+                    addon_name: addon.name,
+                    addon_price: addon.price,
+                    addon_cost: addon.cost,
+                    status: 'dismissed',
+                  }));
+                  supabase.from('booking_addon_events' as any).insert(dismissEvents);
                 }
               }}
             />

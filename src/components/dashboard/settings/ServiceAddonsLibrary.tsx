@@ -7,11 +7,13 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2, Package, Check, X, Clock } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, Check, X, Clock, Link2, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useServiceAddons, useCreateServiceAddon, useUpdateServiceAddon, useDeleteServiceAddon, type ServiceAddon } from '@/hooks/useServiceAddons';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useAllServicesByCategory } from '@/hooks/usePhorestServices';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface ServiceAddonsLibraryProps {
   organizationId: string;
@@ -36,12 +38,14 @@ export function ServiceAddonsLibrary({ organizationId }: ServiceAddonsLibraryPro
   const { formatCurrency } = useFormatCurrency();
 
   // Form state
+  const { services = [] } = useAllServicesByCategory();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [cost, setCost] = useState('');
   const [duration, setDuration] = useState('');
+  const [linkedServiceId, setLinkedServiceId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const resetForm = () => {
@@ -51,6 +55,7 @@ export function ServiceAddonsLibrary({ organizationId }: ServiceAddonsLibraryPro
     setPrice('');
     setCost('');
     setDuration('');
+    setLinkedServiceId(null);
   };
 
   const startEdit = (addon: ServiceAddon) => {
@@ -59,6 +64,7 @@ export function ServiceAddonsLibrary({ organizationId }: ServiceAddonsLibraryPro
     setPrice(String(addon.price));
     setCost(addon.cost != null ? String(addon.cost) : '');
     setDuration(addon.duration_minutes != null ? String(addon.duration_minutes) : '');
+    setLinkedServiceId(addon.linked_service_id || null);
     setShowForm(false);
   };
 
@@ -69,6 +75,7 @@ export function ServiceAddonsLibrary({ organizationId }: ServiceAddonsLibraryPro
       price: parseFloat(price),
       cost: cost ? parseFloat(cost) : null,
       duration_minutes: duration ? parseInt(duration) : null,
+      linked_service_id: linkedServiceId || null,
     };
 
     if (editingId) {
@@ -143,6 +150,38 @@ export function ServiceAddonsLibrary({ organizationId }: ServiceAddonsLibraryPro
                   <MarginBadge margin={computeMargin(parseFloat(price) || 0, parseFloat(cost) || null)} />
                 )}
               </div>
+              {/* Linked Service Picker */}
+              <div className="col-span-2">
+                <Select value={linkedServiceId || '_none'} onValueChange={v => setLinkedServiceId(v === '_none' ? null : v)}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <div className="flex items-center gap-1.5">
+                      <Link2 className="h-3 w-3 text-muted-foreground" />
+                      <SelectValue placeholder="Link to service (optional)" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">No linked service</SelectItem>
+                    {services.map(s => (
+                      <SelectItem key={s.phorest_service_id} value={s.phorest_service_id}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {/* Duration mismatch warning */}
+              {linkedServiceId && duration && (() => {
+                const linkedSvc = services.find(s => s.phorest_service_id === linkedServiceId);
+                if (linkedSvc && linkedSvc.duration_minutes !== parseInt(duration)) {
+                  return (
+                    <div className="col-span-2 flex items-center gap-1.5 text-[11px] text-amber-600">
+                      <AlertTriangle className="h-3 w-3" />
+                      Duration ({duration}m) differs from linked service ({linkedSvc.duration_minutes}m)
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
             <div className="flex items-center gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={resetForm}>Cancel</Button>
@@ -177,6 +216,36 @@ export function ServiceAddonsLibrary({ organizationId }: ServiceAddonsLibraryPro
                     <div className="flex items-center">
                       {cost && price && <MarginBadge margin={computeMargin(parseFloat(price) || 0, parseFloat(cost) || null)} />}
                     </div>
+                    <div className="col-span-2">
+                      <Select value={linkedServiceId || '_none'} onValueChange={v => setLinkedServiceId(v === '_none' ? null : v)}>
+                        <SelectTrigger className="h-9 text-sm">
+                          <div className="flex items-center gap-1.5">
+                            <Link2 className="h-3 w-3 text-muted-foreground" />
+                            <SelectValue placeholder="Link to service (optional)" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="_none">No linked service</SelectItem>
+                          {services.map(s => (
+                            <SelectItem key={s.phorest_service_id} value={s.phorest_service_id}>
+                              {s.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {linkedServiceId && duration && (() => {
+                      const linkedSvc = services.find(s => s.phorest_service_id === linkedServiceId);
+                      if (linkedSvc && linkedSvc.duration_minutes !== parseInt(duration)) {
+                        return (
+                          <div className="col-span-2 flex items-center gap-1.5 text-[11px] text-amber-600">
+                            <AlertTriangle className="h-3 w-3" />
+                            Duration ({duration}m) differs from linked service ({linkedSvc.duration_minutes}m)
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                   <div className="flex items-center gap-2 justify-end">
                     <Button size="sm" variant="ghost" onClick={resetForm}>Cancel</Button>
@@ -203,6 +272,12 @@ export function ServiceAddonsLibrary({ organizationId }: ServiceAddonsLibraryPro
                       <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
                         <Clock className="h-3 w-3" />
                         {addon.duration_minutes}m
+                      </span>
+                    )}
+                    {addon.linked_service_id && (
+                      <span className="flex items-center gap-0.5 text-[11px] text-primary/70">
+                        <Link2 className="h-3 w-3" />
+                        Linked
                       </span>
                     )}
                   </div>
