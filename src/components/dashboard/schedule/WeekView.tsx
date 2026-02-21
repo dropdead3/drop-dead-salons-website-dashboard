@@ -430,7 +430,7 @@ export function WeekView({
           {/* Time Grid */}
           <div className="grid grid-cols-[70px_repeat(7,1fr)] relative">
             {/* Time Labels Column */}
-            <div className="relative bg-muted/10">
+            <div className="relative bg-sidebar">
               {timeSlots.map((slot, index) => (
                 <div 
                   key={`${slot.hour}-${slot.minute}`}
