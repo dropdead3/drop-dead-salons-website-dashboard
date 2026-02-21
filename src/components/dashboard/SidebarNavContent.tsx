@@ -11,8 +11,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils';
 import { ExternalLink, Rocket, TrendingUp, Users, LayoutGrid, Briefcase, ArrowLeft, Shield, FlaskConical, PanelLeftClose, ChevronRight } from 'lucide-react';
 import { NavBadge } from './NavBadge';
-import Logo from '@/assets/drop-dead-logo.svg';
-import LogoWhite from '@/assets/drop-dead-logo-white.svg';
+import Logo from '@/assets/dd-secondary-logo.svg';
+import LogoWhite from '@/assets/dd-secondary-logo-white.svg';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
 import { SidebarGreeting } from './SidebarGreeting';
 import { SidebarSyncStatusWidget } from './SidebarSyncStatusWidget';

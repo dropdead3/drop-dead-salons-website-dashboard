@@ -142,7 +142,7 @@ function ServiceCard({
           </div>
           {isConsultation && (
             <a
-              href="https://drop-dead-gorgeous-az.square.site"
+              href="#book-consult"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground text-xs font-display tracking-[0.1em] uppercase rounded-full transition-all duration-300 hover:bg-primary/90 hover:scale-[1.02]"
@@ -374,7 +374,7 @@ export default function Services() {
                 All new clients must request a <span className="text-foreground font-medium">New-Client Consultation</span> to match you with the stylist most skilled for your desired service — and to understand your current look and how to best achieve your vision.
               </p>
               <a
-                href="https://drop-dead-gorgeous-az.square.site"
+                href="#book-consult"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 font-display text-xs tracking-[0.15em] uppercase text-primary hover:text-primary/80 transition-colors"

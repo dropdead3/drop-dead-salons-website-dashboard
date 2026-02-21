@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ArrowRight, ChevronDown, MoreHorizontal, UserRound } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import Logo from "@/assets/drop-dead-logo.svg";
+import Logo from "@/assets/dd-secondary-logo.svg";
 import LogoIcon from "@/assets/dd-secondary-logo.svg";
 import { cn } from "@/lib/utils";
 import { useAnnouncementBarSettings } from "@/hooks/useAnnouncementBar";
@@ -295,7 +295,7 @@ export function Header() {
                 {/* Primary Logo - shows when not scrolled OR scrolling up (desktop only for transition) */}
                 <img
                   src={Logo}
-                  alt="Drop Dead"
+                  alt="Salon"
                   style={{ 
                     opacity: !isScrolledDesktop || isScrollingUp ? 1 : 0,
                     transform: !isScrolledDesktop || isScrollingUp ? "scale(1)" : "scale(0.95)",
@@ -309,7 +309,7 @@ export function Header() {
                 {/* Secondary Logo - shows when scrolled AND scrolling down (desktop only) */}
                 <img
                   src={LogoIcon}
-                  alt="Drop Dead"
+                  alt="Salon"
                   style={{ 
                     opacity: isScrolledDesktop && !isScrollingUp ? 1 : 0,
                     transform: isScrolledDesktop && !isScrollingUp ? "scale(1)" : "scale(0.95)",

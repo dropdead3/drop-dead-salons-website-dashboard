@@ -117,7 +117,7 @@ export function SmsTemplateEditor({ template, onSave, onCancel, isLoading }: Sms
       appointment_date: 'January 28, 2026',
       appointment_time: '2:30 PM',
       stylist_name: 'Emily',
-      business_name: 'Drop Dead Gorgeous',
+      business_name: 'Your Salon',
     };
     
     return preview.replace(/\{\{(\w+)\}\}/g, (_, key) => sampleData[key] || `[${key}]`);

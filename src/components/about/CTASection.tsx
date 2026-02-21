@@ -17,7 +17,7 @@ export function CTASection() {
           className="max-w-3xl mx-auto text-center"
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-display mb-6">
-            Ready to Experience Drop Dead?
+            Ready to Experience Us?
           </h2>
           <p className="text-lg text-background/70 mb-8 max-w-xl mx-auto">
             Whether you're looking for a subtle refresh or a bold transformation, 

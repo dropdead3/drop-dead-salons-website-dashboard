@@ -68,7 +68,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
-import DropDeadLogo from '@/assets/drop-dead-logo.svg';
+import DropDeadLogo from '@/assets/dd-secondary-logo.svg';
 import { QRCodeFullScreen } from '@/components/dashboard/QRCodeFullScreen';
 import { formatRelativeTime } from '@/lib/format';
 import { ImageWithSkeleton } from '@/components/ui/image-skeleton';
@@ -102,7 +102,7 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
         <div className="bg-gradient-to-r from-[hsl(0,0%,8%)] to-[hsl(0,0%,15%)] py-3 px-4 text-center">
           <ImageWithSkeleton
             src={DropDeadLogo}
-            alt="Drop Dead"
+            alt="Salon"
             className="h-3 w-auto mx-auto invert"
             wrapperClassName="mx-auto"
           />
@@ -129,7 +129,7 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
           </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0 bg-[hsl(0,0%,8%)] px-4 py-1.5 flex items-center justify-center">
-          <p className="text-[7px] text-[hsl(40,30%,55%)] tracking-wide">Powered by Drop Dead Salon Software</p>
+          <p className="text-[7px] text-[hsl(40,30%,55%)] tracking-wide">Powered by Zura</p>
         </div>
       </div>
     </div>
@@ -171,7 +171,7 @@ function QRCodeCard() {
     ctx.fillStyle = '#f8f6f1';
     ctx.font = '500 60px Termina, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('DROP DEAD®', width / 2, headerHeight * 0.5 + 10);
+    ctx.fillText('SALON', width / 2, headerHeight * 0.5 + 10);
     ctx.font = '28px sans-serif';
     ctx.fillStyle = '#a8a090';
     ctx.fillText('STAFF PORTAL', width / 2, headerHeight * 0.5 + 50);
@@ -224,10 +224,10 @@ function QRCodeCard() {
     ctx.fillRect(0, height - footerHeight, width, footerHeight);
     ctx.fillStyle = '#8a8070';
     ctx.font = '28px sans-serif';
-    ctx.fillText('Powered by Drop Dead Salon Software', width / 2, height - footerHeight / 2 + 10);
+    ctx.fillText('Powered by Zura', width / 2, height - footerHeight / 2 + 10);
 
     const link = document.createElement('a');
-    link.download = 'drop-dead-staff-signup-qr.png';
+    link.download = 'staff-signup-qr.png';
     link.href = pdfCanvas.toDataURL('image/png');
     link.click();
   };
@@ -249,7 +249,7 @@ function QRCodeCard() {
         <div className="flex justify-center p-4 bg-gradient-to-b from-[hsl(40,30%,96%)] to-[hsl(35,25%,92%)] rounded-xl">
           <div className="bg-white rounded-lg shadow-lg overflow-hidden relative" style={{ width: '110px', aspectRatio: '8.5/11' }}>
             <div className="bg-gradient-to-r from-[hsl(0,0%,8%)] to-[hsl(0,0%,15%)] py-1 px-2 text-center">
-              <span className="text-[4px] text-[hsl(40,30%,95%)] font-display tracking-wider block">DROP DEAD®</span>
+              <span className="text-[4px] text-[hsl(40,30%,95%)] font-display tracking-wider block">SALON</span>
               <span className="text-[2.5px] text-[hsl(40,30%,70%)] tracking-[0.15em] uppercase block">Staff Portal</span>
             </div>
             <div className="flex flex-col items-center px-2 py-2">
@@ -273,7 +273,7 @@ function QRCodeCard() {
               </div>
             </div>
             <div className="absolute bottom-0 left-0 right-0 bg-[hsl(0,0%,8%)] py-0.5 flex items-center justify-center">
-              <span className="text-[2.5px] text-[hsl(40,30%,55%)]">Powered by Drop Dead Salon Software</span>
+              <span className="text-[2.5px] text-[hsl(40,30%,55%)]">Powered by Zura</span>
             </div>
           </div>
         </div>

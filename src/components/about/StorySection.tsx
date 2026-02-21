@@ -5,7 +5,7 @@ const milestones = [
   {
     year: "2016",
     title: "The Beginning",
-    description: "Drop Dead opens its doors in Gilbert, Arizona with a vision to create an elevated salon experience.",
+    description: "We opened our doors with a vision to create an elevated salon experience.",
   },
   {
     year: "2019",
@@ -15,7 +15,7 @@ const milestones = [
   {
     year: "2021",
     title: "Second Location",
-    description: "We open our Scottsdale studio to bring the Drop Dead experience to more of the Valley.",
+    description: "We opened our second studio to bring the experience to more of the community.",
   },
   {
     year: "2024",

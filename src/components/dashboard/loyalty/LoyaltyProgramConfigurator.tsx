@@ -104,7 +104,7 @@ export function LoyaltyProgramConfigurator({ organizationId }: LoyaltyProgramCon
                 <Input
                   id="program_name"
                   {...register('program_name')}
-                  placeholder="e.g., Drop Dead Rewards"
+                  placeholder="e.g., Salon Rewards"
                 />
               </div>
             </div>

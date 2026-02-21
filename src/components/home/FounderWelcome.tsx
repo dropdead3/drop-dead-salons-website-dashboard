@@ -26,7 +26,7 @@ export function FounderWelcome() {
             >
               <img
                 src={founderHeadshot}
-                alt="Kristi Day, Founder of Drop Dead Salon"
+                alt="Kristi Day, Founder"
                 className="w-36 h-36 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-2xl object-cover"
               />
             </motion.div>
@@ -42,10 +42,10 @@ export function FounderWelcome() {
                 A Note From Our Founder
               </span>
               <h2 className="text-3xl md:text-4xl font-display mb-6">
-                Welcome to Drop Dead
+                Welcome to Our Salon
               </h2>
               <p className="text-foreground/70 text-lg leading-relaxed mb-6">
-                When I opened Drop Dead Salon, my vision was simple: create a space where artistry meets authenticity. 
+                When I opened our salon, my vision was simple: create a space where artistry meets authenticity. 
                 A place where you can walk in feeling like yourself and leave feeling like the best version of yourself.
               </p>
               <p className="text-foreground/70 text-lg leading-relaxed mb-8">

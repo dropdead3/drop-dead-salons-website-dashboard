@@ -9,9 +9,9 @@ import { BeforeAfterSlider } from "./BeforeAfterSlider";
 const services = [
   {
     category: "Extensions",
-    title: "Drop Dead® Extensions",
+    title: "Premium Extensions",
     price: "Clients typically spend $1,200 - $3,500",
-    description: "Drop Dead salons specialize in seamless, high-quality extensions utilizing both our proprietary hand-tied and tape-in methods for natural volume transformations.",
+    description: "We specialize in seamless, high-quality extensions utilizing both proprietary hand-tied and tape-in methods for natural volume transformations.",
   },
   {
     category: "Color Services",

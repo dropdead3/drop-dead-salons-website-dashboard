@@ -84,15 +84,15 @@ import { useSignaturePresets, SignatureConfig } from '@/hooks/useSignaturePreset
 import { SignaturePresetActions } from './SignaturePresetActions';
 
 // Import brand logos - black versions
-import dropDeadLogo from '@/assets/drop-dead-logo.svg';
-import ddSecondaryLogo from '@/assets/dd-secondary-logo.svg';
-import dd75Icon from '@/assets/dd75-icon.svg';
-import dd75Logo from '@/assets/dd75-logo.svg';
+import brandLogoPrimary from '@/assets/drop-dead-logo.svg';
+import brandLogoSecondary from '@/assets/dd-secondary-logo.svg';
+import brandIcon from '@/assets/dd75-icon.svg';
+import brandWordmark from '@/assets/dd75-logo.svg';
 // Import brand logos - white versions
-import dropDeadLogoWhite from '@/assets/drop-dead-logo-white.svg';
-import ddSecondaryLogoWhite from '@/assets/dd-secondary-logo-white.svg';
-import dd75IconWhite from '@/assets/dd75-icon-white.svg';
-import dd75LogoWhite from '@/assets/dd75-logo-white.svg';
+import brandLogoPrimaryWhite from '@/assets/drop-dead-logo-white.svg';
+import brandLogoSecondaryWhite from '@/assets/dd-secondary-logo-white.svg';
+import brandIconWhite from '@/assets/dd75-icon-white.svg';
+import brandWordmarkWhite from '@/assets/dd75-logo-white.svg';
 
 // Brand logo presets
 type LogoVariant = 'black' | 'white';
@@ -107,72 +107,72 @@ interface BrandLogo {
 }
 
 const brandLogos: BrandLogo[] = [
-  // Drop Dead Logo variants
+  // Primary Logo variants
   {
     id: 'drop-dead-main-black',
     baseId: 'drop-dead-main',
-    name: 'Drop Dead Logo',
-    src: dropDeadLogo,
+    name: 'Primary Logo',
+    src: brandLogoPrimary,
     description: 'Primary wordmark logo',
     variant: 'black',
   },
   {
     id: 'drop-dead-main-white',
     baseId: 'drop-dead-main',
-    name: 'Drop Dead Logo',
-    src: dropDeadLogoWhite,
+    name: 'Primary Logo',
+    src: brandLogoPrimaryWhite,
     description: 'Primary wordmark logo',
     variant: 'white',
   },
-  // DD Secondary variants
+  // Secondary Logo variants
   {
     id: 'dd-secondary-black',
     baseId: 'dd-secondary',
-    name: 'DD Secondary',
-    src: ddSecondaryLogo,
+    name: 'Secondary Logo',
+    src: brandLogoSecondary,
     description: 'Secondary icon logo',
     variant: 'black',
   },
   {
     id: 'dd-secondary-white',
     baseId: 'dd-secondary',
-    name: 'DD Secondary',
-    src: ddSecondaryLogoWhite,
+    name: 'Secondary Logo',
+    src: brandLogoSecondaryWhite,
     description: 'Secondary icon logo',
     variant: 'white',
   },
-  // DD75 Icon variants
+  // Icon variants
   {
     id: 'dd75-icon-black',
     baseId: 'dd75-icon',
-    name: 'DD75 Icon',
-    src: dd75Icon,
+    name: 'Brand Icon',
+    src: brandIcon,
     description: 'Circular icon mark',
     variant: 'black',
   },
   {
     id: 'dd75-icon-white',
     baseId: 'dd75-icon',
-    name: 'DD75 Icon',
-    src: dd75IconWhite,
+    name: 'Brand Icon',
+    src: brandIconWhite,
     description: 'Circular icon mark',
     variant: 'white',
   },
-  // DD75 Logo variants
+  // Wordmark variants
   {
     id: 'dd75-logo-black',
     baseId: 'dd75-logo',
-    name: 'DD75 Logo',
-    src: dd75Logo,
-    description: 'DD75 wordmark',
+    name: 'Brand Wordmark',
+    src: brandWordmark,
+    description: 'Brand wordmark',
     variant: 'black',
   },
   {
     id: 'dd75-logo-white',
     baseId: 'dd75-logo',
-    name: 'DD75 Logo',
-    src: dd75LogoWhite,
-    description: 'DD75 wordmark',
+    name: 'Brand Wordmark',
+    src: brandWordmarkWhite,
+    description: 'Brand wordmark',
     variant: 'white',
   },
 ];
@@ -370,8 +370,8 @@ interface EmailTheme {
 
 const emailThemes: EmailTheme[] = [
   {
-    id: 'drop-dead-premium',
-    name: 'Drop Dead Premium',
+    id: 'premium-dark',
+    name: 'Premium Dark',
     description: 'Signature black, cream & oat luxury palette',
     category: ['luxury', 'dark', 'warm'],
     colors: {
@@ -722,7 +722,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         </div>`;
       }
       case 'footer': {
-        const defaultFooterConfig = { showLogo: true, logoId: 'drop-dead-main-white', showSocialIcons: true, copyrightText: '© 2026 Drop Dead Salons. All rights reserved.', logoSize: 'large' as const, logoPosition: 'center' as const };
+        const defaultFooterConfig = { showLogo: true, logoId: 'drop-dead-main-white', showSocialIcons: true, copyrightText: '© 2026 All rights reserved.', logoSize: 'large' as const, logoPosition: 'center' as const };
         const footerConfig = block.footerConfig ? { ...defaultFooterConfig, ...block.footerConfig } : defaultFooterConfig;
         const logoId = (footerConfig.logoId && footerConfig.logoId.length > 0) ? footerConfig.logoId : 'drop-dead-main-white';
         const logo = getLogoById(logoId) || brandLogos.find(l => l.variant === 'white') || brandLogos[0];
@@ -1047,7 +1047,7 @@ ${blockHtml}
 
 export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTemplateEditorProps>(
   function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onHtmlChange, onBlocksChange }, ref) {
-  const defaultTheme = emailThemes[0]; // Drop Dead Standard
+  const defaultTheme = emailThemes[0]; // Premium Dark
   
   const getInitialBlocks = (): EmailBlock[] => {
     // If we have saved blocks, use them directly
@@ -1143,7 +1143,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
           logoSize: 'large' as const,
           logoPosition: 'center' as const,
           showSocialIcons: true,
-          copyrightText: '© 2026 Drop Dead Salons. All rights reserved.',
+          copyrightText: '© 2026 All rights reserved.',
         }
       },
     ];
@@ -1676,7 +1676,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
           logoSize: 'large' as const,
           logoPosition: 'center' as const,
           showSocialIcons: true,
-          copyrightText: '© 2026 Drop Dead Salons. All rights reserved.',
+          copyrightText: '© 2026 All rights reserved.',
         }
       }),
       ...(type === 'header' && {
@@ -3780,7 +3780,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         logoSize: 'large' as const, 
                         logoPosition: 'center' as const, 
                         showSocialIcons: true, 
-                        copyrightText: '© 2026 Drop Dead Salons. All rights reserved.' 
+                        copyrightText: '© 2026 All rights reserved.' 
                       };
                       const footerConfig = { ...defaultConfig, ...selectedBlock.footerConfig };
                       
@@ -5533,7 +5533,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           );
                         })()}
                         {block.type === 'footer' && (() => {
-                          const defaultFooterConfig = { showLogo: true, logoId: 'drop-dead-main-white', logoSize: 'large' as const, logoPosition: 'center' as const, showSocialIcons: true, copyrightText: '© 2026 Drop Dead Salons. All rights reserved.' };
+                          const defaultFooterConfig = { showLogo: true, logoId: 'drop-dead-main-white', logoSize: 'large' as const, logoPosition: 'center' as const, showSocialIcons: true, copyrightText: '© 2026 All rights reserved.' };
                           const footerConfig = block.footerConfig ? { ...defaultFooterConfig, ...block.footerConfig } : defaultFooterConfig;
                           // Ensure logoId is never empty/undefined
                           const logoId = (footerConfig.logoId && footerConfig.logoId.length > 0) ? footerConfig.logoId : 'drop-dead-main-white';

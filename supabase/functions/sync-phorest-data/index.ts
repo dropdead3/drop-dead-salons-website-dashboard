@@ -232,7 +232,7 @@ async function syncAppointments(
     locations?.forEach((loc: any) => {
       // Map various name formats to location ID
       locationMap.set(loc.name.toLowerCase(), loc.id);
-      // Also try extracting location from Phorest branch name format: "Drop Dead Hair Studio (North Mesa)"
+      // Also try extracting location from Phorest branch name format: "Salon Name (North Mesa)"
       if (loc.name.toLowerCase().includes('mesa')) {
         locationMap.set('north mesa', loc.id);
         locationMap.set('mesa', loc.id);
@@ -293,7 +293,7 @@ async function syncAppointments(
       // Map Phorest branch name to location ID
       let locationId: string | null = null;
       if (apt.branchName) {
-        // Try to extract location from branch name like "Drop Dead Hair Studio (North Mesa)"
+        // Try to extract location from branch name like "Salon Name (North Mesa)"
         const match = apt.branchName.match(/\(([^)]+)\)/);
         if (match) {
           const extractedName = match[1].toLowerCase();
