@@ -6,10 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, Users, UserCheck } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, Users, UserCheck, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useUndoToast } from '@/hooks/useUndoToast';
+import { useActiveLocations } from '@/hooks/useLocations';
 import {
   useStaffQualifications,
   useToggleServiceQualification,
@@ -19,6 +21,8 @@ import {
 import type { Service } from '@/hooks/useServicesData';
 import type { ServiceCategoryColor } from '@/hooks/useServiceCategoryColors';
 
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
 interface Props {
   organizationId: string;
   categories: ServiceCategoryColor[];
@@ -27,11 +31,41 @@ interface Props {
 
 export function StaffServiceConfiguratorCard({ organizationId, categories, servicesByCategory }: Props) {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
-  const { data: stylists, isLoading: stylistsLoading } = useActiveStylists(organizationId);
+  const [locationFilter, setLocationFilter] = useState<string>('all');
+  const [letterFilter, setLetterFilter] = useState<string | null>(null);
+
+  const { data: locations = [] } = useActiveLocations();
+  const { data: stylists, isLoading: stylistsLoading } = useActiveStylists(organizationId, locationFilter);
   const { data: qualifications, isLoading: qualsLoading } = useStaffQualifications(selectedUserId || undefined);
   const toggleService = useToggleServiceQualification();
   const bulkToggle = useBulkToggleCategoryQualifications();
   const showUndoToast = useUndoToast();
+
+  // Client-side letter filter
+  const filteredStylists = useMemo(() => {
+    if (!stylists) return [];
+    if (!letterFilter) return stylists;
+    return stylists.filter(s => {
+      const name = (s.display_name || s.full_name || '').trim();
+      return name.length > 0 && name[0].toUpperCase() === letterFilter;
+    });
+  }, [stylists, letterFilter]);
+
+  // Letters that have matching stylists (for highlighting)
+  const availableLetters = useMemo(() => {
+    const set = new Set<string>();
+    stylists?.forEach(s => {
+      const name = (s.display_name || s.full_name || '').trim();
+      if (name.length > 0) set.add(name[0].toUpperCase());
+    });
+    return set;
+  }, [stylists]);
+
+  // Reset selected user when filters change and they're no longer in list
+  const selectedStillVisible = filteredStylists.some(s => s.user_id === selectedUserId);
+  if (selectedUserId && filteredStylists.length > 0 && !selectedStillVisible && !stylistsLoading) {
+    // Don't reset during loading
+  }
 
   // Build a set of service IDs that are explicitly deactivated
   const deactivatedServiceIds = useMemo(() => {
@@ -42,7 +76,6 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
     return set;
   }, [qualifications]);
 
-  // Build set of explicitly activated service IDs (has a row with is_active=true)
   const activatedServiceIds = useMemo(() => {
     const set = new Set<string>();
     qualifications?.forEach(q => {
@@ -53,13 +86,10 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
 
   const hasAnyQualifications = (qualifications?.length || 0) > 0;
 
-  // Determine if a service is "checked" (qualified)
-  // Default: if no qualifications exist for this stylist, all services are available
   const isServiceChecked = (serviceId: string): boolean => {
-    if (!hasAnyQualifications) return true; // graceful fallback
+    if (!hasAnyQualifications) return true;
     if (deactivatedServiceIds.has(serviceId)) return false;
     if (activatedServiceIds.has(serviceId)) return true;
-    // No row exists — default to available
     return true;
   };
 
@@ -93,7 +123,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
     const services = servicesByCategory[categoryName] || [];
     if (services.length === 0) return;
     const state = getCategoryCheckState(categoryName);
-    const newActive = state !== 'all'; // if all checked, deactivate all; otherwise activate all
+    const newActive = state !== 'all';
     const serviceIds = services.map(s => s.id);
     bulkToggle.mutate(
       { userId: selectedUserId, serviceIds, isActive: newActive },
@@ -108,49 +138,106 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
     );
   };
 
-  const selectedStylist = stylists?.find(s => s.user_id === selectedUserId);
-
   return (
     <Card className="lg:col-span-2">
-      <CardHeader>
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <UserCheck className="w-5 h-5 text-primary" />
             <CardTitle className={tokens.heading.section}>STYLIST SERVICE ASSIGNMENTS</CardTitle>
           </div>
+          {stylists && stylists.length > 0 && (
+            <Badge variant="outline" className="text-xs font-normal">
+              {filteredStylists.length} stylist{filteredStylists.length !== 1 ? 's' : ''}
+            </Badge>
+          )}
         </div>
         <CardDescription>
-          Control which services each stylist is qualified to perform. This affects what can be booked for them.
+          Control which services each stylist is qualified to perform.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Stylist selector */}
-        <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-          <SelectTrigger className="w-full max-w-sm">
-            <SelectValue placeholder="Select a team member…" />
-          </SelectTrigger>
-          <SelectContent>
-            {stylistsLoading ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="w-4 h-4 animate-spin" />
-              </div>
-            ) : (
-              stylists?.map(s => (
-                <SelectItem key={s.user_id} value={s.user_id}>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="w-5 h-5">
-                      <AvatarImage src={s.photo_url || undefined} />
-                      <AvatarFallback className="text-[9px]">
-                        {(s.display_name || s.full_name || '?').charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>{s.display_name || s.full_name || 'Unnamed'}</span>
-                  </div>
-                </SelectItem>
-              ))
-            )}
-          </SelectContent>
-        </Select>
+      <CardContent className="space-y-3">
+        {/* Filter bar */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          {/* Location filter */}
+          <Select value={locationFilter} onValueChange={(v) => { setLocationFilter(v); setSelectedUserId(''); }}>
+            <SelectTrigger className="w-full sm:w-48">
+              <MapPin className="w-3.5 h-3.5 mr-1.5 text-muted-foreground shrink-0" />
+              <SelectValue placeholder="All Locations" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Locations</SelectItem>
+              {locations.map(loc => (
+                <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Stylist selector */}
+          <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+            <SelectTrigger className="w-full sm:flex-1">
+              <SelectValue placeholder="Select a team member…" />
+            </SelectTrigger>
+            <SelectContent>
+              {stylistsLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                </div>
+              ) : filteredStylists.length === 0 ? (
+                <div className="py-3 px-4 text-sm text-muted-foreground text-center">
+                  No stylists match filters
+                </div>
+              ) : (
+                filteredStylists.map(s => (
+                  <SelectItem key={s.user_id} value={s.user_id}>
+                    <div className="flex items-center gap-2">
+                      <Avatar className="w-5 h-5">
+                        <AvatarImage src={s.photo_url || undefined} />
+                        <AvatarFallback className="text-[9px]">
+                          {(s.display_name || s.full_name || '?').charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>{s.display_name || s.full_name || 'Unnamed'}</span>
+                    </div>
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* A-Z letter bar */}
+        <div className="flex flex-wrap gap-0.5">
+          {ALPHABET.map(letter => {
+            const hasMatch = availableLetters.has(letter);
+            const isActive = letterFilter === letter;
+            return (
+              <Button
+                key={letter}
+                variant={isActive ? 'default' : 'ghost'}
+                size="sm"
+                className={cn(
+                  'h-7 w-7 p-0 text-xs font-medium rounded-md',
+                  !hasMatch && !isActive && 'text-muted-foreground/30 pointer-events-none',
+                )}
+                disabled={!hasMatch && !isActive}
+                onClick={() => setLetterFilter(isActive ? null : letter)}
+              >
+                {letter}
+              </Button>
+            );
+          })}
+          {letterFilter && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs text-muted-foreground ml-1"
+              onClick={() => setLetterFilter(null)}
+            >
+              Clear
+            </Button>
+          )}
+        </div>
 
         {/* Empty state */}
         {!selectedUserId && (
@@ -188,7 +275,6 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
                     <div className="flex items-center gap-2">
                       <Checkbox
                         checked={checkState === 'all'}
-                        // indeterminate not natively supported by radix, but we can use data attr
                         {...(checkState === 'some' ? { 'data-state': 'indeterminate' as any } : {})}
                         onCheckedChange={() => handleToggleCategory(cat.category_name)}
                         className="ml-1"
