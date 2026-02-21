@@ -222,7 +222,8 @@ export function ServiceAddonsLibrary({ organizationId, categories = [] }: Servic
     };
 
     const onSuccessWithAssignment = (data: any) => {
-      const addonId = data?.id;
+      // Create returns row directly; Update returns { data: row, organizationId }
+      const addonId = editingId || data?.id || data?.data?.id;
       if (addonId && selectedCategoryIds.length > 0) {
         if (selectedCategoryIds.length === 1 && assignMode === 'service' && linkedServiceId) {
           // Single category + specific service
