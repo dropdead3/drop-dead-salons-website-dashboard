@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Phone, Clock, AlertTriangle, XCircle, GripVertical, Users, Repeat, RotateCcw } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
-import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
+import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getGlassCategoryStyle } from '@/utils/categoryColors';
 import { useRescheduleAppointment } from '@/hooks/useRescheduleAppointment';
 import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
 import {
@@ -247,7 +247,7 @@ function AppointmentCard({
           {...(!isDragOverlay ? { ...attributes, ...listeners } : {})}
           className={cn(
             'absolute rounded-sm cursor-pointer transition-all overflow-hidden group',
-            !displayGradient && 'border-l-4',
+            !displayGradient && !document.documentElement.classList.contains('dark') && 'border-l-4',
             !useCategoryColor && !displayGradient && statusColors.bg,
             !useCategoryColor && !displayGradient && statusColors.border,
             !useCategoryColor && !displayGradient && statusColors.text,
@@ -269,11 +269,15 @@ function AppointmentCard({
             ...(displayGradient ? {
               background: displayGradient.background,
               color: displayGradient.textColor,
-            } : useCategoryColor ? {
-              backgroundColor: catColor.bg,
-              color: catColor.text,
-              borderLeftColor: catColor.bg,
-            } : {}),
+            } : useCategoryColor ? (
+              document.documentElement.classList.contains('dark')
+                ? getGlassCategoryStyle(catColor.bg)
+                : {
+                    backgroundColor: catColor.bg,
+                    color: catColor.text,
+                    borderLeftColor: catColor.bg,
+                  }
+            ) : {}),
           }}
           onClick={(e) => {
             // Only fire click if not dragging
