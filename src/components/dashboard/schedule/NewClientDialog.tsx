@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
 import {
   Dialog,
@@ -32,6 +33,9 @@ import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useLocations } from '@/hooks/useLocations';
+import { useDuplicateDetection } from '@/hooks/useDuplicateDetection';
+import { useDebounce } from '@/hooks/use-debounce';
+import { DuplicateDetectionModal } from '@/components/dashboard/clients/DuplicateDetectionModal';
 
 const formatPhoneNumber = (value: string): string => {
   const digits = value.replace(/\D/g, '').slice(0, 10);
@@ -61,7 +65,9 @@ export function NewClientDialog({
   defaultLocationId,
 }: NewClientDialogProps) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { data: locations = [] } = useLocations();
+  const bypassDuplicateCheck = useRef(false);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -69,10 +75,18 @@ export function NewClientDialog({
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [notes, setNotes] = useState('');
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [birthday, setBirthday] = useState<Date | undefined>(undefined);
   const [clientSince, setClientSince] = useState<Date | undefined>(new Date());
   const [locationId, setLocationId] = useState(defaultLocationId || '');
   const [showLocationSelector, setShowLocationSelector] = useState(!defaultLocationId);
+
+  const debouncedEmail = useDebounce(email.trim(), 500);
+  const debouncedPhone = useDebounce(phone.replace(/\D/g, ''), 500);
+  const { data: duplicates = [] } = useDuplicateDetection(
+    debouncedEmail || null,
+    debouncedPhone || null
+  );
 
   const resetForm = () => {
     setFirstName('');
@@ -128,12 +142,37 @@ export function NewClientDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (canSubmit) {
-      createClient.mutate();
+    if (!canSubmit) return;
+
+    if (duplicates.length > 0 && !bypassDuplicateCheck.current) {
+      setShowDuplicateModal(true);
+      return;
     }
+
+    bypassDuplicateCheck.current = false;
+    createClient.mutate();
+  };
+
+  const handleCreateAnyway = () => {
+    setShowDuplicateModal(false);
+    bypassDuplicateCheck.current = true;
+    createClient.mutate();
+  };
+
+  const handleOpenExisting = (clientId: string) => {
+    setShowDuplicateModal(false);
+    onOpenChange(false);
+    navigate(`/dashboard/clients/${clientId}`);
+  };
+
+  const handleStartMerge = (clientId: string) => {
+    setShowDuplicateModal(false);
+    onOpenChange(false);
+    navigate(`/dashboard/admin/merge-clients?preselect=${clientId}`);
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -343,5 +382,15 @@ export function NewClientDialog({
         </form>
       </DialogContent>
     </Dialog>
+
+    <DuplicateDetectionModal
+      open={showDuplicateModal}
+      onOpenChange={setShowDuplicateModal}
+      duplicates={duplicates}
+      onOpenExisting={handleOpenExisting}
+      onStartMerge={handleStartMerge}
+      onCreateAnyway={handleCreateAnyway}
+    />
+    </>
   );
 }
