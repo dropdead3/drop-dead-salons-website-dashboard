@@ -5,6 +5,8 @@ export interface StylistAddonPerformance {
   staffUserId: string;
   displayName: string;
   totalAddons: number;
+  totalDismissed: number;
+  attachmentRate: number; // accepted / (accepted + dismissed) * 100
   avgMarginPct: number;
   highMarginCount: number; // margin >= 50%
   lowMarginCount: number;  // margin < 30%
@@ -18,7 +20,7 @@ export function useStylistAddonAttachment(organizationId?: string, days = 30) {
 
       const { data: events, error } = await supabase
         .from('booking_addon_events' as any)
-        .select('staff_user_id, addon_price, addon_cost')
+        .select('staff_user_id, addon_price, addon_cost, status')
         .eq('organization_id', organizationId!)
         .gte('created_at', since);
 
@@ -26,11 +28,15 @@ export function useStylistAddonAttachment(organizationId?: string, days = 30) {
       if (!events || events.length === 0) return [];
 
       // Group by stylist
-      const byStaff = new Map<string, { prices: number[]; costs: (number | null)[] }>();
+      const byStaff = new Map<string, { prices: number[]; costs: (number | null)[]; dismissed: number }>();
       for (const e of events as any[]) {
-        const entry = byStaff.get(e.staff_user_id) || { prices: [], costs: [] };
-        entry.prices.push(Number(e.addon_price));
-        entry.costs.push(e.addon_cost != null ? Number(e.addon_cost) : null);
+        const entry = byStaff.get(e.staff_user_id) || { prices: [], costs: [], dismissed: 0 };
+        if (e.status === 'dismissed') {
+          entry.dismissed++;
+        } else if (e.status === 'accepted' || !e.status) {
+          entry.prices.push(Number(e.addon_price));
+          entry.costs.push(e.addon_cost != null ? Number(e.addon_cost) : null);
+        }
         byStaff.set(e.staff_user_id, entry);
       }
 
@@ -66,10 +72,14 @@ export function useStylistAddonAttachment(organizationId?: string, days = 30) {
           }
         }
 
+        const accepted = data.prices.length;
+        const totalOpportunities = accepted + data.dismissed;
         results.push({
           staffUserId: staffId,
           displayName: nameMap.get(staffId) || 'Unknown',
-          totalAddons: data.prices.length,
+          totalAddons: accepted,
+          totalDismissed: data.dismissed,
+          attachmentRate: totalOpportunities > 0 ? (accepted / totalOpportunities) * 100 : 0,
           avgMarginPct: marginCount > 0 ? marginSum / marginCount : 0,
           highMarginCount: highMargin,
           lowMarginCount: lowMargin,

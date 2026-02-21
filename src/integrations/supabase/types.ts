@@ -1342,30 +1342,36 @@ export type Database = {
           addon_id: string
           addon_name: string
           addon_price: number
+          appointment_id: string | null
           created_at: string
           id: string
           organization_id: string
           staff_user_id: string
+          status: string
         }
         Insert: {
           addon_cost?: number | null
           addon_id: string
           addon_name: string
           addon_price?: number
+          appointment_id?: string | null
           created_at?: string
           id?: string
           organization_id: string
           staff_user_id: string
+          status?: string
         }
         Update: {
           addon_cost?: number | null
           addon_id?: string
           addon_name?: string
           addon_price?: number
+          appointment_id?: string | null
           created_at?: string
           id?: string
           organization_id?: string
           staff_user_id?: string
+          status?: string
         }
         Relationships: [
           {
@@ -1373,6 +1379,13 @@ export type Database = {
             columns: ["addon_id"]
             isOneToOne: false
             referencedRelation: "service_addons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_addon_events_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_appointments"
             referencedColumns: ["id"]
           },
           {
@@ -13228,6 +13241,7 @@ export type Database = {
           duration_minutes: number | null
           id: string
           is_active: boolean
+          linked_service_id: string | null
           name: string
           organization_id: string
           price: number
@@ -13241,6 +13255,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           is_active?: boolean
+          linked_service_id?: string | null
           name: string
           organization_id: string
           price?: number
@@ -13254,6 +13269,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           is_active?: boolean
+          linked_service_id?: string | null
           name?: string
           organization_id?: string
           price?: number

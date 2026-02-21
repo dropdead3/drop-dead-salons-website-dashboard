@@ -12,6 +12,7 @@ export interface ServiceAddon {
   duration_minutes: number | null;
   is_active: boolean;
   display_order: number;
+  linked_service_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -45,6 +46,7 @@ export function useCreateServiceAddon() {
       cost?: number | null;
       duration_minutes?: number | null;
       description?: string | null;
+      linked_service_id?: string | null;
     }) => {
       const { data, error } = await supabase
         .from('service_addons')
@@ -74,6 +76,7 @@ export function useUpdateServiceAddon() {
       duration_minutes?: number | null;
       description?: string | null;
       is_active?: boolean;
+      linked_service_id?: string | null;
     }) => {
       const { data, error } = await supabase
         .from('service_addons')
