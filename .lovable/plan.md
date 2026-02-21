@@ -1,20 +1,38 @@
 
 
-# Make New Client Dialog Responsive with Scroll
+# Show "No service providers in system yet" when dropdown is empty
 
-## Problem
-The "Add New Client" dialog extends beyond the viewport on smaller screens, cutting off content and the action buttons.
+## What Changes
 
-## Solution
-Add a maximum height constraint to the `DialogContent` and make the form body scrollable while keeping the header and footer buttons always visible.
+In the **New Client Dialog** (`NewClientDialog.tsx`), when the Preferred Stylist dropdown has no service providers (because none exist in the system yet), show a descriptive disabled message instead of only "None."
 
 ## Technical Details
 
 **File:** `src/components/dashboard/schedule/NewClientDialog.tsx`
 
-1. **DialogContent (line 192)**: Add `max-h-[85vh] flex flex-col` to constrain the dialog height to 85% of the viewport and enable flex column layout
-2. **Form element (line 203)**: Add `overflow-y-auto flex-1 min-h-0` so the form fields scroll independently while the header stays pinned above and the footer stays pinned below
-3. **DialogFooter**: Move the Cancel/Create Client buttons outside the scrollable form area (after the closing `</form>` tag) so they remain always visible at the bottom -- or wrap footer in a non-scrolling section
+### Preferred Stylist Select (lines 383-390)
 
-This keeps the dialog title and action buttons always accessible regardless of viewport height, with smooth scrolling for the form fields in between.
+Add a conditional empty-state item inside `SelectContent`:
+
+- When `teamMembers` is empty or undefined, show a disabled `SelectItem` with text: **"No service providers in system yet"**
+- Keep the existing "None" option so users can still explicitly choose no preference
+- The empty-state item will be styled with `text-muted-foreground` and disabled so it's informational only
+
+```
+<SelectContent>
+  <SelectItem value="none">None</SelectItem>
+  {(!teamMembers || teamMembers.length === 0) && (
+    <div className="px-3 py-2 text-sm text-muted-foreground text-center">
+      No service providers in system yet
+    </div>
+  )}
+  {teamMembers?.map(member => (
+    <SelectItem key={member.user_id} value={member.user_id}>
+      {member.display_name || member.full_name}
+    </SelectItem>
+  ))}
+</SelectContent>
+```
+
+This follows the advisory-first copy tone -- informational, not shame-based -- and aligns with existing empty-state patterns used elsewhere in the platform (e.g., WalkInDialog, LeadAssignmentDialog).
 
