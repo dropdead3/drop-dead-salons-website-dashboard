@@ -35,13 +35,7 @@ import {
   useStylistLevels, 
   useSaveStylistLevels,
 } from '@/hooks/useStylistLevels';
-import {
-  useStylistCommissionOverrides,
-  useDeleteCommissionOverride,
-} from '@/hooks/useStylistCommissionOverrides';
-import { CommissionOverrideDialog } from './CommissionOverrideDialog';
-import { StylistLevelAssignments } from './StylistLevelAssignments';
-import type { StylistCommissionOverride } from '@/hooks/useStylistCommissionOverrides';
+import { TeamCommissionRoster } from './TeamCommissionRoster';
 
 type LocalStylistLevel = {
   id: string;
@@ -112,26 +106,8 @@ export function StylistLevelsContent() {
   });
   const orgId = orgData?.organization_id;
 
-  const { data: overrides } = useStylistCommissionOverrides(orgId);
-  const deleteOverride = useDeleteCommissionOverride();
-  const [overrideDialogOpen, setOverrideDialogOpen] = useState(false);
-  const [editingOverride, setEditingOverride] = useState<StylistCommissionOverride | null>(null);
 
-  // Fetch stylist names for overrides display
-  const { data: stylistNames } = useQuery({
-    queryKey: ['stylist-names-for-overrides', orgId],
-    enabled: !!orgId && !!overrides?.length,
-    queryFn: async () => {
-      const userIds = overrides!.map(o => o.user_id);
-      const { data } = await supabase
-        .from('employee_profiles')
-        .select('user_id, display_name, full_name')
-        .in('user_id', userIds);
-      const map: Record<string, string> = {};
-      data?.forEach(s => { map[s.user_id] = s.display_name || s.full_name || 'Unknown'; });
-      return map;
-    },
-  });
+
 
   useEffect(() => {
     if (dbLevels && !hasChanges) {
@@ -272,9 +248,8 @@ export function StylistLevelsContent() {
     setHasChanges(false);
   };
 
-  const isOverrideExpired = (o: StylistCommissionOverride) => {
-    return o.expires_at && new Date(o.expires_at) < new Date();
-  };
+
+
 
   if (isLoading) {
     return (
@@ -500,98 +475,9 @@ export function StylistLevelsContent() {
         </CardContent>
       </Card>
 
-      {/* Level Assignments */}
+      {/* Team Commission Roster */}
       {orgId && dbLevels && dbLevels.length > 0 && (
-        <StylistLevelAssignments orgId={orgId} levels={dbLevels} />
-      )}
-
-      {/* Commission Overrides Section */}
-      {orgId && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="font-display text-lg">COMMISSION OVERRIDES</CardTitle>
-                <CardDescription>Individual stylist exceptions that override their level's default rates.</CardDescription>
-              </div>
-              <Button
-                size={tokens.button.inline}
-                onClick={() => { setEditingOverride(null); setOverrideDialogOpen(true); }}
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Add Override
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {!overrides?.length ? (
-              <p className="text-sm text-muted-foreground text-center py-6">
-                No commission overrides set. All stylists use their level's default rates.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {overrides.map((o) => {
-                  const expired = isOverrideExpired(o);
-                  return (
-                    <div
-                      key={o.id}
-                      className={cn(
-                        "group flex items-center justify-between gap-4 px-4 py-3 rounded-xl border bg-muted/50",
-                        expired && "opacity-50"
-                      )}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium truncate">
-                            {stylistNames?.[o.user_id] || 'Loading...'}
-                          </span>
-                          {expired && (
-                            <span className="text-xs px-1.5 py-0.5 rounded bg-destructive/10 text-destructive">Expired</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                          {o.service_commission_rate != null && (
-                            <span>Svc: {Math.round(o.service_commission_rate * 100)}%</span>
-                          )}
-                          {o.retail_commission_rate != null && (
-                            <span>Retail: {Math.round(o.retail_commission_rate * 100)}%</span>
-                          )}
-                          <span className="truncate">— {o.reason}</span>
-                          {o.expires_at && (
-                            <span>Expires: {new Date(o.expires_at).toLocaleDateString()}</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          className="p-2 rounded-md hover:bg-muted"
-                          onClick={() => { setEditingOverride(o); setOverrideDialogOpen(true); }}
-                        >
-                          <Pencil className="w-4 h-4 text-muted-foreground" />
-                        </button>
-                        <button
-                          className="p-2 rounded-md hover:bg-destructive/10"
-                          onClick={() => deleteOverride.mutate(o.id)}
-                        >
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {orgId && (
-        <CommissionOverrideDialog
-          open={overrideDialogOpen}
-          onOpenChange={setOverrideDialogOpen}
-          organizationId={orgId}
-          override={editingOverride}
-        />
+        <TeamCommissionRoster orgId={orgId} levels={dbLevels} />
       )}
     </div>
   );
