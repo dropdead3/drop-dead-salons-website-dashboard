@@ -1,83 +1,139 @@
 
 
-## Dark Mode Glassmorphism for Service Category Colors
+## Redo Feature Gap Closure -- Remaining Build Items
 
-### Current State
+### What's Already Working
+- Database schema (all 5 redo columns on appointments)
+- Redo Policy Settings card (pricing, window, approval toggle, reason requirement, notifications toggle)
+- Booking flow redo toggle with reason picker, pricing indicator, manager override input, approval warning
+- Edge function accepts redo metadata
+- Redo badge + reason display on AppointmentDetailSheet
+- Redo analytics card on Stats (rate, by stylist, by reason, financial impact)
 
-All three calendar renderers (DayView, WeekView, CalendarColorPreview) apply category colors as **solid opaque backgrounds** via inline `style={{ backgroundColor: catColor.bg }}`. This works well in light mode but looks flat and harsh against the dark charcoal surfaces.
+---
 
-### Target Aesthetic (from your screenshot)
+### Gap 1: Original Appointment Picker (Critical)
 
-Same color palettes but rendered as **translucent glass panels**:
-- Background at ~25-30% opacity with `backdrop-blur`
-- Thin 1px border using the category color at ~40% opacity
-- Text remains legible with slightly lightened/desaturated variants
-- Maintains the luxury dark-mode layering already used elsewhere in the app
+The `originalAppointmentId` state variable exists but is never set -- there's no UI to link a redo to the original appointment.
 
-### Approach
+**What to build:**
+- In `QuickBookingPopover.tsx`, after the Reason field, add an "Original Appointment" section
+- When the client is already selected, query their recent appointments (last N days based on `redo_window_days`) from the `appointments` table
+- Display as a compact selectable list: service name, date, stylist name
+- Selecting one sets `originalAppointmentId` and auto-populates the pricing reference (original price)
+- If no client selected yet, show a disabled state: "Select a client first"
+- If the selected original appointment is outside the redo window, show an amber warning but still allow managers to proceed
 
-Create a utility function `getGlassStyle(hexBg, hexText)` that converts any solid hex color into a glassmorphic style object. The rendering components will check `document.documentElement.classList.contains('dark')` (or use the existing theme context) to decide which style to apply.
+**Files:** `QuickBookingPopover.tsx`
 
-### Glass Style Formula
+---
 
-For a given category color (e.g., `#f472b6` pink):
+### Gap 2: Forward Link on Original Appointment
 
-| Property | Light Mode (unchanged) | Dark Mode (glass) |
-|----------|----------------------|-------------------|
-| background | `#f472b6` (solid) | `rgba(244,114,182, 0.20)` + `backdrop-blur: 12px` |
-| border | left-4 accent | `1px solid rgba(244,114,182, 0.35)` |
-| text color | `#ffffff` or `#1f2937` | Lightened variant of the category hue |
+When viewing the original appointment's detail, there's no indication that a redo was booked for it.
 
-### Implementation
+**What to build:**
+- In `AppointmentDetailSheet.tsx`, query appointments where `original_appointment_id = current appointment.id`
+- If any exist, show a "Redo Scheduled" badge with a link to the redo appointment (date, stylist)
+- Clicking opens that appointment's detail sheet
 
-**1. New utility: `getGlassCategoryStyle()` in `src/utils/categoryColors.ts`**
+**Files:** `AppointmentDetailSheet.tsx`
 
-Add a function that takes a hex color and returns a CSS style object with:
-- `backgroundColor`: the hex converted to rgba at 0.22 opacity
-- `backdropFilter`: `blur(12px)`
-- `border`: `1px solid` the hex at 0.35 opacity
-- `color`: a lightened text color (pastel tint at ~85% lightness)
-- `borderLeft`: removed (glass panels don't need the accent left-border)
+---
 
-This keeps all color logic centralized in one file.
+### Gap 3: Redo Pricing Applied to Total
 
-**2. Update `DayView.tsx` (~line 263-276)**
+The policy badge shows the pricing type but doesn't actually compute or apply the adjusted price.
 
-Where it currently sets `backgroundColor: catColor.bg`, wrap in a dark-mode check:
-- Light mode: keep existing solid style
-- Dark mode: call `getGlassCategoryStyle(catColor.bg)` and spread the result
-- Add `backdrop-blur-xl` class conditionally in dark mode
-- Remove `border-l-4` class in dark mode (replaced by the all-around glass stroke)
+**What to build:**
+- In `QuickBookingPopover.tsx`, when redo is toggled ON and an original appointment is linked:
+  - Fetch the original appointment's `total_price`
+  - Calculate the redo price based on org policy (free = 0, percentage = original * percentage/100, full = original price)
+  - Display the calculated price clearly
+  - If the manager enters an override, that takes precedence
+  - Pass the final computed price as `redo_pricing_override` (or adjust `total_price` directly)
+- In `create-phorest-booking` edge function: if `is_redo` and no `redo_pricing_override`, look up the org's policy and the original appointment's price to compute the final `total_price`
 
-**3. Update `WeekView.tsx` (~line 129-138)**
+**Files:** `QuickBookingPopover.tsx`, `create-phorest-booking/index.ts`
 
-Same pattern as DayView — conditionally apply glass style in dark mode.
+---
 
-**4. Update `CalendarColorPreview.tsx` (~line 147-166)**
+### Gap 4: Redo Window Validation in Edge Function
 
-Same pattern. Since this is a settings preview, it should accurately reflect what the real schedule looks like in both modes.
+The redo window setting exists but isn't enforced.
 
-**5. Dark-mode detection approach**
+**What to build:**
+- In `create-phorest-booking`, when `is_redo` and `original_appointment_id` are provided:
+  - Fetch the original appointment's date
+  - Fetch the org's `redo_window_days` from settings
+  - If the difference exceeds the window, return an error (unless a manager override flag is passed)
 
-Use a simple hook or inline check. Since the app already has `usePlatformTheme()` and the `dark` class on `<html>`, we can use:
-```tsx
-const isDark = document.documentElement.classList.contains('dark');
-```
-Or import a lightweight hook that listens to the class. The schedule views already import many utilities, so a single boolean check is minimal overhead.
+**Files:** `create-phorest-booking/index.ts`
 
-### Files Modified
+---
 
-| File | Change |
-|------|--------|
-| `src/utils/categoryColors.ts` | Add `getGlassCategoryStyle(hex)` utility function |
-| `src/components/dashboard/schedule/DayView.tsx` | Conditional glass style in dark mode for appointment cells |
-| `src/components/dashboard/schedule/WeekView.tsx` | Same conditional glass treatment |
-| `src/components/dashboard/settings/CalendarColorPreview.tsx` | Same conditional glass treatment for preview accuracy |
+### Gap 5: Approval Workflow (Pending Queue)
 
-### What Stays the Same
+The approval warning shows in the UI but the appointment is still created as `confirmed`.
 
-- Light mode rendering is completely unchanged
-- Gradient categories (consultations, etc.) already have their own glass treatment and are unaffected
-- Block/Break X-pattern overlays work the same (the translucent background actually makes them more visible)
-- All color configuration, CRUD, and theme selection remain untouched
+**What to build:**
+- In booking submission: if `is_redo` and `redo_requires_approval` and the current user is not in `redo_approval_roles`, set the appointment status to `pending` instead of `confirmed`
+- In `AppointmentDetailSheet.tsx`: for pending redo appointments, show an "Approve" button visible only to managers/admins
+  - Approving sets `redo_approved_by` to the current user's ID and changes status to `confirmed`
+  - Declining changes status to `cancelled` with a note
+- On the schedule view, pending redos should appear with a distinctive visual treatment (amber/dashed border or similar)
+
+**Files:** `QuickBookingPopover.tsx`, `AppointmentDetailSheet.tsx`, `create-phorest-booking/index.ts`
+
+---
+
+### Gap 6: Manager Notification on Redo Booking
+
+The toggle exists but no notification fires.
+
+**What to build:**
+- After a redo booking is created in the edge function, if `redo_notification_enabled` is true:
+  - Query managers at the appointment's location
+  - Insert a record into a notifications mechanism (in-app toast via realtime, or leverage the existing `enqueue-service-emails` pattern with action type `redo`)
+  - Notification content: client name, original stylist, redo reason, price applied
+
+**Files:** `create-phorest-booking/index.ts`
+
+---
+
+### Gap 7: Enhanced Analytics (Trend Line + Repeat Redo Clients)
+
+Current analytics show aggregate counts but miss longitudinal trends.
+
+**What to build:**
+- In `useRedoAnalytics.ts`, add:
+  - Weekly redo count for the last 12 weeks (for a trend sparkline)
+  - "Repeat redo clients" -- clients with 2+ redo appointments in the period
+- In `Stats.tsx` redo card:
+  - Add a small trend sparkline next to the redo rate KPI
+  - Add a "Repeat Redo Clients" count (clients needing multiple corrections signals a deeper quality issue)
+
+**Files:** `useRedoAnalytics.ts`, `Stats.tsx`
+
+---
+
+### Build Sequence
+
+1. Original Appointment Picker (Gap 1) -- unlocks Gaps 3 and 4
+2. Redo pricing calculation (Gap 3) -- depends on picker
+3. Redo window validation (Gap 4) -- depends on picker
+4. Forward link on original appointment (Gap 2) -- independent
+5. Approval workflow (Gap 5) -- independent
+6. Manager notification (Gap 6) -- independent
+7. Enhanced analytics (Gap 7) -- independent
+
+| Gap | Priority | Complexity |
+|-----|----------|------------|
+| Original Appointment Picker | High | Medium |
+| Redo Pricing Applied | High | Low |
+| Redo Window Validation | Medium | Low |
+| Forward Link | Medium | Low |
+| Approval Workflow | Medium | Medium |
+| Manager Notification | Low | Medium |
+| Enhanced Analytics | Low | Low |
 
