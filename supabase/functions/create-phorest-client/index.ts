@@ -122,6 +122,28 @@ Deno.serve(async (req) => {
 
     console.log(`Creating client: ${first_name} ${last_name} at branch ${branch_id}`);
 
+    // Check write-gate from org settings
+    let phorestWriteEnabled = false;
+    try {
+      const { data: locData } = await supabase
+        .from("locations")
+        .select("organization_id")
+        .eq("phorest_branch_id", branch_id)
+        .maybeSingle();
+
+      if (locData?.organization_id) {
+        const { data: orgData } = await supabase
+          .from("organizations")
+          .select("settings")
+          .eq("id", locData.organization_id)
+          .single();
+        const settings = (orgData?.settings || {}) as Record<string, any>;
+        phorestWriteEnabled = settings.phorest_write_enabled === true;
+      }
+    } catch (e) {
+      console.log("Could not resolve org for write-gate check, defaulting to disabled");
+    }
+
     // Build the Phorest client object
     const phorestClient: Record<string, any> = {
       firstName: first_name,
@@ -137,21 +159,27 @@ Deno.serve(async (req) => {
     if (notes) phorestClient.notes = notes;
     if (gender) phorestClient.gender = gender;
 
-    // Create client in Phorest
-    const phorestResponse = await phorestRequest(
-      `/branch/${branch_id}/client`,
-      phorestBusinessId,
-      phorestUsername,
-      phorestPassword,
-      "POST",
-      phorestClient
-    );
+    // Create client in Phorest (only if write-back is enabled)
+    let phorestClientId: string;
+    if (phorestWriteEnabled) {
+      const phorestResponse = await phorestRequest(
+        `/branch/${branch_id}/client`,
+        phorestBusinessId,
+        phorestUsername,
+        phorestPassword,
+        "POST",
+        phorestClient
+      );
 
-    console.log("Phorest response:", JSON.stringify(phorestResponse, null, 2));
+      console.log("Phorest response:", JSON.stringify(phorestResponse, null, 2));
 
-    const phorestClientId = phorestResponse.clientId || phorestResponse.id;
-    if (!phorestClientId) {
-      throw new Error("Failed to get client ID from Phorest response");
+      phorestClientId = phorestResponse.clientId || phorestResponse.id;
+      if (!phorestClientId) {
+        throw new Error("Failed to get client ID from Phorest response");
+      }
+    } else {
+      console.log("Phorest write-back disabled for this organization, local-only client created");
+      phorestClientId = `local-${crypto.randomUUID()}`;
     }
 
     // Get the location for this branch

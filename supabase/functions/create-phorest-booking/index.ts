@@ -110,6 +110,28 @@ serve(async (req) => {
 
     console.log(`Creating booking for client ${client_id} with staff ${staff_id} at ${start_time}`);
 
+    // Check write-gate: look up org settings via branch_id -> locations -> organizations
+    let phorestWriteEnabled = false;
+    try {
+      const { data: locData } = await supabase
+        .from("locations")
+        .select("organization_id")
+        .eq("phorest_branch_id", branch_id)
+        .maybeSingle();
+
+      if (locData?.organization_id) {
+        const { data: orgData } = await supabase
+          .from("organizations")
+          .select("settings")
+          .eq("id", locData.organization_id)
+          .single();
+        const settings = (orgData?.settings || {}) as Record<string, any>;
+        phorestWriteEnabled = settings.phorest_write_enabled === true;
+      }
+    } catch (e) {
+      console.log("Could not resolve org for write-gate check, defaulting to disabled");
+    }
+
     // --- Redo validation ---
     let redoFinalPrice: number | null = null;
     let redoOriginalPrice: number | null = null;
@@ -170,17 +192,22 @@ serve(async (req) => {
       status: 'CONFIRMED',
     };
 
-    // Create booking in Phorest
-    const response = await phorestRequest(
-      `/branch/${branch_id}/appointment`,
-      businessId,
-      username,
-      password,
-      "POST",
-      phorestBooking
-    );
-
-    console.log("Booking created in Phorest:", response);
+    // Create booking in Phorest (only if write-back is enabled)
+    let response: any = {};
+    if (phorestWriteEnabled) {
+      response = await phorestRequest(
+        `/branch/${branch_id}/appointment`,
+        businessId,
+        username,
+        password,
+        "POST",
+        phorestBooking
+      );
+      console.log("Booking created in Phorest:", response);
+    } else {
+      console.log("Phorest write-back disabled for this organization, local-only booking created");
+      response = { id: `native-${crypto.randomUUID()}` };
+    }
 
     // Get service details for local record
     const { data: services } = await supabase
