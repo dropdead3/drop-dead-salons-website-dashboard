@@ -198,6 +198,7 @@ export function useToggleBookableOnline() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['services-website', effectiveOrganization?.id] });
+      queryClient.invalidateQueries({ queryKey: ['booking-visibility-services'] });
     },
     onError: (e) => toast.error('Failed to update: ' + e.message),
   });
