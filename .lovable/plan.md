@@ -1,40 +1,30 @@
 
 
-# Fix Hover Hint Overlap on Collapsed Sidebar
+# Instant Tooltip Hover Hints for Sidebar Icons
 
 ## Problem
-When hovering on a collapsed sidebar icon, both the tooltip ("People") and the flyout menu appear simultaneously, overlapping each other. The tooltip is now redundant since the HoverPopover flyout already displays the section label as its header.
+The sidebar footer icons (Clock In, Lock Dashboard, Feedback/Bug/Help) show tooltips with the default 700ms delay, while the new HoverPopover flyout menus appear instantly. This creates an inconsistent hover experience.
 
 ## Solution
-Remove the `Tooltip` / `TooltipTrigger` / `TooltipContent` wrappers from the collapsed icon buttons in both files where HoverPopover flyouts are used. The flyout itself serves as the label.
+Set `delayDuration={0}` on the root `TooltipProvider` in `App.tsx` (line 205). This makes all tooltips across the app appear instantly on hover, matching the HoverPopover behavior.
 
-## Files Changed
+Components that already override `delayDuration` locally (e.g., `toggle-pill.tsx` at 300ms, `AnimatedBlurredAmount.tsx` at 100ms) will continue using their own values since local providers take precedence.
 
-### 1. `src/components/dashboard/SidebarNavContent.tsx` (lines 659-677)
-Remove the Tooltip wrapper around the PopoverTrigger button. Before:
-```
-<HoverPopover>
-  <Tooltip>
-    <TooltipTrigger asChild>
-      <PopoverTrigger asChild>
-        <button>...</button>
-      </PopoverTrigger>
-    </TooltipTrigger>
-    <TooltipContent side="right">{sectionLabel}</TooltipContent>
-  </Tooltip>
-  <SidebarPopoverContent>...
-```
-After:
-```
-<HoverPopover>
-  <PopoverTrigger asChild>
-    <button>...</button>
-  </PopoverTrigger>
-  <SidebarPopoverContent>...
-```
+## File Changed
 
-### 2. `src/components/dashboard/CollapsibleNavGroup.tsx` (lines 169-187)
-Same removal of the Tooltip wrapper around the PopoverTrigger button for manager sub-group flyouts.
+### `src/App.tsx` (line 205)
+Change:
+```tsx
+<TooltipProvider>
+```
+To:
+```tsx
+<TooltipProvider delayDuration={0}>
+```
 
 ## Impact
-Minimal -- removes 3 lines of JSX per file. No behavioral or styling changes to the flyout itself.
+- All sidebar tooltips (Lock, Clock In, Feedback, Bug, Help) will appear instantly
+- Consistent with HoverPopover flyout timing
+- Components with their own `delayDuration` overrides are unaffected
+- Single-line change, zero risk
+
