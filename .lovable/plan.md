@@ -1,25 +1,26 @@
 
-# Filter Preferred Stylist Dropdown to Service Providers Only
+# Replace Gender Dropdown with Bubble Selection
 
-## Problem
+## What Changes
 
-The "Preferred Stylist" dropdown in both the New Client Dialog and Client Detail Sheet currently shows all active staff members (including front desk, managers, etc.) instead of only service providers.
+The Gender field in the New Client Dialog will switch from a `Select` dropdown to a row of tappable pill/bubble buttons. The selected option gets a highlighted style (primary background); unselected options remain outlined. Tapping a selected bubble again deselects it (since gender is optional).
 
-## Solution
+## Options Displayed
 
-Filter the `teamMembers` list to only include users with service-provider roles (`stylist`, `stylist_assistant`, `booth_renter`) before rendering the dropdown options. The `useTeamDirectory` hook already returns `roles` for each member, so no new queries are needed.
+- Male
+- Female
+- Non-Binary
+- Prefer not to say
 
-## Changes
+## Technical Details
 
-### 1. `src/components/dashboard/schedule/NewClientDialog.tsx`
+**File Modified:** `src/components/dashboard/schedule/NewClientDialog.tsx`
 
-- After the `useTeamDirectory` call, filter `teamMembers` to only those whose `roles` array includes at least one of `stylist`, `stylist_assistant`, or `booth_renter`
-- The filtered list feeds into the existing `Select` dropdown
-
-### 2. `src/components/dashboard/ClientDetailSheet.tsx`
-
-- Same filtering logic applied to `teamMembers` before rendering the preferred stylist `Select` dropdown in the edit-mode Settings card
-
-### Technical Note
-
-The constant `SERVICE_PROVIDER_ROLES` already exists in `useStaffServiceConfigurator.ts` as `['stylist', 'stylist_assistant', 'booth_renter']`. Both files will use the same role set inline (a simple `.filter()` call) to keep the change minimal.
+- Remove the `Select`/`SelectTrigger`/`SelectContent`/`SelectItem` markup for gender (lines 221-231)
+- Replace with a `flex flex-wrap gap-2` container holding four bubble buttons
+- Each bubble: `rounded-full px-4 py-2 text-sm border transition-colors cursor-pointer`
+  - **Selected state**: `bg-primary text-primary-foreground border-primary`
+  - **Unselected state**: `bg-background text-foreground border-input hover:bg-accent/50`
+- `onClick` toggles: if already selected, clears to `''`; otherwise sets the value
+- No new components or files needed -- inline toggle buttons using standard Tailwind classes
+- Font uses `font-sans` per design system rules; no bold weights
