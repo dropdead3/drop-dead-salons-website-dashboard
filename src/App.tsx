@@ -157,6 +157,7 @@ import FeedbackHub from "./pages/dashboard/admin/FeedbackHub";
 import SEOWorkshopHub from "./pages/dashboard/admin/SEOWorkshopHub";
 import ReengagementHub from "./pages/dashboard/admin/ReengagementHub";
 import ClientHealthHub from "./pages/dashboard/admin/ClientHealthHub";
+import MergeClients from "./pages/dashboard/admin/MergeClients";
 
 // Renter Portal pages
 import RenterPortal from "./pages/dashboard/RenterPortal";
@@ -338,6 +339,7 @@ const App = () => (
                       <Route path="/dashboard/admin/reengagement" element={<ProtectedRoute requiredPermission="manage_settings"><ReengagementHub /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/client-health" element={<ProtectedRoute requiredPermission="view_team_overview"><ClientHealthHub /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/features" element={<ProtectedRoute requiredPermission="manage_settings"><FeaturesCenter /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/merge-clients" element={<ProtectedRoute requiredPermission="client_merge"><MergeClients /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/access-hub" element={<ProtectedRoute requiredPermission="manage_settings"><AccessHub /></ProtectedRoute>} />
                       
                       {/* Team Challenges routes */}
