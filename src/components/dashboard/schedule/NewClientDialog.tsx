@@ -75,7 +75,7 @@ export function NewClientDialog({
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [gender, setGender] = useState('');
+  const [gender, setGender] = useState('Female');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [notes, setNotes] = useState('');
@@ -104,7 +104,7 @@ export function NewClientDialog({
   const resetForm = () => {
     setFirstName('');
     setLastName('');
-    setGender('');
+    setGender('Female');
     setEmail('');
     setPhone('');
     setNotes('');
@@ -227,7 +227,7 @@ export function NewClientDialog({
           <div className="space-y-2">
             <Label htmlFor="gender">Gender</Label>
             <div className="flex flex-wrap gap-2">
-              {['Male', 'Female', 'Non-Binary', 'Prefer not to say'].map((option) => (
+              {['Female', 'Male', 'Non-Binary', 'Prefer not to say'].map((option) => (
                 <button
                   key={option}
                   type="button"
