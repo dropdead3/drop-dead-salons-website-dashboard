@@ -114,3 +114,29 @@ export function useDeleteServiceAddon() {
     onError: (err: Error) => toast.error('Failed to remove: ' + err.message),
   });
 }
+
+/** Batch-update display_order for drag-to-reorder */
+export function useReorderServiceAddons() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ organizationId, items }: {
+      organizationId: string;
+      items: { id: string; display_order: number }[];
+    }) => {
+      const updates = items.map(item =>
+        supabase
+          .from('service_addons')
+          .update({ display_order: item.display_order })
+          .eq('id', item.id)
+      );
+      const results = await Promise.all(updates);
+      const failed = results.find(r => r.error);
+      if (failed?.error) throw failed.error;
+      return { organizationId };
+    },
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ['service-addons', r.organizationId] });
+    },
+    onError: (err: Error) => toast.error('Failed to reorder: ' + err.message),
+  });
+}
