@@ -349,11 +349,15 @@ export function ScheduleHeader({
                   closed.isClosed && !isSelected && 'opacity-60'
                 )}
               >
-                <span className="text-xs font-medium tracking-wide">{format(day, 'EEE')}</span>
-                <span className="text-[10px] opacity-70">{format(day, 'd')}</span>
-                {closed.isClosed && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-destructive mt-0.5" />
-                )}
+                <div className="flex items-center gap-1">
+                  {closed.isClosed && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-destructive flex-shrink-0" />
+                  )}
+                  <div className="flex flex-col items-center">
+                    <span className="text-xs font-medium tracking-wide">{format(day, 'EEE')}</span>
+                    <span className="text-[10px] opacity-70">{format(day, 'd')}</span>
+                  </div>
+                </div>
               </button>
             );
 
