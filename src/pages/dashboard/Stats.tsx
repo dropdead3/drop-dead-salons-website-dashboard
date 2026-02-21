@@ -19,6 +19,7 @@ import { Link } from 'react-router-dom';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useAddonMarginAnalytics } from '@/hooks/useAddonMarginAnalytics';
 import { useRedoAnalytics } from '@/hooks/useRedoAnalytics';
+import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
 import { useStylistAddonAttachment } from '@/hooks/useStylistAddonAttachment';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
@@ -359,18 +360,27 @@ export default function Stats() {
                     <Badge variant="outline" className="text-xs">Last 30 days</Badge>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="grid grid-cols-4 gap-4 mb-6">
                     <div className="text-center">
                       <p className="text-2xl font-display tabular-nums">{redoData.totalRedos}</p>
                       <p className="text-xs text-muted-foreground">Redos</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-display tabular-nums">{redoData.redoRate.toFixed(1)}%</p>
+                      <div className="flex items-center justify-center gap-2">
+                        <p className="text-2xl font-display tabular-nums">{redoData.redoRate.toFixed(1)}%</p>
+                        {redoData.weeklyTrend.length >= 2 && (
+                          <TrendSparkline data={redoData.weeklyTrend} width={60} height={20} />
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">Redo Rate</p>
                     </div>
                     <div className="text-center">
                       <p className="text-2xl font-display tabular-nums">{formatCurrencyWhole(redoData.financialImpact)}</p>
                       <p className="text-xs text-muted-foreground">Revenue Impact</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-display tabular-nums">{redoData.repeatRedoClients}</p>
+                      <p className="text-xs text-muted-foreground">Repeat Clients</p>
                     </div>
                   </div>
 

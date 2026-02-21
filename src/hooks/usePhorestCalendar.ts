@@ -39,7 +39,7 @@ export interface PhorestAppointment {
   };
 }
 
-export type AppointmentStatus = 'booked' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled' | 'no_show';
+export type AppointmentStatus = 'pending' | 'booked' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled' | 'no_show';
 
 export type CalendarView = 'day' | 'week' | 'month' | 'agenda';
 
