@@ -128,10 +128,10 @@ function DroppableSlot({
   const highlight = isOver || dndIsOver;
 
   const borderClass = minute === 0
-    ? 'border-t border-border'
+    ? 'border-t border-border dark:border-border/80'
     : minute === 30
-      ? 'border-t border-dashed border-border dark:border-border/50'
-      : 'border-t border-dotted border-border/80 dark:border-border/30';
+      ? 'border-t border-dashed border-border dark:border-border/60'
+      : 'border-t border-dotted border-border/80 dark:border-border/50';
 
   return (
     <div
