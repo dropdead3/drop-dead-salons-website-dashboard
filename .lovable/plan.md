@@ -1,63 +1,54 @@
 
 
-## Settings Page UI Audit and Fixes
+## Fix Table Column Headers: Title Case with Aeonik Pro
 
-### Issues Found
+### The Problem
 
-**1. Card Header Pattern Violations (canonical-card-header-pattern)**
-The Experience Levels and Team Commission Roster cards use the old pattern where the icon is missing from the card header. Per the design system, all card headers must include a `tokens.card.iconBox` with a `tokens.card.icon` to the left of the `CardTitle`.
+Table column headers across the dashboard are rendering in ALL CAPS using Aeonik Pro (font-sans). The screenshot shows "STYLIST", "LEVEL", "SVC %", "RETAIL %", "SOURCE" -- all uppercase. Per the design system, font-sans (Aeonik Pro) should NEVER be uppercase. Only font-display (Termina) gets uppercase treatment.
 
-- `StylistLevelsContent.tsx` -- Experience Levels card has no icon box
-- `TeamCommissionRoster.tsx` -- Team Commission Roster card has no icon box
-- `CommissionIntelligence.tsx` -- Team Commission Breakdown card uses an inline icon without the proper icon box wrapper
+Column headers should use Aeonik Pro with standard Title Case capitalization: "Stylist", "Level", "Svc %", "Retail %", "Source".
 
-**2. Typography Rule Violations (design-rules)**
-- `CommissionIntelligence.tsx` line 221: Uses `font-semibold` on the total row -- this is a **banned** weight class (max is `font-medium` / 500)
-- `CommissionIntelligence.tsx` line 101: Section heading uses raw `text-lg font-display` instead of `tokens.heading.card`
+### Root Cause
 
-**3. Settings Sub-Page Header Inconsistency**
-The Stylist Levels sub-page uses a raw inline back button and a manually styled `h1` (line 937-948 in Settings.tsx). This is inconsistent with other pages that use `DashboardPageHeader`. The header should use the canonical `DashboardPageHeader` component for consistency with other settings sub-pages.
+Two separate patterns cause this:
 
-**4. CommissionIntelligence Summary Cards Missing Icon Box Standard**
-The three summary cards in `CommissionIntelligence.tsx` use `p-3 rounded-lg bg-primary/10` for their icon containers. The canonical token is `tokens.card.iconBox` (`w-10 h-10 bg-muted flex items-center justify-center rounded-lg`). These should be aligned.
-
-**5. Missing Canonical Card Title Token**
-Several `CardTitle` elements use `font-display text-lg` instead of `tokens.card.title` (`font-display text-base tracking-wide`). This creates an inconsistent heading size.
-
-Affected locations:
-- `StylistLevelsContent.tsx` line 283
-- `TeamCommissionRoster.tsx` line 156
-
----
+1. **TeamCommissionRoster.tsx** (line 195): Uses a custom grid header row with explicit `uppercase` class
+2. **CommissionIntelligence.tsx** and other tables: Use `TableHead` component -- no uppercase in the component, but some render content in caps
 
 ### Plan
 
-**File: `src/components/dashboard/settings/StylistLevelsContent.tsx`**
-- Add icon box (`tokens.card.iconBox` with `Layers` icon) to Experience Levels card header
-- Replace raw `font-display text-lg` on CardTitle with `tokens.card.title`
+**1. Add a `table.columnHeader` token to `design-tokens.ts`**
 
-**File: `src/components/dashboard/settings/TeamCommissionRoster.tsx`**
-- Add icon box (`tokens.card.iconBox` with `Users` icon) to Team Commission Roster card header
-- Replace raw `font-display text-lg` on CardTitle with `tokens.card.title`
+A new token that encodes the correct column header style: Aeonik Pro, small text, medium weight, muted color, wider tracking -- but NO uppercase.
 
-**File: `src/components/dashboard/payroll/CommissionIntelligence.tsx`**
-- Fix `font-semibold` on total row (line 221) -- replace with `font-medium`
-- Replace section heading (line 101) with `tokens.heading.card`
-- Add icon box to the Team Commission Breakdown card header (line 168)
-- Align summary card icon containers to `tokens.card.iconBox`
-- Use `tokens.card.title` on CardTitle
+```
+table: {
+  columnHeader: 'font-sans text-[11px] font-medium text-muted-foreground tracking-wider',
+}
+```
 
-**File: `src/pages/dashboard/admin/Settings.tsx`**
-- Replace the raw back button + h1 in the active category view (lines 937-948) with `DashboardPageHeader`, matching the pattern used on all other settings sub-pages. This gives consistent back-button behavior, proper `font-display text-xl md:text-2xl` sizing, and correct layout alignment.
+**2. Fix `TeamCommissionRoster.tsx`**
 
----
+Remove `uppercase` from the custom grid header row (line 195) and apply the new `tokens.table.columnHeader` token. Change text content to Title Case:
+- "Stylist", "Level", "Svc %", "Retail %", "Source"
+
+**3. Audit `CommissionIntelligence.tsx`**
+
+Verify the `TableHead` content uses Title Case (it likely already does since it uses natural text). No changes expected.
+
+**4. Update `design-rules.ts`**
+
+Add a rule documenting that table column headers must use font-sans (Aeonik Pro) with Title Case -- never uppercase.
+
+**5. Update design system rule files**
+
+Add the table column header rule to `.cursor/rules/design-system.mdc` so future generation follows this pattern.
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/settings/StylistLevelsContent.tsx` | Add icon box, fix card title token |
-| `src/components/dashboard/settings/TeamCommissionRoster.tsx` | Add icon box, fix card title token |
-| `src/components/dashboard/payroll/CommissionIntelligence.tsx` | Fix banned font weight, standardize tokens, add icon box |
-| `src/pages/dashboard/admin/Settings.tsx` | Replace raw header with `DashboardPageHeader` |
-
+| `src/lib/design-tokens.ts` | Add `table.columnHeader` token |
+| `src/components/dashboard/settings/TeamCommissionRoster.tsx` | Remove `uppercase`, apply token, Title Case text |
+| `src/lib/design-rules.ts` | Add column header rule |
+| `.cursor/rules/design-system.mdc` | Document table column header standard |
