@@ -19,7 +19,7 @@ export function WeeklyLeverSection({ onClose }: WeeklyLeverSectionProps) {
   const generateMutation = useGenerateRecommendation();
 
   return (
-    <Card className="rounded-2xl">
+    <Card className="rounded-xl">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

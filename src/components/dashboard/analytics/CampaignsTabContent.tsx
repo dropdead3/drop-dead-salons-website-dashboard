@@ -64,19 +64,19 @@ export function CampaignsTabContent() {
     <div className="space-y-6">
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4 rounded-2xl">
+        <Card className="p-4 rounded-xl">
           <p className="text-xs text-muted-foreground">Total</p>
           <p className="text-2xl font-medium">{campaigns?.length || 0}</p>
         </Card>
-        <Card className="p-4 rounded-2xl">
+        <Card className="p-4 rounded-xl">
           <p className="text-xs text-muted-foreground">Active</p>
           <p className="text-2xl font-medium text-primary">{activeCampaigns.length}</p>
         </Card>
-        <Card className="p-4 rounded-2xl">
+        <Card className="p-4 rounded-xl">
           <p className="text-xs text-muted-foreground">Completed</p>
           <p className="text-2xl font-medium text-chart-2">{completedCampaigns.length}</p>
         </Card>
-        <Card className="p-4 rounded-2xl">
+        <Card className="p-4 rounded-xl">
           <p className="text-xs text-muted-foreground">Avg Completion</p>
           <p className="text-2xl font-medium">
             {campaigns?.length
@@ -92,7 +92,7 @@ export function CampaignsTabContent() {
       </div>
 
       {/* Campaign List */}
-      <Card className="rounded-2xl">
+      <Card className="rounded-xl">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="font-display text-base">All Campaigns</CardTitle>

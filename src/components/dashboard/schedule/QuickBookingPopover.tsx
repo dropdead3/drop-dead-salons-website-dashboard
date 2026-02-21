@@ -1496,7 +1496,7 @@ export function QuickBookingPopover({
                       </Badge>
                       <span className="text-sm text-muted-foreground">{totalDuration}m</span>
                     </div>
-                    <span className="text-base font-semibold">{formatCurrencyWhole(totalPrice)}</span>
+                    <span className="text-base font-medium">{formatCurrencyWhole(totalPrice)}</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {selectedServiceDetails.map(s => (
@@ -1594,7 +1594,7 @@ export function QuickBookingPopover({
                     </Badge>
                     <span className="text-sm text-muted-foreground">{totalDuration}m</span>
                   </div>
-                  <span className="text-base font-semibold">{formatCurrencyWhole(totalPrice)}</span>
+                  <span className="text-base font-medium">{formatCurrencyWhole(totalPrice)}</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {selectedServiceDetails.map(s => (
@@ -1735,7 +1735,7 @@ export function QuickBookingPopover({
                     <span className="text-sm text-muted-foreground">{totalDuration}m</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-base font-semibold">{formatCurrencyWhole(levelBasedTotalPrice)}</span>
+                    <span className="text-base font-medium">{formatCurrencyWhole(levelBasedTotalPrice)}</span>
                     <span className="text-sm text-muted-foreground ml-1.5">• Level {selectedLevelNumber}</span>
                   </div>
                 </div>

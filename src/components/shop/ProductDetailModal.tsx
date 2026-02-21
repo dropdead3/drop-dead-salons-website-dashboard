@@ -50,7 +50,7 @@ export function ProductDetailModal({ product, open, onOpenChange }: ProductDetai
 
           {/* Price & availability */}
           <div className="flex items-center justify-between">
-            <p className="text-2xl font-bold text-foreground">${(product.retail_price ?? 0).toFixed(2)}</p>
+            <p className="text-2xl font-medium text-foreground">${(product.retail_price ?? 0).toFixed(2)}</p>
             {!inStock ? (
               <Badge variant="secondary" className="bg-destructive/10 text-destructive border-0">Out of stock</Badge>
             ) : lowStock ? (

@@ -101,7 +101,7 @@ export default function Shop() {
           <ShoppingBag className="w-3.5 h-3.5" />
           Online Store
         </div>
-        <h1 className="text-3xl sm:text-4xl font-display font-bold text-foreground mb-2">
+        <h1 className="text-3xl sm:text-4xl font-display font-medium text-foreground mb-2">
           Shop Our Products
         </h1>
         <p className="text-muted-foreground text-sm max-w-md mx-auto">

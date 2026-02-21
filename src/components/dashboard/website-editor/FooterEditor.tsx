@@ -75,7 +75,7 @@ const SOCIAL_PLATFORMS = [
   { key: 'twitter_url' as const, icon: Twitter, label: 'X / Twitter', placeholder: 'https://x.com/yoursalon' },
   { key: 'youtube_url' as const, icon: Youtube, label: 'YouTube', placeholder: 'https://youtube.com/@yoursalon' },
   { key: 'linkedin_url' as const, icon: Linkedin, label: 'LinkedIn', placeholder: 'https://linkedin.com/company/yoursalon' },
-  { key: 'tiktok_url' as const, icon: () => <span className="text-xs font-bold">TT</span>, label: 'TikTok', placeholder: 'https://tiktok.com/@yoursalon' },
+  { key: 'tiktok_url' as const, icon: () => <span className="text-xs font-medium">TT</span>, label: 'TikTok', placeholder: 'https://tiktok.com/@yoursalon' },
 ];
 
 export function FooterEditor() {

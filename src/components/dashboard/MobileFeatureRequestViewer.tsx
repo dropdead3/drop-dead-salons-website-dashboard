@@ -96,7 +96,7 @@ export function MobileFeatureRequestViewer({
                           <button
                             onClick={() => onVote(request)}
                             className={cn(
-                              'flex flex-col items-center gap-2 p-6 rounded-2xl transition-all',
+                              'flex flex-col items-center gap-2 p-6 rounded-xl transition-all',
                               request.user_voted
                                 ? 'bg-primary/10 text-primary'
                                 : 'bg-muted hover:bg-muted/80'

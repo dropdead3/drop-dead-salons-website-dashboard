@@ -31,7 +31,7 @@ export function KioskFeatureToggles({ localSettings, updateField }: KioskFeature
               <UserCheck className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-sm font-semibold">Check-In</p>
+              <p className="text-sm font-medium">Check-In</p>
               <p className="text-xs text-muted-foreground">Clients look up and check in for existing appointments</p>
             </div>
           </div>
@@ -88,7 +88,7 @@ export function KioskFeatureToggles({ localSettings, updateField }: KioskFeature
               <ClipboardCheck className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-sm font-semibold">Walk-In Registration</p>
+              <p className="text-sm font-medium">Walk-In Registration</p>
               <p className="text-xs text-muted-foreground">Let clients register without an appointment</p>
             </div>
           </div>
@@ -113,7 +113,7 @@ export function KioskFeatureToggles({ localSettings, updateField }: KioskFeature
               <CalendarPlus className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-sm font-semibold">Self-Service Booking</p>
+              <p className="text-sm font-medium">Self-Service Booking</p>
               <p className="text-xs text-muted-foreground">Walk-in clients can browse services and book appointments</p>
             </div>
           </div>
@@ -172,7 +172,7 @@ export function KioskFeatureToggles({ localSettings, updateField }: KioskFeature
               <FileSignature className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-sm font-semibold">Form Signing</p>
+              <p className="text-sm font-medium">Form Signing</p>
               <p className="text-xs text-muted-foreground">Prompt new clients to sign intake forms during check-in</p>
             </div>
           </div>
@@ -197,7 +197,7 @@ export function KioskFeatureToggles({ localSettings, updateField }: KioskFeature
               <MessageSquare className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-sm font-semibold">Feedback Prompt</p>
+              <p className="text-sm font-medium">Feedback Prompt</p>
               <p className="text-xs text-muted-foreground">Ask clients for feedback after check-in</p>
             </div>
           </div>

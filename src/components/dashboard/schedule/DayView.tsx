@@ -359,7 +359,7 @@ function AppointmentCard({
                   <Repeat className="h-2.5 w-2.5 opacity-60 shrink-0" />
                 )}
                 {isAssisting && (
-                  <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-semibold shrink-0">AST</span>
+                  <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-medium shrink-0">AST</span>
                 )}
                 {!isAssisting && hasAssistants && (
                   <Users className="h-3 w-3 opacity-60 shrink-0" />
@@ -379,7 +379,7 @@ function AppointmentCard({
                     <span className="w-1.5 h-1.5 rounded-full bg-white/80 shrink-0" />
                   )}
                   {isAssisting && (
-                    <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-semibold shrink-0">ASSISTING</span>
+                    <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-medium shrink-0">ASSISTING</span>
                   )}
                   {!isAssisting && hasAssistants && (
                     <Users className="h-3 w-3 opacity-60 shrink-0" />
