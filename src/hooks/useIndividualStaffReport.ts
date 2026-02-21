@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { differenceInDays, parseISO, subDays, format, differenceInBusinessDays } from 'date-fns';
-import { useCommissionTiers } from '@/hooks/useCommissionTiers';
+import { useResolveCommission } from '@/hooks/useResolveCommission';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -81,6 +81,8 @@ export interface CommissionData {
   productCommission: number;
   totalCommission: number;
   tierName: string;
+  source?: 'override' | 'level' | 'tier';
+  sourceName?: string;
 }
 
 export interface TeamAverages {
@@ -140,7 +142,7 @@ const SERVICE_TYPES = ['Service', 'service', 'SERVICE'];
 // ---------------------------------------------------------------------------
 
 export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: string, dateTo?: string) {
-  const { calculateCommission, isLoading: tiersLoading } = useCommissionTiers();
+  const { resolveCommission, calculateCommission, isLoading: tiersLoading } = useResolveCommission();
 
   const query = useQuery({
     queryKey: ['individual-staff-report', staffUserId, dateFrom, dateTo],
@@ -428,13 +430,15 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
         .sort((a, b) => b.revenue - a.revenue)
         .slice(0, 10);
 
-      // ── Commission ──
-      const commResult = calculateCommission(serviceRevenue, productRevenue);
+      // ── Commission (resolved via 3-tier priority) ──
+      const resolved = resolveCommission(staffUserId, serviceRevenue, productRevenue);
       const commission: CommissionData = {
-        serviceCommission: commResult.serviceCommission,
-        productCommission: commResult.productCommission,
-        totalCommission: commResult.totalCommission,
-        tierName: commResult.tierName,
+        serviceCommission: resolved.serviceCommission,
+        productCommission: resolved.retailCommission,
+        totalCommission: resolved.totalCommission,
+        tierName: resolved.sourceName,
+        source: resolved.source,
+        sourceName: resolved.sourceName,
       };
 
       // ── Team averages ──

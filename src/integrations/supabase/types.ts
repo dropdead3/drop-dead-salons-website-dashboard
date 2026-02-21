@@ -3364,6 +3364,53 @@ export type Database = {
           },
         ]
       }
+      commission_rate_history: {
+        Row: {
+          change_type: string
+          changed_by: string | null
+          created_at: string
+          id: string
+          new_retail_rate: number | null
+          new_service_rate: number | null
+          organization_id: string | null
+          previous_retail_rate: number | null
+          previous_service_rate: number | null
+          user_id: string | null
+        }
+        Insert: {
+          change_type: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_retail_rate?: number | null
+          new_service_rate?: number | null
+          organization_id?: string | null
+          previous_retail_rate?: number | null
+          previous_service_rate?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          change_type?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_retail_rate?: number | null
+          new_service_rate?: number | null
+          organization_id?: string | null
+          previous_retail_rate?: number | null
+          previous_service_rate?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_rate_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commission_tiers: {
         Row: {
           applies_to: string

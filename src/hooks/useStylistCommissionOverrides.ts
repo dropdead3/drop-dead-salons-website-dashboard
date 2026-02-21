@@ -21,11 +21,13 @@ export function useStylistCommissionOverrides(orgId: string | undefined) {
     queryKey: ['stylist-commission-overrides', orgId],
     enabled: !!orgId,
     queryFn: async () => {
+      const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('stylist_commission_overrides')
         .select('*')
         .eq('organization_id', orgId!)
         .eq('is_active', true)
+        .or(`expires_at.is.null,expires_at.gt.${now}`)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

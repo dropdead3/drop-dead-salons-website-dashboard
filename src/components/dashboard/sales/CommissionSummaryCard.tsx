@@ -4,6 +4,7 @@ import { Loader2, Wallet, Users, Scissors, ShoppingBag } from 'lucide-react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { useResolveCommission } from '@/hooks/useResolveCommission';
 
 interface StylistData {
   user_id: string;
@@ -14,7 +15,8 @@ interface StylistData {
 
 interface CommissionSummaryCardProps {
   stylistData: StylistData[] | undefined;
-  calculateCommission: (serviceRevenue: number, productRevenue: number) => {
+  /** @deprecated - kept for backward compat, resolver is used internally now */
+  calculateCommission?: (serviceRevenue: number, productRevenue: number) => {
     serviceCommission: number;
     productCommission: number;
     totalCommission: number;
@@ -23,8 +25,9 @@ interface CommissionSummaryCardProps {
   isLoading: boolean;
 }
 
-export function CommissionSummaryCard({ stylistData, calculateCommission, isLoading }: CommissionSummaryCardProps) {
+export function CommissionSummaryCard({ stylistData, isLoading }: CommissionSummaryCardProps) {
   const { formatCurrencyWhole } = useFormatCurrency();
+  const { resolveCommission, isLoading: resolverLoading } = useResolveCommission();
 
   const totals = useMemo(() => {
     if (!stylistData?.length) return { total: 0, service: 0, product: 0, avg: 0, count: 0 };
@@ -34,10 +37,10 @@ export function CommissionSummaryCard({ stylistData, calculateCommission, isLoad
     let totalProductCommission = 0;
 
     stylistData.forEach((s) => {
-      const c = calculateCommission(s.serviceRevenue, s.productRevenue);
+      const c = resolveCommission(s.user_id, s.serviceRevenue, s.productRevenue);
       totalCommission += c.totalCommission;
       totalServiceCommission += c.serviceCommission;
-      totalProductCommission += c.productCommission;
+      totalProductCommission += c.retailCommission;
     });
 
     return {
@@ -47,9 +50,9 @@ export function CommissionSummaryCard({ stylistData, calculateCommission, isLoad
       avg: stylistData.length > 0 ? totalCommission / stylistData.length : 0,
       count: stylistData.length,
     };
-  }, [stylistData, calculateCommission]);
+  }, [stylistData, resolveCommission]);
 
-  if (isLoading) {
+  if (isLoading || resolverLoading) {
     return (
       <Card>
         <CardContent className="p-6 flex items-center justify-center h-[140px]">
@@ -97,10 +100,10 @@ export function CommissionSummaryCard({ stylistData, calculateCommission, isLoad
           <div>
             <div className="flex items-center gap-2">
               <CardTitle className="font-display text-base tracking-wide">COMMISSION SUMMARY</CardTitle>
-              <MetricInfoTooltip description="Aggregate commission liability across all stylists. Calculated by applying each stylist's revenue to the configured commission tiers for services and products." />
+              <MetricInfoTooltip description="Aggregate commission liability across all stylists. Resolves per-stylist using override → level → tier priority." />
             </div>
             <CardDescription className="text-xs">
-              Total estimated commission based on individual stylist revenue and configured tiers
+              Total estimated commission based on individual stylist revenue and resolved rates
             </CardDescription>
           </div>
         </div>
