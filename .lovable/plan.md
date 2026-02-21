@@ -1,76 +1,49 @@
 
 
-## Enhance Service Add-Ons Configurator
+## Seamless Sidebar Popout Menu Design
 
-### Current State
+### What We're Fixing
 
-The add-on system has two cards in the bento grid:
-1. **Service Add-Ons Library** (left) -- define reusable add-ons with name, price, cost, duration, linked service
-2. **Booking Add-On Recommendations** (right) -- assign add-ons to categories or individual services via expandable rows
+The collapsed sidebar popover menus (the flyout panels that appear when clicking icons like the gear/Settings icon) currently float next to the sidebar with a small gap. The goal is to:
 
-The assignment card already supports both category-level and service-level assignments. The booking popover then surfaces these as smart recommendations.
+1. Add more visual spacing between the sidebar icon and the popover
+2. Create a seamless visual connection so the popover feels anchored to the clicked icon rather than floating independently
 
-### Enhancements
+### Design Approach
 
-#### 1. Bulk "Assign to All Categories" Action
+Create a "bridge" effect using a CSS pseudo-element or wrapper that visually connects the popover to its trigger icon. This involves:
 
-Add a quick action at the top of the Assignments card to assign an add-on to every category at once. This is common for universal add-ons like "Olaplex Treatment" or "Deep Conditioning" that apply across all service types.
+- Increasing `sideOffset` from 8 to 12-16px for breathing room
+- Adding a subtle connecting shape (a small triangular notch/arrow or a blurred bridge element) on the left edge of the popover, aligned with the trigger icon
+- Matching the popover's background and border styling to create the "seamlessly connected" illusion
+- Adding a soft glow or shadow that extends toward the trigger
 
-- A "Bulk Assign" button opens a small dropdown to pick an add-on
-- On selection, it creates assignments for all categories that don't already have that add-on
-- Shows a confirmation count: "Assigned to 6 categories"
+### Technical Changes
 
-#### 2. Description Field for Add-Ons
+**1. Custom PopoverContent variant for sidebar flyouts**
 
-Add an optional `description` field to the add-on library form. This text surfaces in the booking toast so stylists understand _why_ to recommend the add-on (e.g., "Repairs bonds after lightening services").
+Create a reusable `SidebarPopoverContent` wrapper that adds:
+- A left-pointing notch/arrow via `::before` pseudo-element
+- Increased `sideOffset` (16px)
+- Matching glassmorphic styling (`bg-card/90 backdrop-blur-xl border-border/50`)
+- A subtle connecting shadow that bridges toward the sidebar
 
-- New text input in the create/edit form
-- Displayed as a subtitle in the add-on list items
-- Surfaced in the ServiceAddonToast during booking
+**2. Update both popover locations**
 
-**Database**: The `service_addons` table already has a `description` column (nullable text), so no migration is needed.
+| File | Change |
+|------|--------|
+| `src/components/dashboard/CollapsibleNavGroup.tsx` (line 186) | Replace `PopoverContent` with new `SidebarPopoverContent` |
+| `src/components/dashboard/SidebarNavContent.tsx` (line 676) | Replace `PopoverContent` with new `SidebarPopoverContent` |
 
-#### 3. Visual Improvements to the Library Card
+**3. The visual connector**
 
-- Show a count badge on the card header (e.g., "4 add-ons")
-- Add an empty state icon (Package) instead of just text
-- Show the linked service name (not just "Linked") in the add-on row for clarity
-- Group services in the linked-service picker by category for easier navigation
+A small arrow/notch on the left side of the popover panel, positioned at the vertical center of the trigger icon. This is achieved with a CSS `::before` element using border-triangle or clip-path technique, colored to match the popover background. Combined with a subtle box-shadow that bleeds leftward, this creates the illusion of a single connected surface.
 
-#### 4. Drag-to-Reorder Add-Ons in the Library
+### Files to Create/Modify
 
-Allow admins to reorder add-ons in the library via drag handles. The `display_order` column already exists -- it just needs a UI.
-
-- Use `@dnd-kit/sortable` (already installed) to add drag handles to the add-on list
-- On reorder, batch-update `display_order` values
-- Order persists and controls the order add-ons appear in booking recommendations
-
-#### 5. Quick-Assign from Library Card
-
-When hovering an add-on in the library, show a small "Assign" shortcut that opens a popover to pick a target category or service without needing to go to the assignments card.
-
----
-
-### Technical Details
-
-**Files to modify:**
-
-| File | Changes |
-|------|---------|
-| `src/components/dashboard/settings/ServiceAddonsLibrary.tsx` | Description field in form, count badge, linked service name display, drag-to-reorder with dnd-kit, category-grouped service picker, quick-assign popover |
-| `src/components/dashboard/settings/ServiceAddonAssignmentsCard.tsx` | Bulk "Assign to All" action at top of card |
-| `src/hooks/useServiceAddons.ts` | New `useReorderServiceAddons` mutation for batch display_order updates |
-| `src/components/dashboard/schedule/ServiceAddonToast.tsx` | Show add-on description subtitle if available |
-
-**No database migration needed** -- all columns (`description`, `display_order`, `linked_service_id`) already exist.
-
-**Dependencies already installed:** `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`.
-
-### Sequencing
-
-1. Library card enhancements (description, count badge, linked service name, grouped picker)
-2. Drag-to-reorder in library
-3. Bulk assign action on assignments card
-4. Quick-assign popover from library
-5. Toast description surfacing
+| File | Action |
+|------|--------|
+| `src/components/dashboard/SidebarPopoverContent.tsx` | **New** -- custom popover content with arrow connector and glassmorphic styling |
+| `src/components/dashboard/CollapsibleNavGroup.tsx` | Swap `PopoverContent` for `SidebarPopoverContent` |
+| `src/components/dashboard/SidebarNavContent.tsx` | Swap `PopoverContent` for `SidebarPopoverContent` |
 
