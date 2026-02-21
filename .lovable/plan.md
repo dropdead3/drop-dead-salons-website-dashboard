@@ -1,108 +1,170 @@
 
 
-## Staffing Tab UI Audit and Cohesiveness Fixes
+# Terminology Enforcement + Brand Tokenization
 
-### Issues Found (13 violations across 5 components)
+## Phase 1: Terminology Drift Report
 
----
+### Category A -- Hardcoded Brand Name "Zura" (55 files, ~665 occurrences)
 
-### 1. Icon Color Violations (CARD_HEADER_DESIGN_RULES: "w-5 h-5 text-primary")
+These are instances where the platform name "Zura" is hardcoded as a string literal instead of being drawn from a tokenized constant. No brand token system (`PLATFORM_NAME`) exists today.
 
-| Card | Current | Should Be |
-|------|---------|-----------|
-| STYLISTS BY LEVEL | `text-chart-5` | `text-primary` |
-| CLIENT EXPERIENCE SCORECARD | `text-chart-4` | `text-primary` |
+| File | Line(s) | Current Usage | Issue |
+|------|---------|---------------|-------|
+| `src/pages/PlatformLanding.tsx` | 30, 146 | `"Zura"`, `"Zura Platform"` | Hardcoded brand in global landing page |
+| `src/pages/UnifiedLogin.tsx` | 327, 561 | `"Get started with Zura"`, `"Zura Platform"` | Hardcoded brand in auth flows |
+| `src/components/ErrorBoundary.tsx` | 36 | `"Zura encountered a rendering issue"` | Hardcoded brand in error fallback |
+| `src/components/dashboard/help-fab/AIHelpTab.tsx` | 77, 79 | `"I'm Zura, your AI assistant"` | Hardcoded in tenant-facing help UI |
+| `src/components/dashboard/PlatformFeedbackDialog.tsx` | 84 | `"help us improve Zura"` | Hardcoded in feedback dialog |
+| `src/components/dashboard/PersonalInsightsDrawer.tsx` | 233 | `"ZURA PERSONAL INSIGHTS"` | Hardcoded in insights UI |
+| `src/components/dashboard/IntegrationsTab.tsx` | 187 | `"your Zura appointments"` | Hardcoded in integrations copy |
+| `src/components/dashboard/sales/GoalLocationRow.tsx` | 255 | `"Powered by Zura AI"` | Hardcoded in sales UI |
+| `src/components/dashboard/sales/ShareToDMDialog.tsx` | 53 | `"Zura flagged that..."` | Hardcoded in message templates |
+| `src/pages/dashboard/admin/ZuraConfigPage.tsx` | 19-20 | `"Zura Configuration"`, `"how Zura communicates"` | Hardcoded in admin config |
+| `src/pages/dashboard/admin/ManagementHub.tsx` | 423 | `"Zura Configuration"` | Hardcoded in management hub |
+| `src/pages/dashboard/Campaigns.tsx` | 87 | `"Zura AI insights"` | Hardcoded in campaigns |
+| `src/pages/dashboard/NotificationPreferences.tsx` | 335, 347 | `"Zura Insights Email"`, `"your Zura insights"` | Hardcoded in notification settings |
+| `src/components/executive-brief/SilenceState.tsx` | 78 | `"Before Zura can surface levers"` | Hardcoded in executive brief |
+| `src/components/platform/account/EmailBrandingSection.tsx` | 330 | `"Sent via Zura"` | Hardcoded in email footer |
 
-**File:** `StylistsOverviewCard.tsx` line 49, `StylistExperienceCard.tsx` line 200
+### Category B -- Terminology Conflation (Platform vs Organization)
 
----
+| File | Line | Current | Issue | Fix |
+|------|------|---------|-------|-----|
+| `src/components/platform/CreateOrganizationDialog.tsx` | 138 | `"Set up a new organization on the platform"` | Correct usage -- no fix needed | N/A |
+| `src/components/dashboard/help-fab/AIHelpTab.tsx` | 79 | `"using the platform"` | Tenant user sees "platform" when they should see the product name or nothing | Replace with brand token |
+| `src/components/dashboard/MobileSubmitDrawer.tsx` | 63 | `"improve the platform"` | Tenant user sees "platform" generically | Replace with brand token |
+| `src/pages/PlatformLanding.tsx` | 65 | `"Salon Management Platform"` | Correct -- describes what the system is | N/A |
 
-### 2. Configure Button Inconsistency (HiringCapacityCard)
+### Category C -- SEO Component Has Hardcoded Tenant Data at Global Level
 
-The HIRING CAPACITY card uses `variant="ghost"` with raw classes for its Configure button, while STYLISTS BY LEVEL uses the correct `variant="outline"` with `tokens.button.cardAction` (pill style). These must match.
+| File | Issue |
+|------|-------|
+| `src/components/SEO.tsx` | Contains hardcoded `BUSINESS_INFO` for "Drop Dead Salon" with specific addresses, phone numbers, reviews. This is tenant data baked into the global system. It should be dynamically pulled from the organization's settings or removed from the platform-level codebase entirely. |
 
-**File:** `HiringCapacityCard.tsx` lines 206-214
-- Change `variant="ghost"` to `variant="outline"`
-- Add `className={tokens.button.cardAction}`
+**This is a cross-tenant data leak risk** -- the SEO component renders one specific tenant's schema markup for every visitor, regardless of organization context.
 
----
+### Category D -- Correct Usage (No Action Needed)
 
-### 3. Workload Card Empty State: Non-Canonical Header
-
-When the STYLIST WORKLOAD DISTRIBUTION card has no data (lines 97-123), its header is completely different from the data state: inline icon with mixed-case title, no icon box.
-
-**File:** `StylistWorkloadCard.tsx` lines 99-115
-- Replace inline `CardTitle` with proper icon-box + uppercase title pattern matching the data state (lines 154-166)
-
----
-
-### 4. Spacing: Individual Card Margins vs Parent Grid
-
-Cards should not carry their own vertical margins. The parent `StaffingContent.tsx` uses `gap-6` in grids for the first two rows, but the last three cards are standalone with their own `mb-6` or `mt-6`. This creates double-spacing in some cases and inconsistent gaps.
-
-| Card | Current | Fix |
-|------|---------|-----|
-| StylistWorkloadCard | `className="mb-6"` (lines 72, 98, 152) | Remove `mb-6` |
-| StaffRevenueLeaderboard | `className="mt-6"` (line 75) | Remove `mt-6` |
-| StylistExperienceCard | `className="mt-6"` (line 195) | Remove `mt-6` |
-
-**File:** `StaffingContent.tsx` -- wrap the last three cards in a `space-y-6` container to provide consistent spacing from the parent.
-
----
-
-### 5. Subsection Headers Not Using Design Tokens
-
-Internal subsection headings inside cards use raw `h4 text-sm font-medium` instead of `tokens.heading.subsection`.
-
-| Card | Heading Text | Line |
-|------|-------------|------|
-| HiringCapacityCard | "By Location (Sorted by Priority)" | 256 |
-| HiringCapacityCard | "90-Day Hiring Forecast" | 265 |
-| StylistWorkloadCard | "Productivity per Appointment" | 242 |
-
-**Fix:** Replace with `tokens.heading.subsection` class.
+The following are architecturally correct uses of "platform":
+- `src/components/platform/*` -- These are the platform admin layer (global system UI). Correct.
+- `platform_roles` table -- Global system roles. Correct.
+- `usePlatformBranding` -- Global system branding. Correct.
+- `PlatformContextBanner` -- Shows when platform admin is impersonating an org. Correct.
+- `PLATFORM_THEME_TOKENS` in `usePlatformBranding.ts` -- Global system theme tokens. Correct.
 
 ---
 
-### 6. Bold Weight Violation in Tooltip
+## Phase 2: Corrections Plan
 
-StylistExperienceCard tooltip uses `<strong>` tags (lines 223-226) which renders at 700 weight, violating the 500 max rule.
+### 2A. Create Brand Token Infrastructure
 
-**File:** `StylistExperienceCard.tsx` lines 223-226
-- Replace `<strong>` with `<span className="font-medium">`
+**New file: `src/lib/brand.ts`**
+
+```typescript
+/**
+ * Global platform identity token.
+ * This is the PLATFORM name (the software system).
+ * Never use this for Organization or tenant-level entities.
+ */
+export const PLATFORM_NAME = 'Zura';
+export const PLATFORM_NAME_FULL = 'Zura Platform';
+
+/**
+ * AI assistant identity (configurable per org via zura_personality_config).
+ * This fallback is used when no org-level config exists.
+ */
+export const AI_ASSISTANT_NAME_DEFAULT = 'Zura';
+```
+
+### 2B. Replace All Hardcoded "Zura" Strings with Token
+
+Every file in Category A will import `PLATFORM_NAME` from `src/lib/brand.ts` and use the token instead of the literal string. Template literals will be used for interpolation (e.g., `` `${PLATFORM_NAME} encountered a rendering issue` ``).
+
+Files to update (17 files):
+1. `src/pages/PlatformLanding.tsx`
+2. `src/pages/UnifiedLogin.tsx`
+3. `src/components/ErrorBoundary.tsx`
+4. `src/components/dashboard/help-fab/AIHelpTab.tsx`
+5. `src/components/dashboard/PlatformFeedbackDialog.tsx`
+6. `src/components/dashboard/PersonalInsightsDrawer.tsx`
+7. `src/components/dashboard/IntegrationsTab.tsx`
+8. `src/components/dashboard/sales/GoalLocationRow.tsx`
+9. `src/components/dashboard/sales/ShareToDMDialog.tsx`
+10. `src/pages/dashboard/admin/ZuraConfigPage.tsx`
+11. `src/pages/dashboard/admin/ManagementHub.tsx`
+12. `src/pages/dashboard/Campaigns.tsx`
+13. `src/pages/dashboard/NotificationPreferences.tsx`
+14. `src/components/executive-brief/SilenceState.tsx`
+15. `src/components/platform/account/EmailBrandingSection.tsx`
+16. `src/components/dashboard/MobileSubmitDrawer.tsx`
+17. `src/hooks/usePlatformBranding.ts` (toast message only)
+
+### 2C. Fix SEO Cross-Tenant Data Leak
+
+The `src/components/SEO.tsx` file will be flagged but **not refactored in this pass** -- it requires a separate architectural decision about whether SEO is rendered per-org from database or removed from the global codebase. This is a Phase 2+ concern that should be addressed as part of the public website multi-tenancy work.
+
+### 2D. Tenant-Facing "Platform" Copy Corrections
+
+| File | Current | After |
+|------|---------|-------|
+| `AIHelpTab.tsx` | `"using the platform"` | `"using ${PLATFORM_NAME}"` |
+| `MobileSubmitDrawer.tsx` | `"improve the platform"` | `"improve ${PLATFORM_NAME}"` |
 
 ---
 
-### 7. Staff Revenue Leaderboard Settings Button
+## Phase 3: Brand Tokenization Scope
 
-The settings gear button uses `variant="outline" size="icon" className="h-8 w-8"` -- an icon-only square button that doesn't match the pill-style `cardAction` pattern used elsewhere. It should match the HIRING CAPACITY and STYLISTS BY LEVEL Configure buttons.
+**What gets tokenized (Platform identity only):**
+- `PLATFORM_NAME` -- used in UI copy, error messages, footers, landing pages
+- `PLATFORM_NAME_FULL` -- used in copyright lines
+- `AI_ASSISTANT_NAME_DEFAULT` -- fallback for AI assistant name
 
-**File:** `StaffRevenueLeaderboard.tsx` line 113
-- Change from icon-only to pill button with "Settings" label using `tokens.button.cardAction`
-
----
-
-### 8. Missing `tokens.card.wrapper` on Several Cards
-
-Cards that use raw `className="p-6"` or `className="mb-6"` without `tokens.card.wrapper` (`rounded-xl`):
-- StaffOverviewCard (line 154)
-- StylistsOverviewCard (line 45)
-- StylistWorkloadCard (lines 72, 98, 152)
-- StylistExperienceCard (line 195)
-- StaffRevenueLeaderboard (line 75)
-
-These should all include `tokens.card.wrapper` for the standard rounded corner radius.
+**What does NOT get tokenized:**
+- "Organization" -- always a tenant entity, never tokenized
+- "Location" -- always a business unit within an org
+- "User" -- always a human with credentials
+- Any tenant-level configuration (org names, slugs, settings)
 
 ---
 
-### Files Changed Summary
+## Cross-Tenant Risk Assessment
 
-| File | Changes |
-|------|---------|
-| `StylistsOverviewCard.tsx` | Fix icon color to `text-primary`, add `tokens.card.wrapper` |
-| `HiringCapacityCard.tsx` | Fix Configure button to pill style, subsection headers to tokens |
-| `StylistWorkloadCard.tsx` | Fix empty state header, remove `mb-6`, add `tokens.card.wrapper`, subsection headers to tokens |
-| `StaffRevenueLeaderboard.tsx` | Fix settings button to pill style, remove `mt-6`, add `tokens.card.wrapper` |
-| `StylistExperienceCard.tsx` | Fix icon color to `text-primary`, remove bold `<strong>` tags, remove `mt-6`, add `tokens.card.wrapper` |
-| `StaffingContent.tsx` | Wrap standalone cards in `space-y-6` for consistent spacing |
+| Risk | Status | Detail |
+|------|--------|--------|
+| RLS isolation | OK | All tables use `organization_id` + RLS policies |
+| Recommendation engine leakage | OK | AI insights are scoped to org via `organization_id` in queries |
+| Executive briefs | OK | Scoped to org/location level |
+| Alert scoping | OK | Alerts tied to org-level thresholds |
+| SEO data leak | **AT RISK** | `SEO.tsx` has hardcoded "Drop Dead Salon" tenant data at global level |
+| Global/tenant config separation | OK | `site_settings` is platform-level, `organization.settings` is tenant-level |
+| Cross-tenant data in UI | OK | All queries filter by `effectiveOrganization.id` |
+
+---
+
+## Output Summary
+
+| Metric | Value |
+|--------|-------|
+| Terminology Drift Instances | ~665 across 55 files |
+| Hardcoded Brand Strings to Tokenize | 17 files |
+| Cross-Tenant Risk Items | 1 (SEO.tsx -- flagged, deferred) |
+| Conflation Errors (Platform/Org) | 2 minor copy issues |
+| Architecture Integrity Score | **8/10** (deducted for SEO leak and missing brand token layer) |
+| Tokenization Readiness After Fix | White-label ready for platform name swap |
+
+---
+
+## Technical Implementation
+
+### New File
+- `src/lib/brand.ts` -- Single source of truth for platform identity tokens
+
+### Modified Files (17 total)
+All modifications are string replacements: hardcoded `"Zura"` becomes `PLATFORM_NAME` (or `PLATFORM_NAME_FULL` for copyright lines). No architectural changes, no database changes, no new dependencies.
+
+### What This Enables
+- Single-constant brand swap for white-labeling
+- Clean semantic separation: Platform (global) vs Organization (tenant)
+- Investor-grade terminology discipline
+- No risk of global token changes impacting organization data structures
 
