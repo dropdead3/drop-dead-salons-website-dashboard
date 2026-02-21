@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { PLATFORM_NAME } from '@/lib/brand';
+import { PLATFORM_NAME, PLATFORM_URL } from '@/lib/brand';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -770,7 +770,7 @@ export function EmailBrandingSettings() {
                   {showAttribution && (
                     <p style={{ margin: 0, fontSize: 12, color: '#a1a1aa' }}>
                       Sent via{' '}
-                      <a href="https://getzura.com" style={{ color: '#a1a1aa', textDecoration: 'underline' }} onClick={(e) => e.preventDefault()}>
+                      <a href={PLATFORM_URL} style={{ color: '#a1a1aa', textDecoration: 'underline' }} onClick={(e) => e.preventDefault()}>
                         {PLATFORM_NAME}
                       </a>
                     </p>
