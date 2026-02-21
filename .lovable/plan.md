@@ -1,66 +1,39 @@
 
-## Enhance "Add Level" with Service and Retail Commission Inputs
+
+## Add Configure Button to STYLISTS BY LEVEL Card
 
 ### What Changes
 
-The current "Add Level" inline form only captures a name. When a new level is created, `serviceCommissionRate` and `retailCommissionRate` default to empty strings, meaning the user must then find and edit the level to set rates. This should all happen at creation time.
+Add a small configure/settings button to the top-right area of the STYLISTS BY LEVEL card header that navigates the user to the Experience Levels settings page. This follows the same card header action pattern used elsewhere (icon + title on left, action button on right).
 
 ### Plan
 
-**File: `src/components/dashboard/settings/StylistLevelsContent.tsx`**
+**File: `src/components/dashboard/StylistsOverviewCard.tsx`**
 
-**1. Add state for new level rates**
+1. **Import dependencies**: Add `Settings` icon from `lucide-react`, `Button` from UI, `useNavigate` from `react-router-dom`, and `tokens` from design tokens.
 
-Add two new state variables alongside `newLevelName`:
-- `newServiceRate` (string, default `''`)
-- `newRetailRate` (string, default `''`)
-
-**2. Replace the single-input inline form with a multi-field row**
-
-Transform the current add form (lines 453-468) from a single name input + buttons into a structured row with three inputs:
+2. **Restructure the header** to use `justify-between` so the left side (icon + title) and right side (configure button) are separated:
 
 ```
-[Name input (flex-1)] [Svc % input (w-20)] [Retail % input (w-20)] [Add] [Cancel]
+<div className="flex items-center justify-between mb-4">
+  <div className="flex items-center gap-3">
+    <!-- existing icon box + title/description -->
+  </div>
+  <Button
+    variant="outline"
+    size="sm"
+    className={tokens.button.cardAction}
+    onClick={() => navigate('/dashboard/admin/settings', { state: { scrollTo: 'levels' } })}
+  >
+    <Settings className="w-4 h-4" /> Configure
+  </Button>
+</div>
 ```
 
-- Name: text input, placeholder "Level name...", flex-1
-- Svc %: number input, placeholder "Svc %", small fixed width (~w-20)
-- Retail %: number input, placeholder "Retail %", small fixed width (~w-20)
-- Add button: enabled when name is non-empty (rates can be optional/default to 0)
-- Cancel button: resets all three fields
-
-**3. Update `handleAddNew` to use the new rate fields**
-
-Pass `newServiceRate` and `newRetailRate` into the new `LocalStylistLevel` object instead of empty strings:
-
-```typescript
-const handleAddNew = () => {
-  if (!newLevelName.trim()) return;
-  const newSlug = newLevelName.toLowerCase().replace(/\s+/g, '-');
-  const newLevel: LocalStylistLevel = {
-    id: newSlug,
-    slug: newSlug,
-    label: newLevelName.trim(),
-    clientLabel: `Level ${levels.length + 1}`,
-    description: '',
-    serviceCommissionRate: newServiceRate || '',
-    retailCommissionRate: newRetailRate || '',
-  };
-  setLevels([...levels, newLevel]);
-  setNewLevelName('');
-  setNewServiceRate('');
-  setNewRetailRate('');
-  setIsAddingNew(false);
-  setHasChanges(true);
-};
-```
-
-**4. Reset all fields on Cancel and Escape**
-
-Update the cancel handler and Escape keydown to also clear `newServiceRate` and `newRetailRate`.
+The button uses `tokens.button.cardAction` for the pill styling consistent with other card header actions. It navigates to the admin settings page where Experience Levels are configured.
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/settings/StylistLevelsContent.tsx` | Add rate state vars, expand inline form to 3 inputs, update handleAddNew and cancel/reset logic |
+| `src/components/dashboard/StylistsOverviewCard.tsx` | Add Configure button to card header with navigation to settings |
