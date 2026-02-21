@@ -240,9 +240,14 @@ export function NewClientDialog({
           {defaultLocationId && !showLocationSelector ? (
             <div className="flex items-center justify-between rounded-md bg-muted px-3 py-2">
               <div className="text-sm">
-                <span className="text-muted-foreground">Location: </span>
+                <span className="text-muted-foreground">Preferred Location: </span>
                 <span className="font-medium">
-                  {locations.find(l => l.id === locationId)?.name || 'Selected location'}
+                  {(() => {
+                    const loc = locations.find(l => l.id === locationId);
+                    if (!loc) return 'Selected location';
+                    const parts = [loc.name, loc.address, loc.city].filter(Boolean);
+                    return loc.address ? `${loc.name} — ${[loc.address, loc.city].filter(Boolean).join(', ')}` : loc.name;
+                  })()}
                 </span>
               </div>
               <Button
@@ -257,17 +262,22 @@ export function NewClientDialog({
             </div>
           ) : (
             <div className="space-y-2">
-              <Label htmlFor="location">Location *</Label>
+              <Label htmlFor="location">Preferred Location</Label>
               <Select value={locationId} onValueChange={setLocationId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a location" />
+                  <SelectValue placeholder="Select preferred location" />
                 </SelectTrigger>
                 <SelectContent>
-                  {locations.map((loc) => (
-                    <SelectItem key={loc.id} value={loc.id}>
-                      {loc.name}
-                    </SelectItem>
-                  ))}
+                  {locations.map((loc) => {
+                    const fullLabel = loc.address
+                      ? `${loc.name} — ${[loc.address, loc.city].filter(Boolean).join(', ')}`
+                      : loc.name;
+                    return (
+                      <SelectItem key={loc.id} value={loc.id}>
+                        {fullLabel}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
