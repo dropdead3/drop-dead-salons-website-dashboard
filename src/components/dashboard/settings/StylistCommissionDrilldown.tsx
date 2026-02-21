@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Trash2, ExternalLink, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getLevelColor } from '@/lib/level-colors';
 import { useNavigate } from 'react-router-dom';
 import { useAssignStylistLevel } from '@/hooks/useAssignStylistLevel';
 import { useUpsertCommissionOverride, useDeleteCommissionOverride } from '@/hooks/useStylistCommissionOverrides';
@@ -33,7 +34,7 @@ interface StylistCommissionDrilldownProps {
   orgId: string;
   levels: StylistLevel[];
   override: StylistCommissionOverride | null;
-  getLevelColor: (index: number, total: number) => { bg: string; text: string };
+  
 }
 
 export function StylistCommissionDrilldown({
@@ -43,7 +44,7 @@ export function StylistCommissionDrilldown({
   orgId,
   levels,
   override,
-  getLevelColor,
+  
 }: StylistCommissionDrilldownProps) {
   const navigate = useNavigate();
   const assignLevel = useAssignStylistLevel();
@@ -148,7 +149,7 @@ export function StylistCommissionDrilldown({
                   {currentLevel?.client_label} — {currentLevel?.label}
                 </span>
               ) : (
-                <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-100/60 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-destructive/10 text-destructive">
                   Unassigned
                 </span>
               )}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { tokens } from '@/lib/design-tokens';
+import { getLevelColor } from '@/lib/level-colors';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,23 +49,6 @@ type LocalStylistLevel = {
   retailCommissionRate: string;
 };
 
-const getLevelColor = (index: number, totalLevels: number) => {
-  const colorStops = [
-    { bg: 'bg-stone-100 dark:bg-stone-800', text: 'text-stone-600 dark:text-stone-400' },
-    { bg: 'bg-stone-200 dark:bg-stone-700', text: 'text-stone-700 dark:text-stone-300' },
-    { bg: 'bg-amber-100/70 dark:bg-amber-900/40', text: 'text-amber-700 dark:text-amber-400' },
-    { bg: 'bg-amber-200/80 dark:bg-amber-900/60', text: 'text-amber-800 dark:text-amber-300' },
-    { bg: 'bg-amber-300/80 dark:bg-amber-800/70', text: 'text-amber-900 dark:text-amber-200' },
-    { bg: 'bg-yellow-600 dark:bg-yellow-700', text: 'text-yellow-50 dark:text-yellow-100' },
-  ];
-  
-  if (totalLevels <= 1) return colorStops[colorStops.length - 1];
-  
-  const ratio = index / (totalLevels - 1);
-  const colorIndex = Math.round(ratio * (colorStops.length - 1));
-  
-  return colorStops[Math.min(colorIndex, colorStops.length - 1)];
-};
 
 const formatRate = (rate: number | null | undefined): string => {
   if (rate == null) return '';
@@ -383,12 +367,12 @@ export function StylistLevelsContent() {
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle className="flex items-center gap-2">
-                                {hasStylists && <AlertTriangle className="w-5 h-5 text-amber-500" />}
+                                {hasStylists && <AlertTriangle className="w-5 h-5 text-destructive" />}
                                 Delete "{level.label}"?
                               </AlertDialogTitle>
                               <AlertDialogDescription>
                                 {hasStylists ? (
-                                  <span className="text-amber-600">
+                                  <span className="text-destructive">
                                     Warning: {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is'} assigned to this level.
                                   </span>
                                 ) : (

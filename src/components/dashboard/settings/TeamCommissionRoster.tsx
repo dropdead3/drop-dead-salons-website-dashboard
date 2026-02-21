@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Users, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getLevelColor } from '@/lib/level-colors';
 import { toast } from 'sonner';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useAssignStylistLevel, useBulkAssignStylistLevel } from '@/hooks/useAssignStylistLevel';
@@ -26,20 +27,6 @@ interface TeamCommissionRosterProps {
   levels: StylistLevel[];
 }
 
-const getLevelColor = (index: number, totalLevels: number) => {
-  const colorStops = [
-    { bg: 'bg-stone-100 dark:bg-stone-800', text: 'text-stone-600 dark:text-stone-400' },
-    { bg: 'bg-stone-200 dark:bg-stone-700', text: 'text-stone-700 dark:text-stone-300' },
-    { bg: 'bg-amber-100/70 dark:bg-amber-900/40', text: 'text-amber-700 dark:text-amber-400' },
-    { bg: 'bg-amber-200/80 dark:bg-amber-900/60', text: 'text-amber-800 dark:text-amber-300' },
-    { bg: 'bg-amber-300/80 dark:bg-amber-800/70', text: 'text-amber-900 dark:text-amber-200' },
-    { bg: 'bg-yellow-600 dark:bg-yellow-700', text: 'text-yellow-50 dark:text-yellow-100' },
-  ];
-  if (totalLevels <= 1) return colorStops[colorStops.length - 1];
-  const ratio = index / (totalLevels - 1);
-  const colorIndex = Math.round(ratio * (colorStops.length - 1));
-  return colorStops[Math.min(colorIndex, colorStops.length - 1)];
-};
 
 export function TeamCommissionRoster({ orgId, levels }: TeamCommissionRosterProps) {
   const navigate = useNavigate();
@@ -240,7 +227,7 @@ export function TeamCommissionRoster({ orgId, levels }: TeamCommissionRosterProp
                       {level.client_label} — {level.label}
                     </span>
                   ) : (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-100/60 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-destructive/10 text-destructive">
                       Unassigned
                     </span>
                   )}
@@ -324,7 +311,7 @@ export function TeamCommissionRoster({ orgId, levels }: TeamCommissionRosterProp
         orgId={orgId}
         levels={levels}
         override={drilldownUserId ? overrideByUser.get(drilldownUserId) ?? null : null}
-        getLevelColor={getLevelColor}
+        
       />
     </TooltipProvider>
   );
