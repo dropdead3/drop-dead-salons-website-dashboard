@@ -110,6 +110,54 @@ serve(async (req) => {
       }
     }
 
+    // 2c. Per-stylist add-on quality signal
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: addonEvents } = await supabase
+      .from("booking_addon_events")
+      .select("staff_user_id, addon_price, addon_cost")
+      .eq("organization_id", organization_id)
+      .gte("created_at", thirtyDaysAgo);
+
+    if (addonEvents && addonEvents.length > 0) {
+      // Group by stylist and compute avg margin
+      const byStaff = new Map<string, { count: number; marginSum: number; marginCount: number }>();
+      for (const e of addonEvents as any[]) {
+        const entry = byStaff.get(e.staff_user_id) || { count: 0, marginSum: 0, marginCount: 0 };
+        entry.count++;
+        if (e.addon_cost != null && e.addon_price > 0) {
+          entry.marginSum += ((e.addon_price - e.addon_cost) / e.addon_price) * 100;
+          entry.marginCount++;
+        }
+        byStaff.set(e.staff_user_id, entry);
+      }
+
+      // Flag stylists with 3+ add-ons but avg margin below 35%
+      const lowMarginUpsellers: { staff_user_id: string; count: number; avg_margin: number }[] = [];
+      for (const [staffId, data] of byStaff) {
+        if (data.count >= 3 && data.marginCount > 0) {
+          const avgMargin = data.marginSum / data.marginCount;
+          if (avgMargin < 35) {
+            lowMarginUpsellers.push({ staff_user_id: staffId, count: data.count, avg_margin: Math.round(avgMargin) });
+          }
+        }
+      }
+
+      if (lowMarginUpsellers.length > 0) {
+        leverCandidates.push({
+          lever_type: "service_mix",
+          score: 0.45,
+          deviation: 0.3,
+          dataCompleteness: 1,
+          estimatedImpact: lowMarginUpsellers.length * 300,
+          drivers: lowMarginUpsellers.map(s =>
+            `Stylist (${s.staff_user_id.slice(0, 8)}) sold ${s.count} add-ons at avg ${s.avg_margin}% margin — coach toward higher-margin add-ons`
+          ),
+          evidence: { stylist_addon_quality: lowMarginUpsellers },
+          relatedKpis: [],
+        });
+      }
+    }
+
     // 4. If no candidate exceeds minimum threshold, return silence
     const MIN_SCORE = 0.3;
     const topCandidates = leverCandidates
