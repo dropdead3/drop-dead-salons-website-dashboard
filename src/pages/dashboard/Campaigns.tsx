@@ -97,7 +97,7 @@ export default function Campaigns() {
 
               return (
                 <Link key={campaign.id} to={`/dashboard/campaigns/${campaign.id}`}>
-                  <Card className="relative overflow-hidden p-5 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 group cursor-pointer">
+                  <Card className="relative overflow-hidden p-5 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 group cursor-pointer">
                     <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
                     
                     <div className="flex items-start justify-between gap-3 mb-3">

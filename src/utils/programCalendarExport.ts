@@ -13,7 +13,7 @@ interface CalendarEvent {
  */
 export function generateProgramCalendar(
   startDate: Date,
-  programName: string = 'DD75: Client Engine',
+  programName: string = 'Client Engine',
   totalDays: number = 75
 ): string {
   const events: CalendarEvent[] = [];
@@ -66,17 +66,17 @@ function formatICSDate(date: Date): string {
 }
 
 function generateUID(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}@dd75`;
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}@client-engine`;
 }
 
 function generateICS(events: CalendarEvent[]): string {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//DD75 Client Engine//EN',
+    'PRODID:-//Client Engine Program//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    'X-WR-CALNAME:DD75 Client Engine Program',
+    'X-WR-CALNAME:Client Engine Program',
     'X-WR-TIMEZONE:America/Los_Angeles',
   ];
 
@@ -127,7 +127,7 @@ export function downloadCalendar(
   
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'dd75-client-engine-schedule.ics';
+  link.download = 'client-engine-schedule.ics';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

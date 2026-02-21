@@ -26,7 +26,7 @@ interface CalendarSyncModalProps {
   programName?: string;
 }
 
-export function CalendarSyncModal({ startDate, programName = 'DD75: Client Engine' }: CalendarSyncModalProps) {
+export function CalendarSyncModal({ startDate, programName = 'Client Engine' }: CalendarSyncModalProps) {
   const [open, setOpen] = useState(false);
 
   const handleDownloadICS = () => {
