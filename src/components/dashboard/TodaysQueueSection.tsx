@@ -322,6 +322,12 @@ export function TodaysQueueSection({
             recurrence_group_id: null,
             recurrence_index: null,
             recurrence_rule: null,
+            is_redo: false,
+            redo_reason: null,
+            original_appointment_id: null,
+            redo_pricing_override: null,
+            redo_approved_by: null,
+            original_price: null,
           }}
           open={checkoutOpen}
           onOpenChange={setCheckoutOpen}

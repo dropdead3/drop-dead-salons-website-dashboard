@@ -14,7 +14,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Phone, User, Heart, Smartphone, Users, Repeat } from 'lucide-react';
+import { Phone, User, Heart, Smartphone, Users, Repeat, RotateCcw } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { QuickBookingPopover } from './QuickBookingPopover';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
@@ -122,7 +122,9 @@ function AppointmentCard({
             !useCategoryColor && !displayGradient && statusColors.border,
             !useCategoryColor && !displayGradient && statusColors.text,
             appointment.status === 'cancelled' && 'opacity-50 line-through',
-            displayGradient && 'shadow-lg'
+            displayGradient && 'shadow-lg',
+            // Pending redo: amber dashed border treatment
+            appointment.status === 'pending' && (appointment as any).is_redo && 'border-dashed border-2 border-amber-500 dark:border-amber-400',
           )}
           style={{
             ...style,
@@ -188,6 +190,7 @@ function AppointmentCard({
           <div className="relative z-10">
             {isCompact ? (
               <div className="text-xs font-medium truncate flex items-center gap-0.5">
+                {(appointment as any).is_redo && <RotateCcw className="h-2.5 w-2.5 text-amber-500 shrink-0" />}
                 {appointment.recurrence_group_id && <Repeat className="h-2.5 w-2.5 opacity-60 shrink-0" />}
                 {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[7px] px-0.5 rounded-sm font-semibold shrink-0">AST</span>}
                 {!isAssisting && hasAssistants && <Users className="h-2.5 w-2.5 opacity-60 shrink-0" />}

@@ -48,6 +48,7 @@ import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
 import { BannedClientAlert } from './clients/BannedClientAlert';
 import { BannedClientBadge } from './clients/BannedClientBadge';
 import { BanClientToggle } from './clients/BanClientToggle';
+import { ClientRedoHistory } from './clients/ClientRedoHistory';
 import { ArchiveClientToggle } from './clients/ArchiveClientToggle';
 import { ClientMarketingStatus } from './clients/ClientMarketingStatus';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -935,11 +936,12 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
             </Card>
           )}
 
-          {/* Tabs for History and Notes */}
+          {/* Tabs for History, Notes, and Redos */}
           <Tabs defaultValue="history" className="mt-0">
             <TabsList className="w-full rounded-xl">
               <TabsTrigger value="history" className="flex-1">Visit History</TabsTrigger>
               <TabsTrigger value="notes" className="flex-1">Notes</TabsTrigger>
+              <TabsTrigger value="redos" className="flex-1">Redos</TabsTrigger>
             </TabsList>
             
             <TabsContent value="history" className="mt-4">
@@ -951,6 +953,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
             
             <TabsContent value="notes" className="mt-4">
               <ClientNotesSection clientId={client.id} />
+            </TabsContent>
+
+            <TabsContent value="redos" className="mt-4">
+              <ClientRedoHistory clientId={client.id} />
             </TabsContent>
           </Tabs>
 

@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Phone, Clock, AlertTriangle, XCircle, GripVertical, Users, Repeat } from 'lucide-react';
+import { Phone, Clock, AlertTriangle, XCircle, GripVertical, Users, Repeat, RotateCcw } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
@@ -256,7 +256,9 @@ function AppointmentCard({
             isSelected && 'ring-2 ring-primary ring-offset-1',
             isDragging && !isDragOverlay && 'opacity-30',
             isDragOverlay && 'shadow-2xl ring-2 ring-primary scale-105 z-50',
-            displayGradient && 'shadow-lg'
+            displayGradient && 'shadow-lg',
+            // Pending redo: amber dashed border treatment
+            appointment.status === 'pending' && (appointment as any).is_redo && 'border-dashed border-2 border-amber-500 dark:border-amber-400',
           )}
           style={{
             ...(isDragOverlay ? { position: 'relative', width: '200px', height: style.height } : style),
@@ -350,6 +352,9 @@ function AppointmentCard({
           <div className="px-1.5 py-0.5 relative z-10">
             {isCompact ? (
               <div className="text-xs font-medium truncate flex items-center gap-1">
+                {(appointment as any).is_redo && (
+                  <RotateCcw className="h-2.5 w-2.5 text-amber-500 shrink-0" />
+                )}
                 {appointment.recurrence_group_id && (
                   <Repeat className="h-2.5 w-2.5 opacity-60 shrink-0" />
                 )}
@@ -364,6 +369,9 @@ function AppointmentCard({
             ) : (
               <>
                 <div className="text-xs font-medium truncate flex items-center gap-1">
+                  {(appointment as any).is_redo && (
+                    <RotateCcw className="h-3 w-3 text-amber-500 shrink-0" />
+                  )}
                   {appointment.recurrence_group_id && (
                     <Repeat className="h-3 w-3 opacity-60 shrink-0" />
                   )}
