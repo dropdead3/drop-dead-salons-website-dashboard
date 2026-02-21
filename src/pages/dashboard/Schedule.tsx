@@ -117,15 +117,21 @@ export default function Schedule() {
     setBreakContextMenu({ open: true, x: e.clientX, y: e.clientY, time, stylistId });
   };
 
-  // Close context menu on any click
+  // Close context menu on any click (delayed to avoid closing on the same event)
   useEffect(() => {
     if (!breakContextMenu?.open) return;
     const close = () => setBreakContextMenu(null);
-    window.addEventListener('click', close);
-    window.addEventListener('contextmenu', close);
+    // Use a rAF to avoid the current event from immediately closing the menu
+    const frameId = requestAnimationFrame(() => {
+      window.addEventListener('mousedown', close);
+      window.addEventListener('contextmenu', close);
+      window.addEventListener('scroll', close, true);
+    });
     return () => {
-      window.removeEventListener('click', close);
+      cancelAnimationFrame(frameId);
+      window.removeEventListener('mousedown', close);
       window.removeEventListener('contextmenu', close);
+      window.removeEventListener('scroll', close, true);
     };
   }, [breakContextMenu?.open]);
 
@@ -596,6 +602,7 @@ export default function Schedule() {
         <div
           className="fixed z-50 min-w-[160px] rounded-lg border bg-popover p-1 shadow-md animate-in fade-in-0 zoom-in-95"
           style={{ top: breakContextMenu.y, left: breakContextMenu.x }}
+          onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
         >
           <button

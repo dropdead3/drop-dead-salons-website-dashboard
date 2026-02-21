@@ -161,6 +161,7 @@ function DroppableSlot({
       onContextMenu={(e) => {
         if ((isAvailable || isOutsideHours) && !isPastSlot && onContextMenu) {
           e.preventDefault();
+          e.stopPropagation();
           onContextMenu(e);
         }
       }}
