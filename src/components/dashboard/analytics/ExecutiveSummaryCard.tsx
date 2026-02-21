@@ -37,7 +37,7 @@ import { useExpectedRentRevenue } from '@/hooks/useExpectedRentRevenue';
 import { useHasRenters } from '@/hooks/useHasRenters';
 import { useBookingPipeline } from '@/hooks/useBookingPipeline';
 import { usePaySchedule } from '@/hooks/usePaySchedule';
-import { useCommissionTiers } from '@/hooks/useCommissionTiers';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
 import { subDays, differenceInDays, parseISO, format, startOfMonth, startOfYear } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
@@ -222,7 +222,14 @@ export function ExecutiveSummaryCard() {
 
   // Commission liability for the current pay period to date
   const { currentPeriod } = usePaySchedule();
-  const { calculateCommission, isLoading: tiersLoading } = useCommissionTiers();
+  const { data: levels, isLoading: tiersLoading } = useStylistLevels();
+  const calculateCommission = (serviceRevenue: number, productRevenue: number) => {
+    if (!levels || levels.length === 0) return { totalCommission: 0 };
+    const midLevel = levels[Math.floor(levels.length / 2)];
+    const svcRate = midLevel.service_commission_rate ?? 0;
+    const retailRate = midLevel.retail_commission_rate ?? 0;
+    return { totalCommission: serviceRevenue * svcRate + productRevenue * retailRate };
+  };
 
   const payPeriodFrom = format(currentPeriod.periodStart, 'yyyy-MM-dd');
   const payPeriodTo = format(new Date(), 'yyyy-MM-dd');

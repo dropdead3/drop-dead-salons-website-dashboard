@@ -81,7 +81,7 @@ export interface CommissionData {
   productCommission: number;
   totalCommission: number;
   tierName: string;
-  source?: 'override' | 'level' | 'tier';
+  source?: 'override' | 'level' | 'unassigned';
   sourceName?: string;
 }
 
@@ -142,7 +142,7 @@ const SERVICE_TYPES = ['Service', 'service', 'SERVICE'];
 // ---------------------------------------------------------------------------
 
 export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: string, dateTo?: string) {
-  const { resolveCommission, calculateCommission, isLoading: tiersLoading } = useResolveCommission();
+  const { resolveCommission, isLoading: tiersLoading } = useResolveCommission();
 
   const query = useQuery({
     queryKey: ['individual-staff-report', staffUserId, dateFrom, dateTo],
@@ -203,7 +203,7 @@ export function useIndividualStaffReport(staffUserId: string | null, dateFrom?: 
 
       if (!phorestStaffId) {
         // Staff has no Phorest mapping -- return empty data with profile
-        return buildEmptyResult(profile, calculateCommission);
+        return buildEmptyResult(profile, (svc: number, prod: number) => resolveCommission(staffUserId!, svc, prod));
       }
 
       // ── Fetch appointments for current + prior + two-prior periods ──

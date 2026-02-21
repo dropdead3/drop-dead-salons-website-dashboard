@@ -1,11 +1,10 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useCommissionTiers } from './useCommissionTiers';
 import { useStylistLevels, StylistLevel } from './useStylistLevels';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
-export type CommissionSource = 'override' | 'level' | 'tier';
+export type CommissionSource = 'override' | 'level' | 'unassigned';
 
 export interface ResolvedCommission {
   serviceRate: number;
@@ -32,13 +31,12 @@ interface EmployeeLevelRow {
 
 /**
  * Unified commission resolution hook.
- * Priority: 1) per-stylist override  2) stylist-level default  3) revenue-band tier fallback
+ * Priority: 1) per-stylist override  2) stylist-level default  3) unassigned (0%)
  */
 export function useResolveCommission() {
   const { selectedOrganization } = useOrganizationContext();
   const orgId = selectedOrganization?.id;
 
-  const { tiers, calculateCommission, isLoading: tiersLoading } = useCommissionTiers();
   const { data: levels, isLoading: levelsLoading } = useStylistLevels();
 
   // Fetch active, non-expired overrides for the org
@@ -141,17 +139,15 @@ export function useResolveCommission() {
       }
     }
 
-    // 3. Fallback to revenue-band tiers
-    const tierResult = calculateCommission(serviceRevenue, productRevenue);
-    const totalRev = serviceRevenue + productRevenue;
+    // 3. Unassigned — no level, no override → 0% (enforces "define before payout")
     return {
-      serviceRate: serviceRevenue > 0 ? tierResult.serviceCommission / serviceRevenue : 0,
-      retailRate: productRevenue > 0 ? tierResult.productCommission / productRevenue : 0,
-      serviceCommission: tierResult.serviceCommission,
-      retailCommission: tierResult.productCommission,
-      totalCommission: tierResult.totalCommission,
-      source: 'tier',
-      sourceName: tierResult.tierName ? `Tier: ${tierResult.tierName}` : '',
+      serviceRate: 0,
+      retailRate: 0,
+      serviceCommission: 0,
+      retailCommission: 0,
+      totalCommission: 0,
+      source: 'unassigned',
+      sourceName: 'Unassigned',
     };
   };
 
@@ -171,13 +167,11 @@ export function useResolveCommission() {
     };
   };
 
-  const isLoading = tiersLoading || levelsLoading || overridesLoading || empLoading;
+  const isLoading = levelsLoading || overridesLoading || empLoading;
 
   return {
     resolveCommission,
     resolveForUser,
-    /** Fallback for components that don't have userId context */
-    calculateCommission,
     isLoading,
   };
 }
