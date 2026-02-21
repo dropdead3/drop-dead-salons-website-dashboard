@@ -168,12 +168,12 @@ function DroppableSlot({
       onMouseMove={(e) => setMouseX(e.nativeEvent.offsetX)}
     >
       {isPastSlot && (
-        <div className="absolute -translate-x-1/2 -top-8 bg-muted-foreground text-white text-xs px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap" style={{ left: mouseX ?? '50%', fontWeight: 700 }}>
+        <div className="absolute -translate-x-1/2 -top-8 bg-muted-foreground text-white text-xs px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap font-display font-medium tracking-wide" style={{ left: mouseX ?? '50%' }}>
           This time slot is no longer available
         </div>
       )}
       {(isAvailable || isOutsideHours) && !isPastSlot && (
-        <div className="absolute -translate-x-1/2 -top-8 bg-foreground text-background text-xs px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap" style={{ left: mouseX ?? '50%', fontWeight: 700 }}>
+        <div className="absolute -translate-x-1/2 -top-8 bg-foreground text-background text-xs px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap font-display font-medium tracking-wide" style={{ left: mouseX ?? '50%' }}>
           {formatSlotTime(hour, minute)}
         </div>
       )}

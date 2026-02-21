@@ -547,7 +547,7 @@ export function WeekView({
                             if (badge) badge.style.left = `${e.clientX - rect.left}px`;
                           }}
                         >
-                          <div data-slot-badge className="absolute -translate-x-1/2 -top-8 bg-foreground text-background text-xs px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap" style={{ left: '50%', fontWeight: 700 }}>
+                          <div data-slot-badge className="absolute -translate-x-1/2 -top-8 bg-foreground text-background text-xs px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap font-display font-medium tracking-wide" style={{ left: '50%' }}>
                             {(() => {
                               const ampm = slot.hour >= 12 ? 'PM' : 'AM';
                               const hour12 = slot.hour % 12 || 12;
