@@ -1,28 +1,28 @@
 
-## Move Red Closure Dots to the Left of Day Labels
+
+## Align Red Dots with Day Labels
 
 ### Change
 
-**File: `src/components/dashboard/schedule/ScheduleHeader.tsx`** (lines 336-357)
+**File: `src/components/dashboard/schedule/ScheduleHeader.tsx`** (lines 352-360)
 
-Currently the button layout is a vertical column (`flex-col items-center`):
+Currently the red dot and the label+date column are siblings in a horizontal flex, which vertically centers the dot against both lines of text. Instead, move the dot inside the day label row so it sits at the same vertical position as "Sun" / "Mon":
+
+**Current structure:**
 ```
-  Sun
-   22
-   *      <-- red dot below
+[dot] [Sun]
+       [22]
 ```
 
-Change to: keep the vertical stack for label+date, but wrap the whole button content in a horizontal row so the red dot sits to the left of the label column:
+**New structure:**
 ```
- * Sun
-    22
+[dot Sun]
+  [22]
 ```
 
 Specifically:
-1. Change the button's inner content from three stacked children to a horizontal `flex items-center gap-1` wrapper containing:
-   - The red dot (if closed) on the left
-   - A vertical `flex-col items-center` div with the day label and date number on the right
-2. Remove the old red dot that was below the date number
-3. Keep all existing className logic, tooltips, and closed-day opacity unchanged
+1. Remove the outer `flex items-center gap-1` wrapper
+2. Change the inner `flex-col items-center` div back to being the direct button child
+3. Replace the plain day label `<span>` with a `flex items-center gap-1` row containing the dot (if closed) and the label text
+4. Date number stays on its own line below, unchanged
 
-This is a ~5 line tweak to the button's inner JSX only.
