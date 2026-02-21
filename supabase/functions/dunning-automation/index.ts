@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createNotification } from '../_shared/notify.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -95,7 +96,7 @@ Deno.serve(async (req) => {
           results.retriesScheduled++;
 
           // Create notification for platform team
-          await adminClient.from('platform_notifications').insert({
+          await createNotification(adminClient, {
             type: 'payment_retry',
             severity: 'warning',
             title: `Payment Retry Scheduled: ${org.name}`,
@@ -110,30 +111,33 @@ Deno.serve(async (req) => {
           results.notifications.push(`Retry scheduled for ${org.name}`);
         }
       } else if (daysSinceFailure >= DEFAULT_CONFIG.gracePeriodDays) {
-        // Max retries exceeded and grace period ended - schedule suspension
+        // Max retries exceeded and grace period ended — flag for manual review.
+        // Per autonomy doctrine: suspensions require human approval.
+        // We mark as "pending_suspension" and notify; a platform admin must
+        // confirm via the Account Management UI to finalize.
         await adminClient
           .from('organizations')
-          .update({ subscription_status: 'suspended' })
+          .update({ subscription_status: 'pending_suspension' })
           .eq('id', org.id);
 
         await adminClient.from('billing_changes').insert({
           organization_id: org.id,
-          change_type: 'subscription_suspended',
-          notes: `Auto-suspended after ${DEFAULT_CONFIG.maxRetries} failed payment retries`,
+          change_type: 'suspension_pending',
+          notes: `Flagged for suspension after ${DEFAULT_CONFIG.maxRetries} failed payment retries. Awaiting admin review.`,
           previous_value: { status: 'past_due' },
-          new_value: { status: 'suspended' },
+          new_value: { status: 'pending_suspension' },
         });
 
-        await adminClient.from('platform_notifications').insert({
-          type: 'account_suspended',
+        await createNotification(adminClient, {
+          type: 'suspension_pending',
           severity: 'critical',
-          title: `Account Suspended: ${org.name}`,
-          message: `${org.name} has been suspended after ${DEFAULT_CONFIG.maxRetries} failed payment attempts over ${daysSinceFailure} days.`,
+          title: `Suspension Review Required: ${org.name}`,
+          message: `${org.name} has exhausted ${DEFAULT_CONFIG.maxRetries} payment retries over ${daysSinceFailure} days. Admin approval required to suspend.`,
           metadata: { organization_id: org.id },
-        });
+        }, { force: true }); // Always surface suspension reviews
 
         results.suspensionsScheduled++;
-        results.notifications.push(`${org.name} suspended`);
+        results.notifications.push(`${org.name} flagged for suspension review`);
       }
     }
 

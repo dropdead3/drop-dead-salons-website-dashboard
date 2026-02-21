@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createNotification } from "../_shared/notify.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -104,13 +105,14 @@ serve(async (req) => {
             days_late: daysLate,
           });
 
-          // Create notification for admin
-          await supabase.from("platform_notifications").insert({
+          // Create notification for admin (deduplicated)
+          await createNotification(supabase, {
             type: "rent_overdue",
             severity: "warning",
             title: "Rent Payment Overdue",
             message: `A rent payment of $${payment.amount} is ${daysLate} days overdue. Late fee of $${lateFee.toFixed(2)} has been applied.`,
             metadata: {
+              organization_id: payment.organization_id,
               payment_id: payment.id,
               booth_renter_id: payment.booth_renter_id,
               late_fee: lateFee,
