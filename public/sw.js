@@ -126,7 +126,7 @@ self.addEventListener('push', (event) => {
   console.log('[SW] Push message received');
   
   let data = {
-    title: 'Drop Dead 75',
+    title: 'Zura',
     body: 'You have a new notification',
     icon: '/favicon.ico',
     badge: '/favicon.ico',

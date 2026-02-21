@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Instagram, ArrowUpRight, MapPin, Phone, AlertCircle } from "lucide-react";
-import Logo from "@/assets/dd-secondary-logo.svg";
+import Logo from "@/assets/brand-logo-secondary.svg";
 import { useActiveLocations, formatHoursForDisplay, isClosedForHoliday, isClosedToday } from "@/hooks/useLocations";
 import { useOrgPath } from "@/hooks/useOrgPath";
 

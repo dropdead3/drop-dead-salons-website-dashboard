@@ -9,8 +9,8 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import Logo from '@/assets/dd-secondary-logo.svg';
-import LogoWhite from '@/assets/dd-secondary-logo-white.svg';
+import Logo from '@/assets/brand-logo-secondary.svg';
+import LogoWhite from '@/assets/brand-logo-secondary-white.svg';
 import { tokens } from '@/lib/design-tokens';
 
 interface DashboardLockScreenProps {

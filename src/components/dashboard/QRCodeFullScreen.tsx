@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeCanvas } from 'qrcode.react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import DropDeadLogoWhite from '@/assets/dd-secondary-logo-white.svg';
+import DropDeadLogoWhite from '@/assets/brand-logo-secondary-white.svg';
 
 interface QRCodeFullScreenProps {
   isOpen: boolean;
