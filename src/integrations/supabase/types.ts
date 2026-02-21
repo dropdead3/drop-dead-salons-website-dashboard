@@ -8856,8 +8856,11 @@ export type Database = {
           end_time: string
           id: string
           is_new_client: boolean | null
+          is_redo: boolean
           location_id: string | null
           notes: string | null
+          original_appointment_id: string | null
+          original_price: number | null
           phorest_client_id: string | null
           phorest_id: string
           phorest_staff_id: string | null
@@ -8865,6 +8868,9 @@ export type Database = {
           recurrence_group_id: string | null
           recurrence_index: number | null
           recurrence_rule: Json | null
+          redo_approved_by: string | null
+          redo_pricing_override: number | null
+          redo_reason: string | null
           service_category: string | null
           service_name: string | null
           start_time: string
@@ -8882,8 +8888,11 @@ export type Database = {
           end_time: string
           id?: string
           is_new_client?: boolean | null
+          is_redo?: boolean
           location_id?: string | null
           notes?: string | null
+          original_appointment_id?: string | null
+          original_price?: number | null
           phorest_client_id?: string | null
           phorest_id: string
           phorest_staff_id?: string | null
@@ -8891,6 +8900,9 @@ export type Database = {
           recurrence_group_id?: string | null
           recurrence_index?: number | null
           recurrence_rule?: Json | null
+          redo_approved_by?: string | null
+          redo_pricing_override?: number | null
+          redo_reason?: string | null
           service_category?: string | null
           service_name?: string | null
           start_time: string
@@ -8908,8 +8920,11 @@ export type Database = {
           end_time?: string
           id?: string
           is_new_client?: boolean | null
+          is_redo?: boolean
           location_id?: string | null
           notes?: string | null
+          original_appointment_id?: string | null
+          original_price?: number | null
           phorest_client_id?: string | null
           phorest_id?: string
           phorest_staff_id?: string | null
@@ -8917,6 +8932,9 @@ export type Database = {
           recurrence_group_id?: string | null
           recurrence_index?: number | null
           recurrence_rule?: Json | null
+          redo_approved_by?: string | null
+          redo_pricing_override?: number | null
+          redo_reason?: string | null
           service_category?: string | null
           service_name?: string | null
           start_time?: string

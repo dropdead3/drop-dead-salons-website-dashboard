@@ -167,25 +167,40 @@ export function QuickBookingPopover({
     total_price: number | null;
   } | null>(null);
 
-  // Query client's recent appointments for redo linking
+  // Query client's recent appointments for redo linking (from phorest_appointments, the active schedule table)
   const { data: clientRecentAppointments = [] } = useQuery({
-    queryKey: ['client-recent-appointments', selectedClient?.id, redoPolicy?.redo_window_days],
+    queryKey: ['client-recent-appointments', selectedClient?.phorest_client_id, redoPolicy?.redo_window_days],
     queryFn: async () => {
-      if (!selectedClient?.id) return [];
+      if (!selectedClient?.phorest_client_id) return [];
       const windowDays = redoPolicy?.redo_window_days ?? 14;
       const dateFrom = format(new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
       const { data } = await supabase
-        .from('appointments')
-        .select('id, service_name, appointment_date, staff_name, total_price, start_time')
-        .eq('client_id', selectedClient.id)
+        .from('phorest_appointments')
+        .select('id, service_name, appointment_date, start_time, total_price, stylist_user_id')
+        .eq('phorest_client_id', selectedClient.phorest_client_id)
         .gte('appointment_date', dateFrom)
         .not('status', 'in', '("cancelled")')
-        .eq('is_redo', false)
         .order('appointment_date', { ascending: false })
         .limit(20);
-      return data || [];
+      // Enrich with stylist name
+      if (!data) return [];
+      const stylistIds = [...new Set(data.map(a => a.stylist_user_id).filter(Boolean))];
+      let stylistMap: Record<string, string> = {};
+      if (stylistIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('employee_profiles')
+          .select('user_id, display_name, full_name')
+          .in('user_id', stylistIds);
+        for (const p of profiles || []) {
+          stylistMap[p.user_id] = p.display_name || p.full_name || 'Unknown';
+        }
+      }
+      return data.map(a => ({
+        ...a,
+        staff_name: a.stylist_user_id ? stylistMap[a.stylist_user_id] || 'Unknown' : 'Unknown',
+      }));
     },
-    enabled: !!selectedClient?.id && isRedo && open,
+    enabled: !!selectedClient?.phorest_client_id && isRedo && open,
   });
 
   // Add-on toast state
@@ -791,7 +806,8 @@ export function QuickBookingPopover({
 
   const currentStepIndex = STEPS.indexOf(step);
   const effectiveStylistSelected = !!selectedStylist || !!preSelectedStylistId;
-  const canBook = selectedClient && selectedServices.length > 0 && effectiveStylistSelected && selectedLocation;
+  const redoReasonValid = !isRedo || !redoPolicy?.redo_reason_required || (redoReason && (redoReason !== 'Other' || redoCustomReason.trim()));
+  const canBook = selectedClient && selectedServices.length > 0 && effectiveStylistSelected && selectedLocation && redoReasonValid;
 
   const getStylistName = () => {
     if (preSelectedStylistName) return preSelectedStylistName;
@@ -1974,7 +1990,26 @@ export function QuickBookingPopover({
           <div className="p-3 border-t border-border bg-card space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Total</span>
-              <span className="text-lg font-medium">{formatCurrency(totalPrice)}</span>
+              {(() => {
+                if (!isRedo) return <span className="text-lg font-medium">{formatCurrency(totalPrice)}</span>;
+                // Calculate redo-adjusted price
+                const origPrice = originalAppointmentData?.total_price;
+                let computedRedoPrice: number | null = null;
+                if (origPrice != null && redoPolicy) {
+                  if (redoPolicy.redo_pricing_policy === 'free') computedRedoPrice = 0;
+                  else if (redoPolicy.redo_pricing_policy === 'percentage') computedRedoPrice = origPrice * (redoPolicy.redo_pricing_percentage / 100);
+                  else computedRedoPrice = origPrice;
+                }
+                const finalPrice = redoPriceOverride ?? computedRedoPrice ?? totalPrice;
+                return (
+                  <div className="flex items-center gap-2">
+                    {finalPrice !== totalPrice && (
+                      <span className="text-sm text-muted-foreground line-through">{formatCurrency(totalPrice)}</span>
+                    )}
+                    <span className="text-lg font-medium text-amber-600 dark:text-amber-400">{formatCurrency(finalPrice)}</span>
+                  </div>
+                );
+              })()}
             </div>
             <div className="space-y-0.5">
               <p className="text-[10px] text-muted-foreground/70">

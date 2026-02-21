@@ -31,6 +31,13 @@ export interface PhorestAppointment {
   recurrence_group_id: string | null;
   recurrence_index: number | null;
   recurrence_rule: Record<string, unknown> | null;
+  // Redo fields
+  is_redo: boolean;
+  redo_reason: string | null;
+  original_appointment_id: string | null;
+  redo_pricing_override: number | null;
+  redo_approved_by: string | null;
+  original_price: number | null;
   // Joined data
   stylist_profile?: {
     display_name: string | null;
