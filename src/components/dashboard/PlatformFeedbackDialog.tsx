@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { Lightbulb, Bug, Upload, X, Loader2, ImageIcon } from 'lucide-react';
 import { useSubmitPlatformFeedback } from '@/hooks/usePlatformFeedback';
+import { PLATFORM_NAME } from '@/lib/brand';
 
 type FeedbackType = 'feature_request' | 'bug_report';
 
@@ -81,7 +82,7 @@ export function PlatformFeedbackDialog({ open, onOpenChange, defaultType = 'feat
           <DialogDescription>
             {isBug
               ? 'Help us fix issues by describing what went wrong.'
-              : 'Share your ideas to help us improve Zura.'}
+              : `Share your ideas to help us improve ${PLATFORM_NAME}.`}
           </DialogDescription>
         </DialogHeader>
 

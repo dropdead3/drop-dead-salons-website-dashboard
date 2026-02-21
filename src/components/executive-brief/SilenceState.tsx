@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
 import { useNavigate } from 'react-router-dom';
 import { useKpiDefinitions } from '@/hooks/useKpiDefinitions';
+import { PLATFORM_NAME } from '@/lib/brand';
 
 interface SilenceStateProps {
   compact?: boolean;
@@ -75,7 +76,7 @@ export function SilenceState({ compact = false }: SilenceStateProps) {
             No KPIs configured yet
           </h3>
           <p className="mt-2 max-w-sm text-sm text-[hsl(var(--platform-foreground-muted))]">
-            Before Zura can surface levers, define the metrics you want monitored — targets, thresholds, and review cadence.
+            Before {PLATFORM_NAME} can surface levers, define the metrics you want monitored — targets, thresholds, and review cadence.
           </p>
           <Button
             className="mt-6"

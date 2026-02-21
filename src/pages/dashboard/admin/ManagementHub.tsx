@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { PLATFORM_NAME } from '@/lib/brand';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -420,7 +421,7 @@ export default function ManagementHub() {
           <ManagementCard
             href="/dashboard/admin/zura-config"
             icon={Brain}
-            title="Zura Configuration"
+            title={`${PLATFORM_NAME} Configuration`}
             description="Customize AI personality, knowledge base, and guardrails"
             colorClass="bg-violet-500/10 text-violet-600 dark:text-violet-400"
           />

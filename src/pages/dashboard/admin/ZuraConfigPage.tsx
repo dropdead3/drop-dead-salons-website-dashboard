@@ -7,6 +7,7 @@ import { KnowledgeBaseTab } from '@/components/zura-config/KnowledgeBaseTab';
 import { RoleRulesTab } from '@/components/zura-config/RoleRulesTab';
 import { GuardrailsTab } from '@/components/zura-config/GuardrailsTab';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { PLATFORM_NAME } from '@/lib/brand';
 
 export default function ZuraConfigPage() {
   const { currentOrganization } = useOrganizationContext();
@@ -16,8 +17,8 @@ export default function ZuraConfigPage() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-[1200px] mx-auto space-y-6">
         <DashboardPageHeader
-          title="Zura Configuration"
-          description="Customize how Zura communicates, what she knows, and her boundaries"
+          title={`${PLATFORM_NAME} Configuration`}
+          description={`Customize how ${PLATFORM_NAME} communicates, what she knows, and her boundaries`}
           backTo="/dashboard/admin/management"
           backLabel="Back to Management"
         />

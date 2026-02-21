@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, BarChart3, Users, Calendar, Shield, Zap, Globe } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { PLATFORM_NAME, PLATFORM_NAME_FULL } from '@/lib/brand';
 
 export default function PlatformLanding() {
   const { user } = useAuth();
@@ -27,7 +28,7 @@ export default function PlatformLanding() {
           <div className="p-2 bg-gradient-to-br from-violet-600 to-purple-600 rounded-xl">
             <Sparkles className="w-5 h-5 text-white" />
           </div>
-          <span className="text-xl font-medium tracking-tight">Zura</span>
+          <span className="text-xl font-medium tracking-tight">{PLATFORM_NAME}</span>
         </div>
         <nav className="flex items-center gap-6">
           {user ? (
@@ -143,7 +144,7 @@ export default function PlatformLanding() {
       {/* Footer */}
       <footer className="relative z-10 py-8 text-center border-t border-white/[0.06]">
         <p className="text-sm text-slate-600">
-          &copy; {new Date().getFullYear()} Zura Platform. All rights reserved.
+          &copy; {new Date().getFullYear()} {PLATFORM_NAME_FULL}. All rights reserved.
         </p>
       </footer>
     </div>

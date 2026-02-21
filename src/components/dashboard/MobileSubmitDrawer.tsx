@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Send, Loader2 } from 'lucide-react';
 import { useSubmitFeatureRequest, FEATURE_CATEGORIES } from '@/hooks/useFeatureRequests';
 import { toast } from 'sonner';
+import { PLATFORM_NAME } from '@/lib/brand';
 
 interface MobileSubmitDrawerProps {
   open: boolean;
@@ -60,7 +61,7 @@ export function MobileSubmitDrawer({ open, onOpenChange }: MobileSubmitDrawerPro
         <DrawerHeader className="text-left">
           <DrawerTitle>Submit a Feature Request</DrawerTitle>
           <DrawerDescription>
-            Have an idea to improve the platform? Share it with us!
+            Have an idea to improve {PLATFORM_NAME}? Share it with us!
           </DrawerDescription>
         </DrawerHeader>
         

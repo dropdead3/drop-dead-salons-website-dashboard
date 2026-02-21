@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { PLATFORM_NAME } from '@/lib/brand';
 import {
   Brain,
   RefreshCw,
@@ -230,7 +231,7 @@ export function PersonalInsightsDrawer() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span className="font-display text-sm tracking-[0.15em]">ZURA PERSONAL INSIGHTS</span>
+                  <span className="font-display text-sm tracking-[0.15em]">{PLATFORM_NAME.toUpperCase()} PERSONAL INSIGHTS</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0}>

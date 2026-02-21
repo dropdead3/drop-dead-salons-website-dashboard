@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { PixelZMark } from '@/components/ui/PixelZMark';
+import { PLATFORM_NAME } from '@/lib/brand';
 
 type ErrorBoundaryProps = {
   children: React.ReactNode;
@@ -33,7 +34,7 @@ function ErrorFallback({
           Unexpected interruption
         </h1>
         <p className="mt-3 max-w-xl text-sm text-muted-foreground">
-          Zura encountered a rendering issue. Your data is safe. Reload to resume, or return to your dashboard.
+          {PLATFORM_NAME} encountered a rendering issue. Your data is safe. Reload to resume, or return to your dashboard.
         </p>
 
         <div className="mt-6">
