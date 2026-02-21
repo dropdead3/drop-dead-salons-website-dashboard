@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendEmail } from "../_shared/email-sender.ts";
+import { PLATFORM_NAME } from "../_shared/brand.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -125,7 +126,7 @@ function generateDigestEmail(kpis: WeeklyKPIs, weekOf: string, weekEnd: string):
       ` : ''}
 
       <p style="text-align: center; color: #64748b; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-        Automated weekly digest from Zura.
+        Automated weekly digest from ${PLATFORM_NAME}.
       </p>
     </div>`;
 }
