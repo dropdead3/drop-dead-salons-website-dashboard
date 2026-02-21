@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { EmptyState } from '@/components/ui/empty-state';
 import { 
-  Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors, Search,
+  Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors, Search, Eye,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
@@ -21,6 +21,8 @@ import {
   type ServiceCategoryColor,
 } from '@/hooks/useServiceCategoryColors';
 import { useCreateCategory, useRenameCategory, useDeleteCategory } from '@/hooks/useServiceCategoryColors';
+import { CalendarColorPreview } from './CalendarColorPreview';
+import { ThemeSelector } from './ThemeSelector';
 import { useServicesData, useCreateService, useUpdateService, useDeleteService, type Service } from '@/hooks/useServicesData';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { CategoryFormDialog } from './CategoryFormDialog';
@@ -126,6 +128,24 @@ export function ServicesSettingsContent() {
   const serviceCategories = useMemo(() => 
     categories?.filter(c => !['Block', 'Break'].includes(c.category_name)) || [],
   [categories]);
+
+  const schedulingCategories = useMemo(() =>
+    categories?.filter(c => ['Block', 'Break'].includes(c.category_name)) || [],
+  [categories]);
+
+  // Build color map for preview and theme selector
+  const colorMap = useMemo(() => {
+    if (!categories) return {};
+    const map: Record<string, { bg: string; text: string; abbr: string }> = {};
+    categories.forEach((cat) => {
+      map[cat.category_name.toLowerCase()] = {
+        bg: cat.color_hex,
+        text: cat.text_color_hex,
+        abbr: getAbbr(cat.category_name),
+      };
+    });
+    return map;
+  }, [categories]);
 
   const [localOrder, setLocalOrder] = useState<ServiceCategoryColor[]>([]);
   useEffect(() => { if (serviceCategories.length) setLocalOrder(serviceCategories); }, [serviceCategories]);
@@ -310,11 +330,16 @@ export function ServicesSettingsContent() {
                 <Plus className="w-4 h-4 mr-1" /> Add Category
               </Button>
             </div>
-            <CardDescription>
+           <CardDescription>
               Drag to reorder categories. Click the color badge to customize. This order is used across all booking flows.
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Theme Selector */}
+            <div className="mb-4">
+              <ThemeSelector currentColors={colorMap} />
+            </div>
+            <div className="h-px bg-border mb-4" />
             {localOrder.length === 0 ? (
               <div className={tokens.empty.container}>
                 <Scissors className={tokens.empty.icon} />
@@ -566,6 +591,107 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
           />
         )}
         </div>{/* end row 2 grid */}
+
+        {/* Row 3: Scheduling Blocks + Calendar Preview */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Scheduling Blocks */}
+          {schedulingCategories.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-primary" />
+                  <CardTitle className={tokens.heading.section}>SCHEDULING BLOCKS</CardTitle>
+                </div>
+                <CardDescription>
+                  Colors for non-service calendar entries like blocked time and breaks.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {schedulingCategories.map((cat) => {
+                    const abbr = getCategoryAbbreviation(cat.category_name);
+                    const hasGradient = isGradientMarker(cat.color_hex);
+                    const gradient = hasGradient ? getGradientFromMarker(cat.color_hex) : null;
+                    return (
+                      <div key={cat.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-sans font-medium tracking-normal shrink-0 transition-transform hover:scale-105 ring-2 ring-offset-2 ring-offset-background ring-transparent hover:ring-primary/50"
+                              style={gradient ? { background: gradient.background, color: gradient.textColor } : { backgroundColor: cat.color_hex, color: cat.text_color_hex }}
+                            >
+                              {abbr}
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-4" align="start">
+                            <div className="space-y-3">
+                              <p className={tokens.body.emphasis}>{cat.category_name}</p>
+                              <div className="space-y-1">
+                                <p className={tokens.label.tiny}>Special Styles</p>
+                                <div className="flex gap-2 flex-wrap">
+                                  {GRADIENT_OPTIONS.map(g => (
+                                    <Tooltip key={g.id}>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          className={cn('w-8 h-8 rounded-full shadow-md hover:scale-110 transition-transform', cat.color_hex === `gradient:${g.id}` && 'ring-2 ring-offset-2 ring-primary')}
+                                          style={{ background: g.background }}
+                                          onClick={() => handleColorChange(cat.id, `gradient:${g.id}`)}
+                                        />
+                                      </TooltipTrigger>
+                                      <TooltipContent><p className="text-xs">{g.name}</p></TooltipContent>
+                                    </Tooltip>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="h-px bg-border" />
+                              <div className="space-y-1">
+                                <p className={tokens.label.tiny}>Solid Colors</p>
+                                <div className="grid grid-cols-6 gap-1.5">
+                                  {CATEGORY_PALETTE.map(c => (
+                                    <button
+                                      key={c}
+                                      className={cn('w-7 h-7 rounded-full hover:scale-110 transition-transform', cat.color_hex.toLowerCase() === c.toLowerCase() && !hasGradient && 'ring-2 ring-offset-2 ring-primary')}
+                                      style={{ backgroundColor: c }}
+                                      onClick={() => handleColorChange(cat.id, c)}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                        <div className="flex-1 min-w-0">
+                          <p className={tokens.body.emphasis}>{cat.category_name}</p>
+                          <p className={tokens.body.muted}>
+                            {cat.category_name === 'Block' ? 'Blocked time slots (admin tasks, personal time)' : 'Scheduled breaks (lunch, etc.)'}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Calendar Preview */}
+          {categories && categories.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Eye className="w-5 h-5 text-primary" />
+                  <CardTitle className={tokens.heading.section}>CALENDAR PREVIEW</CardTitle>
+                </div>
+                <CardDescription>
+                  See how your color choices will look on the schedule. Changes update instantly.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CalendarColorPreview colorMap={colorMap} />
+              </CardContent>
+            </Card>
+          )}
+        </div>{/* end row 3 grid */}
 
         {/* Redo & Adjustment Policy */}
         <RedoPolicySettings />
