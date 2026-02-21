@@ -71,8 +71,44 @@ serve(async (req) => {
       .gte("reading_date", ninetyDaysAgo)
       .order("reading_date", { ascending: false });
 
+    // 2b. Fetch add-on margin data
+    const { data: addons } = await supabase
+      .from("service_addons")
+      .select("name, price, cost")
+      .eq("organization_id", organization_id)
+      .eq("is_active", true)
+      .not("cost", "is", null)
+      .gt("price", 0);
+
+    let addonMarginAvgPct: number | null = null;
+    if (addons && addons.length > 0) {
+      const margins = addons.map((a: any) => ((a.price - a.cost) / a.price) * 100);
+      addonMarginAvgPct = margins.reduce((s: number, m: number) => s + m, 0) / margins.length;
+    }
+
     // 3. Calculate deviation scores per lever category
     const leverCandidates = calculateLeverCandidates(kpiDefs, readings || []);
+
+    // Inject add-on margin signal as a lever candidate if below 40%
+    if (addonMarginAvgPct !== null && addonMarginAvgPct < 40) {
+      leverCandidates.push({
+        lever_type: "pricing",
+        score: 0.5,
+        deviation: (40 - addonMarginAvgPct) / 100,
+        dataCompleteness: 1,
+        estimatedImpact: Math.round((40 - addonMarginAvgPct) * 200),
+        drivers: [`Add-on avg margin is ${addonMarginAvgPct.toFixed(0)}%, consider reviewing cost/pricing`],
+        evidence: { addon_margin_avg_pct: addonMarginAvgPct, addon_count: addons!.length },
+        relatedKpis: [],
+      });
+    }
+
+    // Inject addon_margin_avg_pct into all candidates' evidence
+    if (addonMarginAvgPct !== null) {
+      for (const c of leverCandidates) {
+        (c.evidence as Record<string, unknown>).addon_margin_avg_pct = addonMarginAvgPct;
+      }
+    }
 
     // 4. If no candidate exceeds minimum threshold, return silence
     const MIN_SCORE = 0.3;
