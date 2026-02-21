@@ -55,7 +55,7 @@ interface OfflineAction {
   retries: number;
 }
 
-const STORAGE_KEY = 'dd75-offline-actions';
+const STORAGE_KEY = 'zura-offline-actions';
 
 export function useOfflineSync() {
   const { isOnline } = useOfflineStatus();

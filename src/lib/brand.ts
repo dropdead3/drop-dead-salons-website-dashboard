@@ -21,6 +21,10 @@ export const PLATFORM_DESCRIPTOR = 'Guided Intelligence for Scaling Operators';
 /** Product category for SEO and meta descriptions. */
 export const PLATFORM_CATEGORY = 'Salon Intelligence Platform';
 
+// ── Platform URL ───────────────────────────────────────────────────────────────
+/** Canonical platform URL for attribution links and meta tags. */
+export const PLATFORM_URL = 'https://getzura.com';
+
 // ── AI Assistant ───────────────────────────────────────────────────────────────
 /** Fallback AI assistant identity when no org-level config exists. */
 export const AI_ASSISTANT_NAME_DEFAULT = 'Zura';
