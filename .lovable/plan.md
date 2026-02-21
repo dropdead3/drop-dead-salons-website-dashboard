@@ -1,75 +1,72 @@
 
 
-## Build Stylist & Service Visibility Card (Website Booking Tab)
+## Deep Dive: Gaps, Redundancies, and Enhancements
 
-### What You Get
+### Findings Summary
 
-The "Coming Soon" placeholder on the Website Settings > Booking tab gets replaced with a fully functional **Stylist & Service Visibility** card. This gives admins a single view to control what appears on the public booking widget -- without needing to navigate to individual stylist profiles or service editors.
+After analyzing the Staff Service Configurator, Booking Visibility Card, and their shared hooks, here are the issues organized by priority.
 
-### Two Panels in One Card
+---
 
-**Panel 1 -- Stylists on Booking Widget**
-- List of all service-provider stylists (same role filter as the configurator: stylist, stylist_assistant, booth_renter)
-- Each row shows avatar, name, location, and an **"Accepting Bookings"** toggle (wired to `employee_profiles.is_booking`)
-- Location filter dropdown to narrow the list
-- Count badge showing "X of Y visible"
+### 1. REDUNDANCIES (Code Duplication)
 
-**Panel 2 -- Services on Booking Widget**
-- Collapsible category accordions showing all active services
-- Each service row has a **"Bookable Online"** toggle (wired to `services.bookable_online`)
-- Category-level "select all / deselect all" checkbox
-- Count badge per category showing "X of Y online"
+| Issue | Location | Fix |
+|-------|----------|-----|
+| **Duplicate service+category fetching** | `BookingVisibilityCard` has its own `useServicesWithCategories` local hook that duplicates what `useServicesData` + `useServiceCategoryColors` already provide | Remove the local hook; reuse the existing shared hooks that `ServicesSettingsContent` already uses |
+| **Duplicate `is_booking` toggle logic** | `BookingVisibilityCard.useToggleIsBooking` is a local mutation. The same pattern exists in `EditStylistCardDialog` as inline Supabase calls | Extract to a shared `useToggleIsBooking` mutation in `useStaffServiceConfigurator.ts` so both UIs use one source |
+| **Category bulk toggle bypasses mutation pattern** | `BookingVisibilityCard.handleToggleCategory` calls `supabase.from('services').update()` directly with `Promise.all` instead of using `useToggleBookableOnline` | Refactor to use a proper bulk mutation with correct cache invalidation and error handling |
+| **`any` type casts on stylists** | `BookingVisibilityCard` uses `(s: any)` for stylist data throughout | Use the return type from `useActiveStylists` properly |
 
-### How It Connects to Existing Systems
+### 2. GAPS (Missing Functionality)
 
-This card reads and writes the same fields that already power the booking widget:
-- `employee_profiles.is_booking` -- already checked by the homepage stylist cards and booking flows
-- `services.bookable_online` -- already filtered by `useBookingSystem.useServices()` and `usePublicServicesForWebsite`
+| Gap | Impact | Fix |
+|-----|--------|-----|
+| **No undo toast on category bulk toggle** | Inconsistent UX -- individual service toggles have undo, but category bulk toggles do not | Add undo toast to `handleToggleCategory` in `BookingVisibilityCard` |
+| **`useToggleBookableOnline` doesn't invalidate `booking-visibility-services`** | After toggling in the website editor, the Booking Visibility Card shows stale data until manual refresh | Add `booking-visibility-services` to invalidation list (or better, unify the query key) |
+| **No error handling on category bulk toggle** | `Promise.all` in `handleToggleCategory` has no `.catch()` -- failures are silently swallowed | Add error toast on catch |
+| **Stale `selectedUserId` after filter change** | `StaffServiceConfiguratorCard` detects when selected user leaves the filtered list (line 66) but the reset logic is commented out / no-op | Actually reset `selectedUserId` to `''` when the selected user is no longer visible |
+| **No optimistic updates** | All toggles wait for server round-trip before UI updates | Add optimistic cache updates to both toggle mutations for snappier feel |
 
-No new database columns or tables needed. This is purely a UI surface for existing data.
+### 3. ENHANCEMENTS (Quality + Polish)
 
-### Relationship to Staff Service Configurator
+| Enhancement | Description |
+|-------------|-------------|
+| **Unified query keys** | Standardize service query keys across `booking-visibility-services`, `services-website`, and `servicesData` to prevent stale data between pages |
+| **Loading skeleton** | Replace "Loading stylists..." and "Loading services..." text with skeleton rows for a polished feel |
+| **Disable toggles during mutation** | `BookingVisibilityCard` toggles are not disabled during pending mutations (unlike `StaffServiceConfiguratorCard` which correctly disables them) |
+| **Count badge on Stylists tab trigger** | Show the "X of Y visible" count directly on the tab trigger, not just inside the panel |
+| **Consistent card header styling** | `BookingVisibilityCard` uses raw `CardTitle` while `StaffServiceConfiguratorCard` uses `tokens.heading.section` + icon -- standardize both |
 
-The Staff Service Configurator (on the Services settings page) controls **which services a stylist is qualified to perform**. This Visibility card controls **whether a stylist or service appears on the public booking page at all**. They are complementary:
-- A stylist must be "Accepting Bookings" (visibility) AND qualified for a service (configurator) to be bookable for that service online
-- A service must be "Bookable Online" (visibility) AND assigned to the stylist (configurator) to show up
+---
 
 ### Technical Plan
 
-**File: `src/components/dashboard/settings/BookingVisibilityCard.tsx` (new)**
+**File: `src/hooks/useStaffServiceConfigurator.ts`**
+- Export a new `useToggleIsBooking()` mutation (extracted from `BookingVisibilityCard`)
+- Add proper cache invalidation for `booking-visibility-services` and `homepage-stylists`
 
-Create a new component with two tabbed panels:
+**File: `src/components/dashboard/settings/BookingVisibilityCard.tsx`**
+- Remove local `useToggleIsBooking` hook -- import from shared hook
+- Remove local `useServicesWithCategories` hook -- import `useServicesData` + `useServiceCategoryColors`
+- Fix category bulk toggle: use proper mutation with undo toast and error handling
+- Remove `any` type casts on stylists
+- Add `disabled={isPending}` to all Switch/Checkbox elements
+- Add loading skeleton placeholders
+- Standardize header styling with icon + design tokens
+- Add count badge on tab triggers
 
-1. **Stylists panel**: Uses `useActiveStylists` (from `useStaffServiceConfigurator`) for the filtered list. Renders each stylist as a row with a Switch toggling `is_booking` via a mutation on `employee_profiles`.
+**File: `src/components/dashboard/settings/StaffServiceConfiguratorCard.tsx`**
+- Fix the dead code at line 66-68 (stale user reset) -- actually reset `selectedUserId`
 
-2. **Services panel**: Uses the existing services/categories data pattern (same as `ServicesSettingsContent`). Renders category accordions with individual service toggles for `bookable_online`, using `useNativeServicesForWebsite.useToggleBookableOnline` or a direct mutation.
-
-Both panels include:
-- Location filter dropdown
-- Count badges
-- Undo toast on every toggle
-
-**File: `src/components/dashboard/settings/WebsiteSettingsContent.tsx` (update)**
-
-- Replace the Coming Soon stub (lines 714-730) with the new `BookingVisibilityCard`
-- Pass `organizationId` from the parent context
-- The BookingTab function will import and render the new component
-
-### Gap Analysis
-
-| Area | Finding | Action |
-|------|---------|--------|
-| **No centralized visibility controls** | Admins had to edit each stylist profile individually | Fixed: bulk toggle view |
-| **No service bookable_online bulk toggle** | Had to open each service editor dialog | Fixed: inline toggles with category-level bulk |
-| **No location scoping for visibility** | Couldn't see "who's bookable at Location X" | Fixed: location filter |
-| **No count indicators** | No way to see at-a-glance how many are visible | Fixed: count badges |
-| **Booking widget doesn't filter `is_booking`** | `useBookingSystem.useServices` filters `bookable_online` but staff selection may not filter `is_booking` | Future: verify booking wizard respects `is_booking` flag |
-| **No "hide entire category" from booking** | Can only hide individual services | Future enhancement: category-level online visibility |
+**File: `src/hooks/useNativeServicesForWebsite.ts`**
+- Add `booking-visibility-services` to `useToggleBookableOnline` invalidation list to keep both UIs in sync
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/settings/BookingVisibilityCard.tsx` | New component with Stylists + Services visibility panels |
-| `src/components/dashboard/settings/WebsiteSettingsContent.tsx` | Replace Coming Soon stub with new card |
+| `src/hooks/useStaffServiceConfigurator.ts` | Extract shared `useToggleIsBooking` mutation |
+| `src/components/dashboard/settings/BookingVisibilityCard.tsx` | Remove duplicates, fix bulk toggle, add undo/error handling, type safety, loading skeletons, disable during mutation, header polish |
+| `src/components/dashboard/settings/StaffServiceConfiguratorCard.tsx` | Fix stale user reset logic |
+| `src/hooks/useNativeServicesForWebsite.ts` | Cross-invalidate `booking-visibility-services` query key |
 
