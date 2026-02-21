@@ -91,6 +91,36 @@ export function NewClientDialog({
   const [notes, setNotes] = useState('');
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [birthday, setBirthday] = useState<Date | undefined>(undefined);
+  const [birthMonth, setBirthMonth] = useState<string>('');
+  const [birthDay, setBirthDay] = useState<string>('');
+  const [birthYear, setBirthYear] = useState<string>('');
+
+  const currentYear = new Date().getFullYear();
+  const years = useMemo(() => Array.from({ length: 101 }, (_, i) => currentYear - i), [currentYear]);
+  const months = useMemo(() => [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ], []);
+  const daysInMonth = useMemo(() => {
+    if (birthMonth === '' || birthYear === '') return 31;
+    return new Date(Number(birthYear), Number(birthMonth) + 1, 0).getDate();
+  }, [birthMonth, birthYear]);
+
+  // Sync dropdown selections → birthday Date
+  useEffect(() => {
+    if (birthMonth !== '' && birthDay !== '' && birthYear !== '') {
+      setBirthday(new Date(Number(birthYear), Number(birthMonth), Number(birthDay)));
+    } else {
+      setBirthday(undefined);
+    }
+  }, [birthMonth, birthDay, birthYear]);
+
+  // Clamp day if month/year changes reduce available days
+  useEffect(() => {
+    if (birthDay !== '' && Number(birthDay) > daysInMonth) {
+      setBirthDay(String(daysInMonth));
+    }
+  }, [daysInMonth, birthDay]);
   const [clientSince, setClientSince] = useState<Date | undefined>(new Date());
   const [locationId, setLocationId] = useState(defaultLocationId || '');
   const [showLocationSelector, setShowLocationSelector] = useState(!defaultLocationId);
@@ -119,6 +149,9 @@ export function NewClientDialog({
     setPhone('');
     setNotes('');
     setBirthday(undefined);
+    setBirthMonth('');
+    setBirthDay('');
+    setBirthYear('');
     setClientSince(new Date());
     setLocationId(defaultLocationId || '');
     setPreferredStylistId('');
@@ -328,35 +361,40 @@ export function NewClientDialog({
           </p>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+            <div className="space-y-2 col-span-2">
               <Label>Birthday</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !birthday && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {birthday ? format(birthday, "MMM d, yyyy") : "Optional"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={birthday}
-                    onSelect={setBirthday}
-                    disabled={(date) => date > new Date()}
-                    initialFocus
-                    captionLayout="dropdown"
-                    fromYear={1920}
-                    toYear={new Date().getFullYear()}
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
+              <div className="flex gap-2">
+                <Select value={birthMonth} onValueChange={setBirthMonth}>
+                  <SelectTrigger className="flex-[2]">
+                    <SelectValue placeholder="Month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {months.map((m, i) => (
+                      <SelectItem key={i} value={String(i)}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={birthDay} onValueChange={setBirthDay}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Day" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: daysInMonth }, (_, i) => (
+                      <SelectItem key={i + 1} value={String(i + 1)}>{i + 1}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={birthYear} onValueChange={setBirthYear}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {years.map((y) => (
+                      <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Client Since</Label>
