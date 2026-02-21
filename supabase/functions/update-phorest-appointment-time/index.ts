@@ -114,11 +114,24 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Try to update in Phorest if we have the phorest_appointment_id
+    // Check write-gate from org settings
+    let phorestWriteEnabled = false;
+    try {
+      const { data: orgData } = await supabase
+        .from("organizations")
+        .select("settings")
+        .limit(1)
+        .single();
+      const settings = (orgData?.settings || {}) as Record<string, any>;
+      phorestWriteEnabled = settings.phorest_write_enabled === true;
+    } catch (e) {
+      console.log("Could not resolve org for write-gate check, defaulting to disabled");
+    }
+
+    // Try to update in Phorest if we have the phorest_appointment_id and write-back is enabled
     let phorestUpdated = false;
-    if (localApt.phorest_appointment_id) {
+    if (phorestWriteEnabled && localApt.phorest_appointment_id) {
       try {
-        // Phorest PATCH endpoint for appointment updates
         await phorestRequest(
           `/appointment/${localApt.phorest_appointment_id}`,
           PHOREST_BUSINESS_ID,
@@ -134,8 +147,9 @@ Deno.serve(async (req) => {
         console.log("Successfully updated appointment in Phorest");
       } catch (phorestError) {
         console.error("Failed to update Phorest, updating local only:", phorestError);
-        // Continue with local update even if Phorest fails
       }
+    } else if (!phorestWriteEnabled) {
+      console.log("Phorest write-back disabled for this organization, local-only update");
     }
 
     // Update local database

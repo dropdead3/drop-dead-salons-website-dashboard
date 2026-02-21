@@ -70,6 +70,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { PhorestApiHealthDashboard } from '@/components/dashboard/PhorestApiHealthDashboard';
+import { PhorestWriteGateCard } from '@/components/dashboard/PhorestWriteGateCard';
 
 export default function PhorestSettings() {
   const { formatDate } = useFormatDate();
@@ -499,6 +500,10 @@ export default function PhorestSettings() {
             <TabsTrigger value="logs" className="font-display">
               <Clock className="w-4 h-4 mr-2" />
               Sync History
+            </TabsTrigger>
+            <TabsTrigger value="write-gate" className="font-display">
+              <AlertCircle className="w-4 h-4 mr-2" />
+              Write Control
             </TabsTrigger>
           </TabsList>
 
@@ -945,6 +950,9 @@ export default function PhorestSettings() {
                 </Table>
               )}
             </Card>
+          </TabsContent>
+          <TabsContent value="write-gate" className="space-y-6">
+            <PhorestWriteGateCard />
           </TabsContent>
         </Tabs>
       </div>

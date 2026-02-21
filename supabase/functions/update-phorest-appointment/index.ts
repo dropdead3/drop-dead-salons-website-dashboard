@@ -115,21 +115,45 @@ serve(async (req) => {
       updateBody.notes = notes;
     }
 
-    // Update in Phorest
+    // Check write-gate: look up org from the appointment record
+    let phorestWriteEnabled = false;
     try {
-      await phorestRequest(
-        `/appointment/${appointment_id}`,
-        businessId,
-        username,
-        password,
-        "PUT",
-        updateBody
-      );
-      console.log("Appointment updated in Phorest");
-    } catch (e: any) {
-      console.error("Failed to update in Phorest:", e.message);
-      // Continue to update local record even if Phorest fails
-      // This allows for offline-first behavior
+      const { data: aptData } = await supabase
+        .from("phorest_appointments")
+        .select("organization_id")
+        .eq("phorest_id", appointment_id)
+        .single();
+
+      if (aptData?.organization_id) {
+        const { data: orgData } = await supabase
+          .from("organizations")
+          .select("settings")
+          .eq("id", aptData.organization_id)
+          .single();
+        const settings = (orgData?.settings || {}) as Record<string, any>;
+        phorestWriteEnabled = settings.phorest_write_enabled === true;
+      }
+    } catch (e) {
+      console.log("Could not resolve org for write-gate check, defaulting to disabled");
+    }
+
+    // Update in Phorest (only if write-back is enabled)
+    if (phorestWriteEnabled) {
+      try {
+        await phorestRequest(
+          `/appointment/${appointment_id}`,
+          businessId,
+          username,
+          password,
+          "PUT",
+          updateBody
+        );
+        console.log("Appointment updated in Phorest");
+      } catch (e: any) {
+        console.error("Failed to update in Phorest:", e.message);
+      }
+    } else {
+      console.log("Phorest write-back disabled for this organization, local-only update");
     }
 
     // Update local record
