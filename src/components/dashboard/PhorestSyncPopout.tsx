@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
 
 interface SyncStatus {
   sync_type: string;
@@ -37,6 +38,7 @@ interface SyncStatus {
 export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const queryClient = useQueryClient();
+  const { syncLabel } = usePOSProviderLabel();
 
   // Fetch latest sync status for each type
   const { data: syncStatuses } = useQuery({
@@ -185,7 +187,7 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
           </PopoverTrigger>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          <p>Phorest Sync Status</p>
+          <p>{syncLabel} Status</p>
         </TooltipContent>
       </Tooltip>
       
@@ -193,7 +195,7 @@ export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <h4 className="font-display text-xs uppercase tracking-wider text-foreground">
-            Phorest Sync
+            {syncLabel}
           </h4>
           <Link 
             to="/dashboard/admin/phorest-settings" 

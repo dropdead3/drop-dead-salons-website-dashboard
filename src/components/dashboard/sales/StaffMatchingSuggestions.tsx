@@ -16,6 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useNavigate } from 'react-router-dom';
+import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
 
 export interface MatchSuggestion {
   employeeId: string;
@@ -67,6 +68,7 @@ export function StaffMatchingSuggestions({
 }: StaffMatchingSuggestionsProps) {
   const navigate = useNavigate();
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const { providerLabel } = usePOSProviderLabel();
 
   const visibleSuggestions = suggestions.filter(
     s => !dismissed.has(`${s.employeeId}-${s.phorestStaffId}`)
@@ -97,7 +99,7 @@ export function StaffMatchingSuggestions({
             <div>
               <CardTitle className="font-display text-base tracking-wide">STAFF MATCHING</CardTitle>
               <CardDescription className="text-xs">
-                Link your team to Phorest to track individual stats
+                Link your team to {providerLabel} to track individual stats
               </CardDescription>
             </div>
           </div>

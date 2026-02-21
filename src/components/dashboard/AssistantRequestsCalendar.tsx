@@ -11,6 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import type { AssistantRequest } from '@/hooks/useAssistantRequests';
 import { usePhorestRequestConflicts } from '@/hooks/usePhorestConflicts';
 import { cn } from '@/lib/utils';
+import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
 
 interface AssistantRequestsCalendarProps {
   requests: AssistantRequest[];
@@ -27,6 +28,7 @@ interface ConflictInfo {
 
 export function AssistantRequestsCalendar({ requests, onSelectRequest }: AssistantRequestsCalendarProps) {
   const { formatDate } = useFormatDate();
+  const { providerLabel } = usePOSProviderLabel();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
@@ -293,7 +295,7 @@ export function AssistantRequestsCalendar({ requests, onSelectRequest }: Assista
                                       <AlertCircle className="h-3.5 w-3.5 text-destructive ml-auto" />
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p className="font-medium">Phorest Conflict</p>
+                                      <p className="font-medium">{providerLabel} Conflict</p>
                                       {requestPhorestConflicts.map(c => (
                                         <p key={c.appointmentId} className="text-xs">
                                           {c.appointmentClientName}: {c.appointmentStartTime.slice(0, 5)}-{c.appointmentEndTime.slice(0, 5)}
@@ -345,7 +347,7 @@ export function AssistantRequestsCalendar({ requests, onSelectRequest }: Assista
           </div>
           <div className="flex items-center gap-1.5">
             <AlertTriangle className="h-3 w-3 text-destructive" />
-            <span>Phorest Conflict</span>
+            <span>{providerLabel} Conflict</span>
           </div>
         </div>
       </CardContent>
