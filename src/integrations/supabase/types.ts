@@ -14651,6 +14651,56 @@ export type Database = {
           },
         ]
       }
+      stylist_commission_overrides: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          organization_id: string
+          reason: string
+          retail_commission_rate: number | null
+          service_commission_rate: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          reason: string
+          retail_commission_rate?: number | null
+          service_commission_rate?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          reason?: string
+          retail_commission_rate?: number | null
+          service_commission_rate?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stylist_commission_overrides_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stylist_levels: {
         Row: {
           client_label: string
@@ -14660,6 +14710,8 @@ export type Database = {
           id: string
           is_active: boolean
           label: string
+          retail_commission_rate: number | null
+          service_commission_rate: number | null
           slug: string
           updated_at: string
         }
@@ -14671,6 +14723,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           label: string
+          retail_commission_rate?: number | null
+          service_commission_rate?: number | null
           slug: string
           updated_at?: string
         }
@@ -14682,6 +14736,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           label?: string
+          retail_commission_rate?: number | null
+          service_commission_rate?: number | null
           slug?: string
           updated_at?: string
         }

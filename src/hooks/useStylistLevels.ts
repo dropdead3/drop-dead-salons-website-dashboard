@@ -11,6 +11,8 @@ export interface StylistLevel {
   description: string | null;
   display_order: number;
   is_active: boolean;
+  service_commission_rate: number | null;
+  retail_commission_rate: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -242,6 +244,8 @@ export function useSaveStylistLevels() {
       client_label: string;
       description?: string;
       display_order: number;
+      service_commission_rate?: number | null;
+      retail_commission_rate?: number | null;
     }[]) => {
       // Get current levels from DB
       const { data: existingLevels, error: fetchError } = await supabase
@@ -274,6 +278,8 @@ export function useSaveStylistLevels() {
               client_label: level.client_label,
               description: level.description,
               display_order: level.display_order,
+              service_commission_rate: level.service_commission_rate ?? null,
+              retail_commission_rate: level.retail_commission_rate ?? null,
             })
             .eq('slug', level.slug);
           if (error) throw error;
@@ -287,6 +293,8 @@ export function useSaveStylistLevels() {
               client_label: level.client_label,
               description: level.description,
               display_order: level.display_order,
+              service_commission_rate: level.service_commission_rate ?? null,
+              retail_commission_rate: level.retail_commission_rate ?? null,
             });
           if (error) throw error;
         }
