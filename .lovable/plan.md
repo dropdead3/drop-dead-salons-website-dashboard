@@ -1,123 +1,85 @@
 
 
-## Commission System: Gap Analysis and Enhancement Plan
+## Stylist Level Assignment Configurator
 
-### Critical Gap: Commission Resolution Engine is Disconnected
+### What This Solves
 
-You built a 3-tier commission priority system (per-stylist override > level default > revenue-band fallback), but the **calculation engine that every analytics and payroll component uses still only reads revenue-band tiers**. The level rates and overrides exist in the database and settings UI -- they're just never consulted when actually computing commissions.
+There's currently no way in the settings UI to assign stylists to experience levels. The `employee_profiles.stylist_level` field exists but there's no dedicated configurator on the Stylist Levels page to manage assignments. Operators have to set levels individually somewhere else. This feature adds a "Level Assignments" card to the Stylist Levels settings page where you can assign each stylist to a level and get prompted to verify their services and overrides.
 
-This means every commission number shown in the app today (Payroll Overview, Commission Summary Card, Staff Commission Table, Individual Staff Report, Tier Progression, My Pay portal) is **ignoring stylist levels and overrides entirely**.
+### What Gets Built
 
----
+**1. Level Assignment Card (new section on Stylist Levels page)**
 
-### What Needs to Change
+A new card below the Experience Levels card titled "LEVEL ASSIGNMENTS" with:
+- A dropdown or list of all active stylists (filterable by location)
+- Each stylist row shows their current level (or "Unassigned")
+- A level picker (dropdown) per stylist to assign/change their level
+- When a level is changed, a toast/prompt appears: "Level updated. Review [stylist name]'s services and pricing overrides?" with a link to the Services & Schedule settings page (staff service configurator)
+- Visual grouping: stylists grouped by their current level, with unassigned stylists highlighted at the top
 
-**1. Unified Commission Resolution Hook (new)**
+**2. Prompt Flow**
 
-Create a `useResolveCommission` hook that implements the 3-tier priority:
+When assigning or changing a stylist's level:
+1. Level is saved immediately to `employee_profiles.stylist_level`
+2. A confirmation toast appears with an action button: "Review Services & Overrides" that navigates to `/dashboard/admin/settings?category=services` (the staff service configurator)
+3. This ensures operators don't forget to check that service offerings and custom pricing/timing are correct after a level change
 
-| Priority | Source | Lookup |
-|----------|--------|--------|
-| 1 (highest) | Per-stylist override | `stylist_commission_overrides` where `is_active = true` and not expired |
-| 2 | Stylist level default | `stylist_levels.service_commission_rate` / `retail_commission_rate` via `employee_profiles.stylist_level` |
-| 3 (fallback) | Revenue-band tiers | Existing `commission_tiers` table (current behavior) |
+**3. Bulk Assignment**
 
-This hook will accept a `userId` and revenue amounts, then resolve the correct rate by checking each tier in order. It replaces direct calls to `useCommissionTiers.calculateCommission` throughout the app.
+- A "Set Level" bulk action: select multiple stylists via checkboxes, then assign them all to a level at once
+- Same prompt to review services appears after bulk changes
 
-**2. Wire Resolution Into All Consumers**
+### What the UI Looks Like
 
-Every component that currently calls `calculateCommission(serviceRevenue, productRevenue)` needs to switch to the new resolver that also takes `userId`:
+```text
+LEVEL ASSIGNMENTS
+Assign stylists to experience levels. Changing a level affects their
+default commission rates and level-based pricing.
 
-- `usePayrollForecasting` -- payroll projections per employee
-- `useIndividualStaffReport` -- staff detail page commissions
-- `CommissionSummaryCard` -- analytics commission totals
-- `StaffCommissionTable` -- per-stylist commission breakdown
-- `CommissionCalculator` -- the inline calculator widget
-- `useTierDistribution` -- tier progression and impact analysis
-- `CommandCenterAnalytics` -- pinned commission cards
+[Location: All v]
 
-**3. Commission Source Indicator**
+-- Unassigned (2) --
+[ ] Jordan T.         [Select Level v]
+[ ] New Stylist       [Select Level v]
 
-In analytics views, show which rate source is active for each stylist so operators can see at a glance who has overrides vs level defaults vs fallbacks:
+-- New Talent (1) --
+[ ] Rising Star       Level 1 - New Talent  [Change v]
 
-- A small badge: "Override", "Level: Signature Artist", or "Tier: Gold"
-- This makes the commission structure transparent and auditable
+-- Core Artist (1) --
+[ ] Kristi D.         Level 3 - Core Artist [Change v]
 
-**4. Override Expiry Handling**
-
-The overrides table has `expires_at` but the query in `useStylistCommissionOverrides` only filters by `is_active = true` -- it doesn't check expiration. Expired overrides will still be applied as if they're current.
-
-**5. Commission Audit Trail (Enhancement)**
-
-When commission rates change (level rate edited, override added/removed/expired), there's no historical record. For payroll disputes or retroactive analysis, add a `commission_rate_history` table that logs changes.
-
----
+[Set Level for Selected ▾]
+```
 
 ### Technical Plan
 
-**New file: `src/hooks/useResolveCommission.ts`**
-- Fetches all three data sources: overrides (for org), stylist levels, and revenue-band tiers
-- Exports `resolveCommission(userId, serviceRevenue, productRevenue)` that returns `{ serviceRate, retailRate, serviceCommission, retailCommission, totalCommission, source: 'override' | 'level' | 'tier', sourceName: string }`
-- Handles override expiry check (`expires_at` comparison)
-- Needs `employee_profiles.stylist_level` to map user to their level's rates
+**File: `src/components/dashboard/settings/StylistLevelAssignments.tsx` (new)**
+- Fetches active employee profiles for the org (using existing `useTeamDirectory` or a lighter query)
+- Fetches stylist levels via `useStylistLevels`
+- Groups stylists by their current `stylist_level` value
+- Each row has a Select dropdown with all available levels
+- On change: updates `employee_profiles.stylist_level` via a mutation
+- On success: shows a toast with "Review Services & Overrides" action button that navigates to the services settings tab
+- Supports multi-select for bulk level assignment
 
-**Modified: `src/hooks/usePayrollForecasting.ts`**
-- Replace `useCommissionTiers` with `useResolveCommission`
-- Change commission calculation block (lines 207-226) to call per-employee resolution instead of flat tier lookup
-- Each `EmployeeProjection` gets a new `commissionSource` field
+**File: `src/hooks/useAssignStylistLevel.ts` (new)**
+- `useAssignStylistLevel` mutation: updates `employee_profiles.stylist_level` for a given `user_id`
+- `useBulkAssignStylistLevel` mutation: updates multiple stylists at once
+- Invalidates `team-directory`, `employee-profile`, `stylists-by-level`, and `homepage-stylists` queries on success
 
-**Modified: `src/hooks/useIndividualStaffReport.ts`**
-- Replace `calculateCommission(serviceRevenue, productRevenue)` at line 432 with resolved commission that accounts for the staff member's level and any override
+**File: `src/components/dashboard/settings/StylistLevelsContent.tsx` (modified)**
+- Import and render `StylistLevelAssignments` as a new card between the Experience Levels card and the Commission Overrides card
+- Pass `orgId` and `levels` as props
 
-**Modified: `src/hooks/useTierDistribution.ts`**
-- Update to work with the new resolution model -- progression opportunities should be based on the stylist's actual active rate source, not just revenue-band tiers
+### Data Flow
 
-**Modified: `src/components/dashboard/sales/CommissionSummaryCard.tsx`**
-- Accept the new resolver interface instead of flat `calculateCommission`
-- Show aggregate by source type (how much commission comes from overrides vs level rates vs tier fallback)
-
-**Modified: `src/components/dashboard/sales/StaffCommissionTable.tsx`**
-- Add a "Source" column showing where each stylist's rate comes from
-- Use per-stylist resolution instead of flat calculation
-
-**Modified: `src/components/dashboard/analytics/SalesTabContent.tsx`**
-- Pass the new resolver to commission components
-
-**Modified: `src/components/dashboard/CommandCenterAnalytics.tsx`**
-- Pass the new resolver to pinned commission cards
-
-**Modified: `src/hooks/useStylistCommissionOverrides.ts`**
-- Add expiry filtering: `or('expires_at.is.null,expires_at.gt.${now}')`
-
-**Database migration: `commission_rate_history` table**
-- Columns: `id`, `organization_id`, `user_id` (nullable for level-wide changes), `change_type` ('override_added' | 'override_removed' | 'override_expired' | 'level_rate_changed'), `previous_service_rate`, `new_service_rate`, `previous_retail_rate`, `new_retail_rate`, `changed_by`, `created_at`
-- RLS: org members can view, admins can insert
-
----
-
-### Summary of Gaps Found
-
-| Gap | Severity | Status |
-|-----|----------|--------|
-| Level-based rates never used in commission calculation | **Critical** | All commission numbers are wrong for orgs using level rates |
-| Per-stylist overrides never consulted during calculation | **Critical** | Override data is stored but ignored |
-| Override expiry not checked in query | **High** | Expired overrides still treated as active |
-| No commission source transparency in analytics | **Medium** | Operators can't see which rate applies to whom |
-| No audit trail for rate changes | **Medium** | No history for payroll disputes |
-| `useTierDistribution` progression logic assumes revenue-band tiers only | **Medium** | Progression opportunities are misleading for level-based orgs |
+The `stylist_level` column on `employee_profiles` currently stores strings like `"LEVEL 3 STYLIST"`. The new configurator will write the `stylist_levels.slug` value instead (e.g., `"emerging"`, `"senior"`). The existing `getLevelSlug()` utility in `levelPricing.ts` handles the old format, and the commission resolution engine already maps slugs to level IDs -- so both formats will continue to work. Over time, all profiles will migrate to slug-based values.
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/hooks/useResolveCommission.ts` | New unified commission resolution hook |
-| `src/hooks/usePayrollForecasting.ts` | Use per-employee resolution |
-| `src/hooks/useIndividualStaffReport.ts` | Use resolved commission |
-| `src/hooks/useTierDistribution.ts` | Update progression for multi-source model |
-| `src/hooks/useStylistCommissionOverrides.ts` | Add expiry filtering |
-| `src/components/dashboard/sales/CommissionSummaryCard.tsx` | Source-aware display |
-| `src/components/dashboard/sales/StaffCommissionTable.tsx` | Add source column |
-| `src/components/dashboard/analytics/SalesTabContent.tsx` | Wire new resolver |
-| `src/components/dashboard/CommandCenterAnalytics.tsx` | Wire new resolver |
-| Migration | Create `commission_rate_history` table |
+| `src/components/dashboard/settings/StylistLevelAssignments.tsx` | New component: level assignment card with grouped stylist list, level pickers, bulk assign, and review prompt |
+| `src/hooks/useAssignStylistLevel.ts` | New hook: single and bulk level assignment mutations |
+| `src/components/dashboard/settings/StylistLevelsContent.tsx` | Import and render the new assignments card |
 
