@@ -1,16 +1,27 @@
 
 
-# Default Gender to Female and Reorder Options
+# Make "Synced to Phorest" Description Dynamic
 
-## Changes
+## Problem
+The `NewClientDialog` description is hardcoded to "Create a new client in the system. They will be synced to Phorest." -- regardless of the organization's actual integration status. This violates the standalone-detach-Phorest doctrine and would be inaccurate for orgs using a different CRM or no CRM at all.
+
+## Solution
 
 **File:** `src/components/dashboard/schedule/NewClientDialog.tsx`
 
-Three small edits:
+Use the existing `usePOSConfig()` hook to determine the organization's POS/CRM integration and render the description dynamically:
 
-1. **Line 78** -- Change default state from `''` to `'Female'` so the dialog opens with Female pre-selected
-2. **Line 107** -- Change the reset value from `''` to `'Female'` so closing/reopening the dialog also defaults to Female
-3. **Line 230** -- Reorder the array from `['Male', 'Female', 'Non-Binary', 'Prefer not to say']` to `['Female', 'Male', 'Non-Binary', 'Prefer not to say']` so Female appears first in the pill row
+- **Phorest connected:** "Create a new client in the system. They will be synced to Phorest."
+- **Other POS connected:** "Create a new client in the system. They will be synced to {provider name}."
+- **No integration:** "Create a new client in the system."
 
-No other files affected.
+### Technical Details
 
+1. Import `usePOSConfig` from `@/hooks/usePOSData`
+2. Call `usePOSConfig()` inside the component to get `posConfig`
+3. Build a dynamic description string based on `posConfig?.posType`:
+   - If a POS type exists and sync is enabled, append the sync message with the provider name (title-cased)
+   - Otherwise, show only the base message
+4. Replace the hardcoded `DialogDescription` text (line 199) with the dynamic string
+
+This is a single-file change, fully aligned with the POS adapter pattern and the Phorest detach strategy.
