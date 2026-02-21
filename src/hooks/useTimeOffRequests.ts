@@ -52,9 +52,10 @@ export interface CreateBreakInput {
   start_time?: string;
   end_time?: string;
   is_full_day: boolean;
-  reason: BreakType;
+  reason: string;
   notes?: string;
   blocks_online_booking?: boolean;
+  block_mode?: 'Break' | 'Block';
 }
 
 export function useMyTimeOffRequests() {
@@ -303,6 +304,7 @@ export function useCreateBreakRequest() {
           p_reason: input.reason,
           p_notes: input.notes || null,
           p_blocks_online_booking: input.blocks_online_booking ?? true,
+          p_block_mode: input.block_mode || 'Block',
         });
 
       if (error) throw error;
@@ -314,7 +316,7 @@ export function useCreateBreakRequest() {
       queryClient.invalidateQueries({ queryKey: ['schedule'] });
       const result = data?.[0];
       if (result?.status === 'approved') {
-        toast.success('Break scheduled');
+        toast.success('Time block scheduled');
       } else {
         toast.success('Time off request submitted for approval');
       }

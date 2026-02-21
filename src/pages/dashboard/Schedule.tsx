@@ -29,7 +29,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { CalendarFilterState } from '@/components/dashboard/schedule/CalendarFiltersPopover';
-import { AddBreakForm } from '@/components/dashboard/schedule/AddBreakForm';
+import { AddTimeBlockForm } from '@/components/dashboard/schedule/AddTimeBlockForm';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 interface QuickLoginState {
@@ -613,8 +613,8 @@ export default function Schedule() {
               setBreakDialogOpen(true);
             }}
           >
-            <Coffee className="h-4 w-4" />
-            Add Break
+             <Coffee className="h-4 w-4" />
+             Add Break / Block
           </button>
         </div>
       )}
@@ -622,8 +622,8 @@ export default function Schedule() {
       {/* Break dialog from context menu */}
       <Dialog open={breakDialogOpen} onOpenChange={setBreakDialogOpen}>
         <DialogContent className="sm:max-w-md p-0">
-          <DialogTitle className="sr-only">Add Break</DialogTitle>
-          <AddBreakForm
+          <DialogTitle className="sr-only">Add Break / Block</DialogTitle>
+          <AddTimeBlockForm
             date={currentDate}
             time={breakDefaults.time}
             defaultStylistId={breakDefaults.stylistId}

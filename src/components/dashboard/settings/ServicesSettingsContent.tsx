@@ -603,7 +603,9 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                   <CardTitle className={tokens.heading.section}>SCHEDULING BLOCKS</CardTitle>
                 </div>
                 <CardDescription>
-                  Colors for non-service calendar entries like blocked time and breaks.
+                  <span className="block">Configure colors for non-service calendar entries.</span>
+                  <span className="block mt-1 text-xs"><strong>Block</strong> — Non-service hours (admin tasks, training, meetings)</span>
+                  <span className="block text-xs"><strong>Break</strong> — Rest periods (lunch, rest breaks) — tracked for payroll compliance</span>
                 </CardDescription>
               </CardHeader>
               <CardContent>

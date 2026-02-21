@@ -10,11 +10,11 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
-import { useCreateBreakRequest, type BreakType, BREAK_TYPE_LABELS } from '@/hooks/useTimeOffRequests';
+import { useCreateBreakRequest } from '@/hooks/useTimeOffRequests';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-interface AddBreakFormProps {
+interface AddTimeBlockFormProps {
   date: Date;
   time: string;
   onBack: () => void;
@@ -22,19 +22,45 @@ interface AddBreakFormProps {
   defaultStylistId?: string;
 }
 
-const BREAK_TYPES: BreakType[] = ['break', 'personal', 'sick', 'vacation', 'other'];
+type BlockMode = 'Break' | 'Block';
+
+interface SubReason {
+  value: string;
+  label: string;
+}
+
+const BREAK_REASONS: SubReason[] = [
+  { value: 'lunch', label: 'Lunch' },
+  { value: 'rest_break', label: 'Rest Break' },
+  { value: 'personal_break', label: 'Personal Break' },
+];
+
+const BLOCK_REASONS: SubReason[] = [
+  { value: 'admin', label: 'Admin Tasks' },
+  { value: 'training', label: 'Training' },
+  { value: 'meeting', label: 'Meeting' },
+  { value: 'cleaning', label: 'Cleaning' },
+  { value: 'personal', label: 'Personal Time' },
+  { value: 'other', label: 'Other' },
+];
 
 interface DurationPreset {
   label: string;
   minutes: number;
 }
 
-const DURATION_PRESETS: DurationPreset[] = [
+const BREAK_DURATION_PRESETS: DurationPreset[] = [
+  { label: '15 min', minutes: 15 },
+  { label: '30 min', minutes: 30 },
+  { label: '1 hour', minutes: 60 },
+];
+
+const BLOCK_DURATION_PRESETS: DurationPreset[] = [
   { label: '30 min', minutes: 30 },
   { label: '1 hour', minutes: 60 },
   { label: '2 hours', minutes: 120 },
   { label: 'Half Day', minutes: 240 },
-  { label: 'Full Day', minutes: 0 }, // special: is_full_day
+  { label: 'Full Day', minutes: 0 },
 ];
 
 function addMinutesToTime(time: string, minutes: number): string {
@@ -45,7 +71,7 @@ function addMinutesToTime(time: string, minutes: number): string {
   return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`;
 }
 
-export function AddBreakForm({ date, time, onBack, onComplete, defaultStylistId }: AddBreakFormProps) {
+export function AddTimeBlockForm({ date, time, onBack, onComplete, defaultStylistId }: AddTimeBlockFormProps) {
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const roles = useEffectiveRoles();
@@ -53,11 +79,27 @@ export function AddBreakForm({ date, time, onBack, onComplete, defaultStylistId 
 
   const isAdmin = roles.some(r => ['admin', 'manager', 'super_admin', 'front_desk', 'receptionist'].includes(r));
 
-  const [breakType, setBreakType] = useState<BreakType>('break');
-  const [selectedDuration, setSelectedDuration] = useState<number>(60); // minutes, 0 = full day
+  const [blockMode, setBlockMode] = useState<BlockMode>('Break');
+  const [reason, setReason] = useState<string>('lunch');
+  const [selectedDuration, setSelectedDuration] = useState<number>(30);
   const [notes, setNotes] = useState('');
   const [selectedUserId, setSelectedUserId] = useState(defaultStylistId || user?.id || '');
   const [staffSearchOpen, setStaffSearchOpen] = useState(false);
+
+  const reasons = blockMode === 'Break' ? BREAK_REASONS : BLOCK_REASONS;
+  const durationPresets = blockMode === 'Break' ? BREAK_DURATION_PRESETS : BLOCK_DURATION_PRESETS;
+
+  // Reset reason and duration when mode changes
+  const handleModeChange = (mode: BlockMode) => {
+    setBlockMode(mode);
+    if (mode === 'Break') {
+      setReason('lunch');
+      setSelectedDuration(30);
+    } else {
+      setReason('admin');
+      setSelectedDuration(60);
+    }
+  };
 
   // Fetch team members for admin dropdown
   const { data: teamMembers = [] } = useQuery({
@@ -94,13 +136,17 @@ export function AddBreakForm({ date, time, onBack, onComplete, defaultStylistId 
       start_time: isFullDay ? undefined : `${startTime}:00`,
       end_time: isFullDay ? undefined : `${endTime}:00`,
       is_full_day: isFullDay,
-      reason: breakType,
+      reason: reason,
       notes: notes || undefined,
       blocks_online_booking: true,
+      block_mode: blockMode,
     }, {
       onSuccess: () => onComplete(),
     });
   };
+
+  const ModeIcon = blockMode === 'Break' ? Coffee : Clock;
+  const modeLabel = blockMode === 'Break' ? 'Break' : 'Block';
 
   return (
     <div className="flex flex-col gap-3 p-3">
@@ -109,8 +155,38 @@ export function AddBreakForm({ date, time, onBack, onComplete, defaultStylistId 
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onBack}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <Coffee className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium">Add Break</span>
+        <ModeIcon className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-medium">Add {modeLabel}</span>
+      </div>
+
+      {/* Mode Toggle */}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          className={cn(
+            'flex flex-col items-center gap-1 rounded-lg border-2 p-3 transition-colors text-xs',
+            blockMode === 'Break'
+              ? 'border-primary bg-primary/5 text-primary'
+              : 'border-border hover:border-muted-foreground/50 text-muted-foreground'
+          )}
+          onClick={() => handleModeChange('Break')}
+        >
+          <Coffee className="h-5 w-5" />
+          <span className="font-medium">Break</span>
+          <span className="text-[10px] text-muted-foreground leading-tight">Rest periods</span>
+        </button>
+        <button
+          className={cn(
+            'flex flex-col items-center gap-1 rounded-lg border-2 p-3 transition-colors text-xs',
+            blockMode === 'Block'
+              ? 'border-primary bg-primary/5 text-primary'
+              : 'border-border hover:border-muted-foreground/50 text-muted-foreground'
+          )}
+          onClick={() => handleModeChange('Block')}
+        >
+          <Clock className="h-5 w-5" />
+          <span className="font-medium">Block</span>
+          <span className="text-[10px] text-muted-foreground leading-tight">Non-service time</span>
+        </button>
       </div>
 
       {/* Date & Time summary */}
@@ -119,21 +195,21 @@ export function AddBreakForm({ date, time, onBack, onComplete, defaultStylistId 
         <span>{format(date, 'EEE, MMM d')} · {startTime}{!isFullDay && ` – ${endTime}`}{isFullDay && ' (Full Day)'}</span>
       </div>
 
-      {/* Break Type Pills */}
+      {/* Reason Pills */}
       <div className="flex flex-wrap gap-1.5">
-        {BREAK_TYPES.map(type => (
+        {reasons.map(r => (
           <Badge
-            key={type}
-            variant={breakType === type ? 'default' : 'outline'}
+            key={r.value}
+            variant={reason === r.value ? 'default' : 'outline'}
             className={cn(
               'cursor-pointer text-xs px-2.5 py-1 transition-colors',
-              breakType === type
+              reason === r.value
                 ? 'bg-primary text-primary-foreground'
                 : 'hover:bg-accent'
             )}
-            onClick={() => setBreakType(type)}
+            onClick={() => setReason(r.value)}
           >
-            {BREAK_TYPE_LABELS[type]}
+            {r.label}
           </Badge>
         ))}
       </div>
@@ -142,7 +218,7 @@ export function AddBreakForm({ date, time, onBack, onComplete, defaultStylistId 
       <div>
         <span className="text-xs text-muted-foreground mb-1.5 block">Duration</span>
         <div className="flex flex-wrap gap-1.5">
-          {DURATION_PRESETS.map(preset => (
+          {durationPresets.map(preset => (
             <Badge
               key={preset.label}
               variant={selectedDuration === preset.minutes ? 'default' : 'outline'}
@@ -222,7 +298,7 @@ export function AddBreakForm({ date, time, onBack, onComplete, defaultStylistId 
         disabled={createBreak.isPending || !selectedUserId}
       >
         {createBreak.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-        Schedule Break
+        Schedule {modeLabel}
       </Button>
     </div>
   );

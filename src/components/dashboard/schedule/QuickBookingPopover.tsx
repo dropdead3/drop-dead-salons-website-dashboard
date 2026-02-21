@@ -48,7 +48,7 @@ import { useBookingLevelPricing } from '@/hooks/useServiceLevelPricing';
 import { useQualifiedStaffForServices } from '@/hooks/useStaffServiceQualifications';
 import { useStaffQualifiedServices } from '@/hooks/useStaffServiceQualifications';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
-import { AddBreakForm } from './AddBreakForm';
+import { AddTimeBlockForm } from './AddTimeBlockForm';
 import { BannedClientWarningDialog } from '@/components/dashboard/clients/BannedClientWarningDialog';
 import { ServiceAddonToast } from './ServiceAddonToast';
 import { useAddonAssignmentMaps } from '@/hooks/useServiceAddonAssignments';
@@ -1083,7 +1083,7 @@ export function QuickBookingPopover({
       {step === 'service' && (
         <div className={cn("flex flex-col", mode === 'panel' ? 'flex-1 min-h-0' : '')} style={mode === 'popover' ? { height: '550px' } : undefined}>
           {showBreakForm ? (
-            <AddBreakForm
+            <AddTimeBlockForm
               date={date}
               time={time}
               onBack={() => setShowBreakForm(false)}
@@ -1531,7 +1531,7 @@ export function QuickBookingPopover({
                   onClick={() => setShowBreakForm(true)}
                 >
                   <Coffee className="h-4 w-4" />
-                  Add Break
+                   Add Break / Block
                 </Button>
               )}
               <Button className="w-full h-9" onClick={handleServicesComplete}>
