@@ -30,7 +30,7 @@ import {
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useSalesMetrics, useSalesTrend, useSalesByStylist, useSalesByLocation } from '@/hooks/useSalesData';
 
-import { useCommissionTiers } from '@/hooks/useCommissionTiers';
+// Commission resolution is now handled internally by CommissionSummaryCard and StaffCommissionTable
 import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { useLocations } from '@/hooks/useLocations';
 import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
@@ -88,7 +88,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
   const { data: locations } = useLocations();
   const { goals } = useSalesGoals();
   const { data: tomorrowData } = useTomorrowRevenue();
-  const { calculateCommission, isLoading: tiersLoading } = useCommissionTiers();
+  // Commission resolution handled internally by commission components
 
   const locationFilter = filters.locationId !== 'all' ? filters.locationId : undefined;
 
@@ -530,8 +530,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
           <PinnableCard elementKey="commission_summary" elementName="Commission Summary" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <CommissionSummaryCard
               stylistData={stylistData}
-              calculateCommission={calculateCommission}
-              isLoading={stylistLoading || tiersLoading}
+              isLoading={stylistLoading}
             />
           </PinnableCard>
 
@@ -539,8 +538,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
           <PinnableCard elementKey="staff_commission_breakdown" elementName="Staff Commission Breakdown" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <StaffCommissionTable
               stylistData={stylistData}
-              calculateCommission={calculateCommission}
-              isLoading={stylistLoading || tiersLoading}
+              isLoading={stylistLoading}
             />
           </PinnableCard>
         </TabsContent>

@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useEmployeePayrollSettings } from './useEmployeePayrollSettings';
 import { usePaySchedule, getCurrentPayPeriod } from './usePaySchedule';
-import { useCommissionTiers } from './useCommissionTiers';
+import { useResolveCommission } from './useResolveCommission';
 import { format, differenceInDays, subDays } from 'date-fns';
 
 export interface EmployeeProjection {
@@ -43,6 +43,9 @@ export interface EmployeeProjection {
     productCommission: number;
     totalGross: number;
   };
+
+  commissionSource?: string;
+  commissionSourceType?: 'override' | 'level' | 'tier';
 }
 
 export interface PayrollProjection {
@@ -75,7 +78,7 @@ export function usePayrollForecasting() {
   const organizationId = selectedOrganization?.id;
   const { employeeSettings, isLoading: isLoadingSettings } = useEmployeePayrollSettings();
   const { settings: paySchedule, isLoading: isLoadingSchedule } = usePaySchedule();
-  const { tiers, isLoading: isLoadingTiers } = useCommissionTiers();
+  const { resolveCommission, isLoading: isLoadingTiers } = useResolveCommission();
 
   // Get current pay period
   const currentPeriod = paySchedule ? getCurrentPayPeriod(paySchedule) : null;
@@ -172,57 +175,23 @@ export function usePayrollForecasting() {
         basePay = (emp.salary_amount || 0) / 26; // Bi-weekly
       }
 
-      // Find current tier and next tier for services
-      const serviceTiers = tiers
-        .filter(t => t.applies_to === 'services' || t.applies_to === 'all')
-        .sort((a, b) => a.min_revenue - b.min_revenue);
+      // Resolve commission via unified 3-tier priority engine
+      const resolved = resolveCommission(emp.employee_id, projectedServices, projectedProducts);
 
       let currentTier: { name: string; rate: number } | null = null;
       let nextTier: { name: string; rate: number; threshold: number } | null = null;
       let tierProgress = 0;
       let amountToNextTier = 0;
 
-      for (let i = 0; i < serviceTiers.length; i++) {
-        const tier = serviceTiers[i];
-        const maxRev = tier.max_revenue ?? Infinity;
-        
-        if (projectedServices >= tier.min_revenue && projectedServices <= maxRev) {
-          currentTier = { name: tier.tier_name, rate: tier.commission_rate };
-          
-          // Check for next tier
-          if (i < serviceTiers.length - 1) {
-            const next = serviceTiers[i + 1];
-            nextTier = { name: next.tier_name, rate: next.commission_rate, threshold: next.min_revenue };
-            amountToNextTier = next.min_revenue - projectedServices;
-            tierProgress = tier.max_revenue 
-              ? ((projectedServices - tier.min_revenue) / (tier.max_revenue - tier.min_revenue)) * 100
-              : 0;
-          } else {
-            tierProgress = 100;
-          }
-          break;
-        }
-      }
+      currentTier = { name: resolved.sourceName, rate: resolved.serviceRate };
 
       // Calculate commissions
       let serviceCommission = 0;
       let productCommission = 0;
 
       if (emp.commission_enabled) {
-        if (currentTier) {
-          serviceCommission = projectedServices * currentTier.rate;
-        }
-        
-        // Find product tier
-        const productTier = tiers.find(t =>
-          (t.applies_to === 'products' || t.applies_to === 'all') &&
-          projectedProducts >= t.min_revenue &&
-          (t.max_revenue === null || projectedProducts <= t.max_revenue)
-        );
-
-        if (productTier) {
-          productCommission = projectedProducts * productTier.commission_rate;
-        }
+        serviceCommission = resolved.serviceCommission;
+        productCommission = resolved.retailCommission;
       }
 
       return {
@@ -242,6 +211,8 @@ export function usePayrollForecasting() {
           productCommission,
           totalGross: basePay + serviceCommission + productCommission,
         },
+        commissionSource: resolved.sourceName,
+        commissionSourceType: resolved.source,
       };
     });
 
@@ -281,7 +252,7 @@ export function usePayrollForecasting() {
       daysRemaining,
       vsLastPeriod,
     };
-  }, [currentPeriod, periodStart, periodEnd, employeeSettings, currentSalesData, lastPeriodSales, tiers]);
+  }, [currentPeriod, periodStart, periodEnd, employeeSettings, currentSalesData, lastPeriodSales, resolveCommission]);
 
   const isLoading = isLoadingSettings || isLoadingSchedule || isLoadingTiers || isLoadingSales;
 

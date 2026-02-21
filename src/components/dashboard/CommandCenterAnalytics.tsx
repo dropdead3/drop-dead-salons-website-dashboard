@@ -29,7 +29,7 @@ import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
-import { useCommissionTiers } from '@/hooks/useCommissionTiers';
+// Commission resolution is now handled internally by CommissionSummaryCard and StaffCommissionTable
 import { Link } from 'react-router-dom';
 import { Settings2, MapPin, Calendar } from 'lucide-react';
 import { format, startOfMonth, subDays, startOfWeek } from 'date-fns';
@@ -186,7 +186,7 @@ export function CommandCenterAnalytics() {
     dateTo: dateFilters.dateTo,
     locationId: locationFilter,
   });
-  const { tiers, calculateCommission } = useCommissionTiers();
+  // Commission resolution handled internally by commission components
   
   // Show nothing if loading
   if (isLoading) return null;
@@ -454,7 +454,6 @@ export function CommandCenterAnalytics() {
             <PinnableCard elementKey="commission_summary" elementName="Commission Summary" category="Command Center">
               <CommissionSummaryCard
                 stylistData={performers}
-                calculateCommission={calculateCommission}
                 isLoading={isLoadingPerformers}
               />
             </PinnableCard>
@@ -466,7 +465,6 @@ export function CommandCenterAnalytics() {
             <PinnableCard elementKey="staff_commission_breakdown" elementName="Staff Commission Breakdown" category="Command Center">
               <StaffCommissionTable
                 stylistData={performers}
-                calculateCommission={calculateCommission}
                 isLoading={isLoadingPerformers}
               />
             </PinnableCard>

@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { useResolveCommission, CommissionSource } from '@/hooks/useResolveCommission';
 
 interface StylistData {
   user_id: string;
@@ -26,37 +27,45 @@ interface StylistData {
   totalRevenue: number;
 }
 
-interface CommissionResult {
-  serviceCommission: number;
-  productCommission: number;
-  totalCommission: number;
-  tierName: string;
-}
-
 interface StaffCommissionTableProps {
   stylistData: StylistData[] | undefined;
-  calculateCommission: (serviceRevenue: number, productRevenue: number) => CommissionResult;
+  /** @deprecated - kept for backward compat, resolver is used internally now */
+  calculateCommission?: (serviceRevenue: number, productRevenue: number) => any;
   isLoading: boolean;
 }
 
-export function StaffCommissionTable({ stylistData, calculateCommission, isLoading }: StaffCommissionTableProps) {
+const SOURCE_BADGE_STYLES: Record<CommissionSource, string> = {
+  override: 'bg-chart-4/10 text-chart-4 border-chart-4/30',
+  level: 'bg-chart-2/10 text-chart-2 border-chart-2/30',
+  tier: '',
+};
+
+export function StaffCommissionTable({ stylistData, isLoading }: StaffCommissionTableProps) {
   const { formatCurrencyWhole } = useFormatCurrency();
+  const { resolveCommission, isLoading: resolverLoading } = useResolveCommission();
 
   const rows = useMemo(() => {
     if (!stylistData?.length) return [];
 
     return stylistData
       .map((s) => {
-        const c = calculateCommission(s.serviceRevenue, s.productRevenue);
+        const c = resolveCommission(s.user_id, s.serviceRevenue, s.productRevenue);
         const totalRev = s.serviceRevenue + s.productRevenue;
         return {
           ...s,
-          commission: c,
+          commission: {
+            serviceCommission: c.serviceCommission,
+            productCommission: c.retailCommission,
+            totalCommission: c.totalCommission,
+            tierName: c.sourceName,
+          },
+          source: c.source,
+          sourceName: c.sourceName,
           effectiveRate: totalRev > 0 ? (c.totalCommission / totalRev) * 100 : 0,
         };
       })
       .sort((a, b) => b.commission.totalCommission - a.commission.totalCommission);
-  }, [stylistData, calculateCommission]);
+  }, [stylistData, resolveCommission]);
 
   const totals = useMemo(() => {
     return rows.reduce(
@@ -79,7 +88,7 @@ export function StaffCommissionTable({ stylistData, calculateCommission, isLoadi
       .toUpperCase()
       .slice(0, 2);
 
-  if (isLoading) {
+  if (isLoading || resolverLoading) {
     return (
       <Card>
         <CardContent className="p-6 flex items-center justify-center h-[200px]">
@@ -99,7 +108,7 @@ export function StaffCommissionTable({ stylistData, calculateCommission, isLoadi
             </div>
             <div className="flex items-center gap-2">
               <CardTitle className="font-display text-base tracking-wide">STAFF COMMISSION BREAKDOWN</CardTitle>
-              <MetricInfoTooltip description="Per-stylist commission based on individual service and product revenue. Effective rate = total commission / total revenue. Tier is determined by each stylist's service revenue level." />
+              <MetricInfoTooltip description="Per-stylist commission resolved via override → level → tier priority. Source column shows which rate applies." />
             </div>
           </div>
         </CardHeader>
@@ -123,10 +132,10 @@ export function StaffCommissionTable({ stylistData, calculateCommission, isLoadi
           <div>
             <div className="flex items-center gap-2">
               <CardTitle className="font-display text-base tracking-wide">STAFF COMMISSION BREAKDOWN</CardTitle>
-              <MetricInfoTooltip description="Per-stylist commission based on individual service and product revenue. Effective rate = total commission / total revenue. Tier is determined by each stylist's service revenue level." />
+              <MetricInfoTooltip description="Per-stylist commission resolved via override → level → tier priority. Source column shows which rate applies." />
             </div>
             <CardDescription className="text-xs">
-              Per-stylist commission based on individual revenue and tier placement
+              Per-stylist commission based on resolved rates (override → level → tier)
             </CardDescription>
           </div>
         </div>
@@ -140,7 +149,7 @@ export function StaffCommissionTable({ stylistData, calculateCommission, isLoadi
                 <TableHead>Stylist</TableHead>
                 <TableHead className="text-right">Service Rev</TableHead>
                 <TableHead className="text-right">Product Rev</TableHead>
-                <TableHead>Tier</TableHead>
+                <TableHead>Source</TableHead>
                 <TableHead className="text-right">Commission</TableHead>
                 <TableHead className="text-right">Eff. Rate</TableHead>
               </TableRow>
@@ -170,9 +179,12 @@ export function StaffCommissionTable({ stylistData, calculateCommission, isLoadi
                       <BlurredAmount>{formatCurrencyWhole(row.productRevenue)}</BlurredAmount>
                     </TableCell>
                     <TableCell>
-                      {row.commission.tierName ? (
-                        <Badge variant="outline" className="text-xs">
-                          {row.commission.tierName}
+                      {row.sourceName ? (
+                        <Badge
+                          variant="outline"
+                          className={cn('text-xs', SOURCE_BADGE_STYLES[row.source])}
+                        >
+                          {row.sourceName}
                         </Badge>
                       ) : (
                         <span className="text-xs text-muted-foreground">--</span>

@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Calculator } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useCommissionTiers } from '@/hooks/useCommissionTiers';
+import { useResolveCommission } from '@/hooks/useResolveCommission';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
@@ -10,6 +11,7 @@ interface CommissionCalculatorProps {
   serviceRevenue: number;
   productRevenue: number;
   stylistName?: string;
+  stylistUserId?: string;
   showTierEditor?: boolean;
 }
 
@@ -17,12 +19,47 @@ export function CommissionCalculator({
   serviceRevenue, 
   productRevenue, 
   stylistName,
+  stylistUserId,
 }: CommissionCalculatorProps) {
-  const { tiers, isLoading, calculateCommission } = useCommissionTiers();
+  const { tiers, isLoading: tiersLoading } = useCommissionTiers();
+  const { resolveCommission, isLoading: resolverLoading } = useResolveCommission();
   const { formatCurrencyWhole } = useFormatCurrency();
 
-  const commission = calculateCommission(serviceRevenue, productRevenue);
-  const totalRevenue = serviceRevenue + productRevenue;
+  // Use resolver if userId available, else fallback to tier-only
+  const resolved = stylistUserId 
+    ? resolveCommission(stylistUserId, serviceRevenue, productRevenue)
+    : null;
+
+  const commission = resolved 
+    ? {
+        serviceCommission: resolved.serviceCommission,
+        productCommission: resolved.retailCommission,
+        totalCommission: resolved.totalCommission,
+        tierName: resolved.sourceName,
+      }
+    : (() => {
+        // fallback: use tiers directly
+        const serviceTiers = tiers.filter(t => t.applies_to === 'services' || t.applies_to === 'all');
+        let sc = 0, tn = '';
+        for (const tier of serviceTiers) {
+          const max = tier.max_revenue ?? Infinity;
+          if (serviceRevenue >= tier.min_revenue && serviceRevenue <= max) {
+            sc = serviceRevenue * tier.commission_rate;
+            tn = tier.tier_name;
+            break;
+          }
+        }
+        const productTiers = tiers.filter(t => t.applies_to === 'products' || t.applies_to === 'all');
+        let pc = 0;
+        for (const tier of productTiers) {
+          const max = tier.max_revenue ?? Infinity;
+          if (productRevenue >= 0 && productRevenue <= max) {
+            pc = productRevenue * tier.commission_rate;
+            break;
+          }
+        }
+        return { serviceCommission: sc, productCommission: pc, totalCommission: sc + pc, tierName: tn };
+      })();
 
   // Find next tier threshold
   const serviceTiers = tiers.filter(t => t.applies_to === 'services' || t.applies_to === 'all');
@@ -37,6 +74,8 @@ export function CommissionCalculator({
     ? ((serviceRevenue - serviceTiers[currentTierIdx].min_revenue) / 
        (nextTier.min_revenue - serviceTiers[currentTierIdx].min_revenue)) * 100
     : 100;
+
+  const isLoading = tiersLoading || resolverLoading;
 
   if (isLoading) {
     return (
@@ -95,8 +134,8 @@ export function CommissionCalculator({
           </div>
         </div>
 
-        {/* Progress to next tier */}
-        {nextTier && (
+        {/* Progress to next tier - only relevant for tier-based source */}
+        {nextTier && resolved?.source !== 'override' && resolved?.source !== 'level' && (
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Progress to {nextTier.tier_name}</span>
@@ -111,7 +150,23 @@ export function CommissionCalculator({
           </div>
         )}
 
-        {!nextTier && currentTierIdx >= 0 && (
+        {resolved?.source === 'override' && (
+          <div className="p-3 bg-chart-4/5 border border-chart-4/20 rounded-lg text-center">
+            <p className="text-sm text-chart-4 font-medium">
+              Custom override rate active
+            </p>
+          </div>
+        )}
+
+        {resolved?.source === 'level' && (
+          <div className="p-3 bg-chart-2/5 border border-chart-2/20 rounded-lg text-center">
+            <p className="text-sm text-chart-2 font-medium">
+              Rate set by stylist level
+            </p>
+          </div>
+        )}
+
+        {!nextTier && currentTierIdx >= 0 && !resolved?.source && (
           <div className="p-3 bg-chart-2/5 border border-chart-2/20 rounded-lg text-center">
             <p className="text-sm text-chart-2 font-medium">
               Highest commission tier reached
