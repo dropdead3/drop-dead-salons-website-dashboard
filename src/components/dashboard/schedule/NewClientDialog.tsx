@@ -382,6 +382,11 @@ export function NewClientDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">None</SelectItem>
+                {(!teamMembers || teamMembers.length === 0) && (
+                  <div className="px-3 py-2 text-sm text-muted-foreground text-center">
+                    No service providers in system yet
+                  </div>
+                )}
                 {teamMembers?.map(member => (
                   <SelectItem key={member.user_id} value={member.user_id}>
                     {member.display_name || member.full_name}
