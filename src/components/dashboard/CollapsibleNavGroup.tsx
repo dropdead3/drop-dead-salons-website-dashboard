@@ -4,7 +4,8 @@ import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Popover, PopoverTrigger } from '@/components/ui/popover';
+import { PopoverTrigger } from '@/components/ui/popover';
+import { HoverPopover } from './HoverPopover';
 import { SidebarPopoverContent } from './SidebarPopoverContent';
 import {
   Collapsible,
@@ -164,7 +165,7 @@ export function CollapsibleNavGroup({
           const active = isGroupActive(group);
           const items = getVisibleItems(group.items);
           return (
-            <Popover key={group.id}>
+            <HoverPopover key={group.id}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <PopoverTrigger asChild>
@@ -215,7 +216,7 @@ export function CollapsibleNavGroup({
                   );
                 })}
               </SidebarPopoverContent>
-            </Popover>
+            </HoverPopover>
           );
         })}
       </div>
