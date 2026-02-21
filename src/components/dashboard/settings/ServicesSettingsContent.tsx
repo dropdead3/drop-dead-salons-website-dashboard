@@ -411,7 +411,11 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                           </Popover>
 
                           {/* Name & service count */}
-                          <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0 cursor-pointer" onClick={() => {
+                            setCategoryDialogMode('rename');
+                            setEditingCategory(cat);
+                            setCategoryDialogOpen(true);
+                          }}>
                             <p className={cn(tokens.body.emphasis, 'truncate', isEmpty && 'text-muted-foreground')}>{cat.category_name}</p>
                             <div className="flex items-center gap-2 flex-wrap">
                               {isEmpty 
