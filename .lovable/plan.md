@@ -1,65 +1,46 @@
 
 
-## Enhance Service Add-Ons Configurator
+## Add "Add-Ons" as a Bookable Category
 
-### Overview
+### What This Solves
 
-Three targeted improvements to the add-on library form and the booking flow's duration calculation, based on your screenshot and feedback.
+Currently, add-ons only surface as toast recommendations after selecting a service category. Sometimes a client comes in specifically for an add-on (e.g., just an Olaplex Treatment), and the stylist has no easy way to book it as the primary service. This adds a dedicated "Add-Ons" category to the booking wizard's category list.
 
----
+### How It Works
 
-### 1. Embedded Dollar Signs on Currency Inputs
+When a user opens the booking popover and sees the category list (Blonding, Color, Haircuts, etc.), an "Add-Ons" category will appear at the bottom of the list. Tapping it shows all active add-ons from the organization's library as selectable "services" -- each with its name, price, and duration. Selecting one adds it to the booking just like any other service, with its duration contributing to total appointment time.
 
-The price and cost fields currently show plain number inputs with no visual indication they represent dollar amounts. We will add a `$` prefix icon inside these inputs using the existing `Input` component pattern (a wrapper div with an absolutely positioned icon and left padding).
-
-**Files:** `ServiceAddonsLibrary.tsx`
-
----
-
-### 2. Add-On Duration Adds to Total Service Time
-
-Currently, the booking flow calculates `totalDuration` by summing only the selected services' durations. Add-on duration is displayed but never added to the total appointment time.
-
-We will update the `totalDuration` calculation in all three booking components to include accepted add-on durations:
-- `QuickBookingPopover.tsx` -- the primary booking path
-- `BookingWizard.tsx` -- the walk-in/full wizard path
-- `NewBookingSheet.tsx` -- the sheet-based booking path
-
-This ensures that when a stylist adds an Olaplex Treatment (+25 min), the appointment block correctly extends by that duration. The add-on toast already shows the duration; now it will be additive.
-
-**Files:** `QuickBookingPopover.tsx`, `BookingWizard.tsx`, `NewBookingSheet.tsx`
-
----
-
-### 3. Streamlined Category and Service Assignment from the Library
-
-The current form has a "linked service" picker at the bottom grouped by inferred categories. The user wants a clearer two-step flow: first pick a category (or choose "Entire Category"), then optionally narrow to a specific service.
-
-We will replace the single linked-service picker with a two-step inline selector:
-
-1. **Category dropdown** -- lists all configured service categories from `categories` prop. Includes an "Apply to Entire Category" option that auto-creates a category-level assignment.
-2. **Service dropdown** -- appears only when a specific category is selected and user wants to link to a single service. Filtered to services in the chosen category.
-
-This replaces the existing `linked_service_id` picker and also integrates the quick-assign functionality directly into the form, so the user does not need to go to the assignments card for common operations.
-
-**Files:** `ServiceAddonsLibrary.tsx`
+This requires no database changes. The add-on data already exists in the `service_addons` table; we just need to surface it as a virtual category in the booking UI.
 
 ---
 
 ### Technical Details
 
-| File | Changes |
-|------|---------|
-| `ServiceAddonsLibrary.tsx` | Wrap price and cost inputs with `$` prefix icon; replace linked-service picker with category-first then service selector; integrate direct category assignment from the form |
-| `QuickBookingPopover.tsx` | Add accepted add-on durations to `totalDuration` memo |
-| `BookingWizard.tsx` | Add accepted add-on durations to `totalDuration` memo |
-| `NewBookingSheet.tsx` | Add accepted add-on durations to `totalDuration` memo |
+**File: `src/components/dashboard/schedule/QuickBookingPopover.tsx`**
 
-**No database changes needed.** The `service_addon_assignments` table and `linked_service_id` column already support both category and service-level targeting.
+1. Import `useServiceAddons` hook to fetch the organization's active add-ons
+2. After the real categories render in the category list (around line 1058-1093), append a synthetic "Add-Ons" category button with a distinctive icon (Sparkles)
+3. When "Add-Ons" is selected as the category, render the add-on library items as service-like rows instead of the normal `servicesByCategory[category]` list
+4. When an add-on is toggled, create a virtual service entry that gets tracked in `selectedServices` (using the add-on's ID prefixed with `addon:` to distinguish from real Phorest services)
+5. Update `selectedServiceDetails` and `totalDuration`/`totalPrice` memos to include selected add-ons (looking them up from the add-ons list when the ID starts with `addon:`)
+6. Update the confirm step and `handleBook` to handle add-on entries -- they get written as appointment line items with the add-on name, price, and duration
+
+**File: `src/hooks/usePhorestServices.ts`**
+
+No changes needed -- the virtual category is injected at the UI layer, not in the service data.
+
+| Area | Detail |
+|------|--------|
+| Category list | New "Add-Ons" entry at the bottom with Sparkles icon and a count badge if any are selected |
+| Service list | When "Add-Ons" category is active, show add-ons from `useServiceAddons` with name, price, duration, and toggle checkboxes |
+| Duration/Price | Selected add-ons contribute to `totalDuration` and `totalPrice` totals |
+| Booking creation | Add-on selections are included as service line items in the appointment with `service_category: 'Add-Ons'` |
+| No DB migration | Uses existing `service_addons` table data |
 
 ### Sequencing
 
-1. Dollar sign prefixes on price/cost inputs
-2. Category-first assignment picker in add-on form
-3. Duration additive logic across all booking flows
-
+1. Wire up `useServiceAddons` in the booking popover
+2. Add the virtual "Add-Ons" category button to the category list
+3. Render add-on items when that category is selected
+4. Update duration/price calculations to include add-on selections
+5. Update booking submission to include add-on line items
