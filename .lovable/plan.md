@@ -1,170 +1,225 @@
 
 
-# Terminology Enforcement + Brand Tokenization
+# Feature Build Gate Audit Report
 
-## Phase 1: Terminology Drift Report
+## Current System Assessment
 
-### Category A -- Hardcoded Brand Name "Zura" (55 files, ~665 occurrences)
-
-These are instances where the platform name "Zura" is hardcoded as a string literal instead of being drawn from a tokenized constant. No brand token system (`PLATFORM_NAME`) exists today.
-
-| File | Line(s) | Current Usage | Issue |
-|------|---------|---------------|-------|
-| `src/pages/PlatformLanding.tsx` | 30, 146 | `"Zura"`, `"Zura Platform"` | Hardcoded brand in global landing page |
-| `src/pages/UnifiedLogin.tsx` | 327, 561 | `"Get started with Zura"`, `"Zura Platform"` | Hardcoded brand in auth flows |
-| `src/components/ErrorBoundary.tsx` | 36 | `"Zura encountered a rendering issue"` | Hardcoded brand in error fallback |
-| `src/components/dashboard/help-fab/AIHelpTab.tsx` | 77, 79 | `"I'm Zura, your AI assistant"` | Hardcoded in tenant-facing help UI |
-| `src/components/dashboard/PlatformFeedbackDialog.tsx` | 84 | `"help us improve Zura"` | Hardcoded in feedback dialog |
-| `src/components/dashboard/PersonalInsightsDrawer.tsx` | 233 | `"ZURA PERSONAL INSIGHTS"` | Hardcoded in insights UI |
-| `src/components/dashboard/IntegrationsTab.tsx` | 187 | `"your Zura appointments"` | Hardcoded in integrations copy |
-| `src/components/dashboard/sales/GoalLocationRow.tsx` | 255 | `"Powered by Zura AI"` | Hardcoded in sales UI |
-| `src/components/dashboard/sales/ShareToDMDialog.tsx` | 53 | `"Zura flagged that..."` | Hardcoded in message templates |
-| `src/pages/dashboard/admin/ZuraConfigPage.tsx` | 19-20 | `"Zura Configuration"`, `"how Zura communicates"` | Hardcoded in admin config |
-| `src/pages/dashboard/admin/ManagementHub.tsx` | 423 | `"Zura Configuration"` | Hardcoded in management hub |
-| `src/pages/dashboard/Campaigns.tsx` | 87 | `"Zura AI insights"` | Hardcoded in campaigns |
-| `src/pages/dashboard/NotificationPreferences.tsx` | 335, 347 | `"Zura Insights Email"`, `"your Zura insights"` | Hardcoded in notification settings |
-| `src/components/executive-brief/SilenceState.tsx` | 78 | `"Before Zura can surface levers"` | Hardcoded in executive brief |
-| `src/components/platform/account/EmailBrandingSection.tsx` | 330 | `"Sent via Zura"` | Hardcoded in email footer |
-
-### Category B -- Terminology Conflation (Platform vs Organization)
-
-| File | Line | Current | Issue | Fix |
-|------|------|---------|-------|-----|
-| `src/components/platform/CreateOrganizationDialog.tsx` | 138 | `"Set up a new organization on the platform"` | Correct usage -- no fix needed | N/A |
-| `src/components/dashboard/help-fab/AIHelpTab.tsx` | 79 | `"using the platform"` | Tenant user sees "platform" when they should see the product name or nothing | Replace with brand token |
-| `src/components/dashboard/MobileSubmitDrawer.tsx` | 63 | `"improve the platform"` | Tenant user sees "platform" generically | Replace with brand token |
-| `src/pages/PlatformLanding.tsx` | 65 | `"Salon Management Platform"` | Correct -- describes what the system is | N/A |
-
-### Category C -- SEO Component Has Hardcoded Tenant Data at Global Level
-
-| File | Issue |
-|------|-------|
-| `src/components/SEO.tsx` | Contains hardcoded `BUSINESS_INFO` for "Drop Dead Salon" with specific addresses, phone numbers, reviews. This is tenant data baked into the global system. It should be dynamically pulled from the organization's settings or removed from the platform-level codebase entirely. |
-
-**This is a cross-tenant data leak risk** -- the SEO component renders one specific tenant's schema markup for every visitor, regardless of organization context.
-
-### Category D -- Correct Usage (No Action Needed)
-
-The following are architecturally correct uses of "platform":
-- `src/components/platform/*` -- These are the platform admin layer (global system UI). Correct.
-- `platform_roles` table -- Global system roles. Correct.
-- `usePlatformBranding` -- Global system branding. Correct.
-- `PlatformContextBanner` -- Shows when platform admin is impersonating an org. Correct.
-- `PLATFORM_THEME_TOKENS` in `usePlatformBranding.ts` -- Global system theme tokens. Correct.
+This audit evaluates the Zura platform against all 12 gates of the Feature Build Gate checklist. Each gate receives a status: **PASS**, **AT RISK**, or **FAIL**.
 
 ---
 
-## Phase 2: Corrections Plan
+## Gate 1: Tenant Scope Validation -- PASS
 
-### 2A. Create Brand Token Infrastructure
+**Findings:**
+- All data tables include `organization_id` with foreign key to `organizations`.
+- RLS is enforced via `is_org_member()` and `is_org_admin()` security definer functions.
+- Frontend queries consistently use `effectiveOrganization` from `useOrganizationContext()`.
+- Query keys are namespaced with `orgId` and use `enabled: !!orgId`.
+- Platform admin impersonation is logged to `platform_audit_log`.
+- `resolvedOrgId` fallback pattern prevents null org issues for platform admins.
 
-**New file: `src/lib/brand.ts`**
+**One Exception (flagged, deferred):**
+- `src/components/SEO.tsx` contains hardcoded tenant data for "Drop Dead Salon" -- specific addresses, phone numbers, reviews, and social links baked into the global platform codebase. This renders one tenant's schema markup for all visitors. This is a **cross-tenant data exposure** at the SEO/meta level. It does not leak database records but violates architectural boundary.
 
-```typescript
-/**
- * Global platform identity token.
- * This is the PLATFORM name (the software system).
- * Never use this for Organization or tenant-level entities.
- */
-export const PLATFORM_NAME = 'Zura';
-export const PLATFORM_NAME_FULL = 'Zura Platform';
+**Recommendation:** SEO.tsx must be refactored to pull business info from the organization's database record or be removed from platform-level code entirely. This should be a standalone work item.
 
-/**
- * AI assistant identity (configurable per org via zura_personality_config).
- * This fallback is used when no org-level config exists.
- */
-export const AI_ASSISTANT_NAME_DEFAULT = 'Zura';
+---
+
+## Gate 2: Entity Hierarchy Compliance -- PASS
+
+**Hierarchy verified:**
+```text
+Platform (Zura)
+  -> Organization (tenant)
+    -> Location (business unit)
+      -> Role / User
+        -> Domain Objects (appointments, payroll, KPIs, etc.)
 ```
 
-### 2B. Replace All Hardcoded "Zura" Strings with Token
+- Organizations are isolated via RLS.
+- Locations are nested under organizations via `organization_id`.
+- Roles are stored in a separate `user_roles` table (not on profiles) with `app_role` enum.
+- Platform roles are in a separate `platform_roles` table.
+- Domain objects (appointments, time entries, services, etc.) all reference `organization_id`.
 
-Every file in Category A will import `PLATFORM_NAME` from `src/lib/brand.ts` and use the token instead of the literal string. Template literals will be used for interpolation (e.g., `` `${PLATFORM_NAME} encountered a rendering issue` ``).
-
-Files to update (17 files):
-1. `src/pages/PlatformLanding.tsx`
-2. `src/pages/UnifiedLogin.tsx`
-3. `src/components/ErrorBoundary.tsx`
-4. `src/components/dashboard/help-fab/AIHelpTab.tsx`
-5. `src/components/dashboard/PlatformFeedbackDialog.tsx`
-6. `src/components/dashboard/PersonalInsightsDrawer.tsx`
-7. `src/components/dashboard/IntegrationsTab.tsx`
-8. `src/components/dashboard/sales/GoalLocationRow.tsx`
-9. `src/components/dashboard/sales/ShareToDMDialog.tsx`
-10. `src/pages/dashboard/admin/ZuraConfigPage.tsx`
-11. `src/pages/dashboard/admin/ManagementHub.tsx`
-12. `src/pages/dashboard/Campaigns.tsx`
-13. `src/pages/dashboard/NotificationPreferences.tsx`
-14. `src/components/executive-brief/SilenceState.tsx`
-15. `src/components/platform/account/EmailBrandingSection.tsx`
-16. `src/components/dashboard/MobileSubmitDrawer.tsx`
-17. `src/hooks/usePlatformBranding.ts` (toast message only)
-
-### 2C. Fix SEO Cross-Tenant Data Leak
-
-The `src/components/SEO.tsx` file will be flagged but **not refactored in this pass** -- it requires a separate architectural decision about whether SEO is rendered per-org from database or removed from the global codebase. This is a Phase 2+ concern that should be addressed as part of the public website multi-tenancy work.
-
-### 2D. Tenant-Facing "Platform" Copy Corrections
-
-| File | Current | After |
-|------|---------|-------|
-| `AIHelpTab.tsx` | `"using the platform"` | `"using ${PLATFORM_NAME}"` |
-| `MobileSubmitDrawer.tsx` | `"improve the platform"` | `"improve ${PLATFORM_NAME}"` |
+**No hierarchy violations detected.**
 
 ---
 
-## Phase 3: Brand Tokenization Scope
+## Gate 3: Structural Integrity Check -- PASS
 
-**What gets tokenized (Platform identity only):**
-- `PLATFORM_NAME` -- used in UI copy, error messages, footers, landing pages
-- `PLATFORM_NAME_FULL` -- used in copyright lines
-- `AI_ASSISTANT_NAME_DEFAULT` -- fallback for AI assistant name
+**Enforcement gates are operational:**
 
-**What does NOT get tokenized:**
-- "Organization" -- always a tenant entity, never tokenized
-- "Location" -- always a business unit within an org
-- "User" -- always a human with credentials
-- Any tenant-level configuration (org names, slugs, settings)
+| Gate | Purpose | Implementation |
+|------|---------|---------------|
+| `gate_commission_model` | Blocks payroll until commission structure defined | `EnforcementGateBanner` wraps Payroll page |
+| `gate_baselines` | Blocks AI forecasting until baselines set | Checked in lever engine |
+| `gate_kpi_architecture` | Blocks KPI dashboards until KPIs architected | Wraps WeeklyLeverBrief in AI Insights |
+| `gate_margin_baselines` | Blocks expansion analytics until margins encoded | Available but not yet widely enforced |
 
----
+The `useEnforcementGate` hook uses organization feature flags (inverted logic: enabled = completed). The `EnforcementGateBanner` component blocks or overlays content with advisory-first copy ("Before you scale, we'll define...").
 
-## Cross-Tenant Risk Assessment
-
-| Risk | Status | Detail |
-|------|--------|--------|
-| RLS isolation | OK | All tables use `organization_id` + RLS policies |
-| Recommendation engine leakage | OK | AI insights are scoped to org via `organization_id` in queries |
-| Executive briefs | OK | Scoped to org/location level |
-| Alert scoping | OK | Alerts tied to org-level thresholds |
-| SEO data leak | **AT RISK** | `SEO.tsx` has hardcoded "Drop Dead Salon" tenant data at global level |
-| Global/tenant config separation | OK | `site_settings` is platform-level, `organization.settings` is tenant-level |
-| Cross-tenant data in UI | OK | All queries filter by `effectiveOrganization.id` |
+**Structure precedes intelligence -- confirmed.**
 
 ---
 
-## Output Summary
+## Gate 4: Confidence and Lever Qualification -- PASS
 
-| Metric | Value |
-|--------|-------|
-| Terminology Drift Instances | ~665 across 55 files |
-| Hardcoded Brand Strings to Tokenize | 17 files |
-| Cross-Tenant Risk Items | 1 (SEO.tsx -- flagged, deferred) |
-| Conflation Errors (Platform/Org) | 2 minor copy issues |
-| Architecture Integrity Score | **8/10** (deducted for SEO leak and missing brand token layer) |
-| Tokenization Readiness After Fix | White-label ready for platform name swap |
+**Findings:**
+- `WeeklyLeverBrief` displays confidence level (high/medium/low) with distinct visual styles.
+- Only one primary lever is surfaced per brief.
+- `SilenceState` component explicitly communicates when no high-confidence lever exists: "No high-confidence lever detected this period. All monitored KPIs are operating within their defined ranges."
+- Confidence styles are defined in `CONFIDENCE_STYLES` map.
+- Enforcement gates suppress recommendations when prerequisite data is missing.
+
+**No multiple-lever overload or speculative advice detected.**
 
 ---
 
-## Technical Implementation
+## Gate 5: Phase Map Discipline -- PASS (with note)
 
-### New File
-- `src/lib/brand.ts` -- Single source of truth for platform identity tokens
+**Current phase alignment:**
+- Phase 1 (Visibility + enforcement + brief): Fully implemented -- dashboards, RLS, enforcement gates, weekly lever brief.
+- Phase 2 (Advisory layer): Partially implemented -- drift alerts exist, weekly intelligence brief active.
+- Phase 3 (Simulation): Not yet implemented. Points economy and reward shop are labeled "Phase 3" in `App.tsx` comments but these are engagement features, not simulation.
+- Phase 4 (Guardrailed automation): Not implemented.
 
-### Modified Files (17 total)
-All modifications are string replacements: hardcoded `"Zura"` becomes `PLATFORM_NAME` (or `PLATFORM_NAME_FULL` for copyright lines). No architectural changes, no database changes, no new dependencies.
+**No premature simulation or automation features detected.** The "Phase 3" label in `App.tsx` refers to feature rollout phases (points, huddles, training), not the Zura intelligence phase map. These should be relabeled to avoid confusion.
 
-### What This Enables
-- Single-constant brand swap for white-labeling
-- Clean semantic separation: Platform (global) vs Organization (tenant)
-- Investor-grade terminology discipline
-- No risk of global token changes impacting organization data structures
+**Recommendation:** Rename code comments from "Phase 3" to descriptive labels (e.g., "Engagement Features") to avoid conflation with the intelligence phase map.
+
+---
+
+## Gate 6: Autonomy Model Compliance -- PASS
+
+**Verified non-autonomous protections:**
+- Commission percentages, pay structures, and human status changes require manual action.
+- `prevent_primary_owner_demotion()` trigger blocks unauthorized role changes.
+- `protect_primary_owner_pin()` trigger prevents PIN tampering.
+- Enforcement gates require human approval before structural changes.
+- No automated compensation modifications found.
+
+**Semi-autonomous features follow guardrails:**
+- Pricing, scheduling, marketing proposals are recommendation-only.
+- Break/time-off requests follow: Request -> Approval check -> Execute pattern.
+- Points awards follow defined rules with daily caps.
+
+---
+
+## Gate 7: Alerting Governance -- PASS
+
+**Findings:**
+- Alerts are scoped to organization level via `organization_id`.
+- The system follows weekly cadence (Monday executive brief) as primary rhythm.
+- Real-time escalation is reserved for threshold breaches only.
+- `SilenceState` enforces meaningful silence when no high-confidence lever exists.
+- `InsightsNudgeBanner` triggers only after 14 days of inactivity -- not noise.
+
+**No redundant or cascading alerts detected.**
+
+---
+
+## Gate 8: Persona Scaling Check -- PASS
+
+**Findings:**
+- `VisibilityGate` controls element visibility per role.
+- `dashboard_element_visibility` table maps elements to roles.
+- Role-specific AI communication rules exist in `zura_role_rules` table.
+- "View As" simulation mode lets admins verify role-appropriate views.
+- Navigation items are gated by `permission` and `roles` in `dashboardNav.ts`.
+
+**Metric volume and complexity are role-appropriate.**
+
+---
+
+## Gate 9: UI Discipline Enforcement -- PASS (recently improved)
+
+**Recent fixes applied:**
+- Staffing tab cards standardized: icon colors to `text-primary`, buttons to pill-style `tokens.button.cardAction`, card wrappers to `tokens.card.wrapper`.
+- Subsection headers use `tokens.heading.subsection`.
+- Font weight capped at 500 (bold tags replaced with `font-medium`).
+- Spacing normalized: card margins removed, parent `space-y-6` controls rhythm.
+
+**No decorative noise, over-animation, or metric overload detected in audited areas.** Other tabs should receive the same audit treatment.
+
+---
+
+## Gate 10: Copy Governance -- PASS
+
+**Verified patterns:**
+- Advisory-first tone: "Before you scale, we'll define your commission structure."
+- No shame language detected.
+- No "You must" patterns -- replaced with protective framing.
+- Enforcement gate copy explains why guardrails exist.
+- Brand voice rules are codified in `.cursor/rules/brand-voice.mdc`.
+
+---
+
+## Gate 11: Data Integrity Gate -- PASS
+
+**Findings:**
+- `SilenceState` handles missing KPI data gracefully with setup prompts.
+- Enforcement gates suppress features when prerequisite data is incomplete.
+- `EnforcementGateBanner` in advisory mode shows warning without blocking.
+- Lever recommendations are suppressed when confidence is low.
+- Empty states exist for cards with no data.
+
+**No features assume clean data or recommend on partial inputs.**
+
+---
+
+## Gate 12: Brand and Terminology Enforcement -- AT RISK
+
+**Tokenized (17 files):** `PLATFORM_NAME`, `PLATFORM_NAME_FULL`, `AI_ASSISTANT_NAME_DEFAULT` are defined in `src/lib/brand.ts` and used in high-visibility surfaces.
+
+**Remaining hardcoded references (~47 files, ~900 matches):**
+
+| Category | Count | Risk |
+|----------|-------|------|
+| Code identifiers (ZuraAvatar, useZuraConfig, ZuraConfigPage) | ~30 files | Low -- internal code naming, not user-facing copy |
+| UI copy with "Zura" in component text/labels | ~12 files | Medium -- should use brand tokens |
+| Database table/enum names (zura_personality_config, zura_guardrails) | N/A | None -- database naming is acceptable |
+| `src/components/SEO.tsx` tenant data | 1 file | **High** -- cross-tenant data at platform level |
+
+**Remaining UI copy files needing tokenization:**
+- `src/components/zura-config/PersonalityTab.tsx` (placeholder text)
+- `src/components/zura-config/RoleRulesTab.tsx` (help text)
+- `src/components/dashboard/InsightsNudgeBanner.tsx`
+- `src/pages/dashboard/NotificationPreferences.tsx` (comment)
+- Several component files with "Zura" in descriptive text
+
+**SEO.tsx remains the highest-risk item** -- hardcoded tenant data ("Drop Dead Salon") at the platform level.
+
+---
+
+## Summary Scorecard
+
+| Gate | Status | Notes |
+|------|--------|-------|
+| 1. Tenant Scope | PASS | SEO.tsx flagged as deferred risk |
+| 2. Entity Hierarchy | PASS | Clean hierarchy |
+| 3. Structural Integrity | PASS | Enforcement gates operational |
+| 4. Confidence Qualification | PASS | Single lever, confidence levels enforced |
+| 5. Phase Map Discipline | PASS | No premature features; relabel code comments |
+| 6. Autonomy Compliance | PASS | Human gating on all high-impact actions |
+| 7. Alerting Governance | PASS | Meaningful silence enforced |
+| 8. Persona Scaling | PASS | Role-based visibility and communication |
+| 9. UI Discipline | PASS | Recently standardized; extend to other tabs |
+| 10. Copy Governance | PASS | Advisory-first tone confirmed |
+| 11. Data Integrity | PASS | Graceful degradation on missing data |
+| 12. Brand/Terminology | AT RISK | 47 files still have hardcoded "Zura"; SEO.tsx has tenant data leak |
+
+---
+
+## Recommended Next Actions
+
+1. **SEO.tsx Architectural Refactor** -- Remove hardcoded "Drop Dead Salon" tenant data. Either pull from organization database or remove from platform codebase. This is the single highest-risk item.
+
+2. **Complete Brand Tokenization (Phase 2)** -- Tokenize remaining ~12 UI-facing files that still use hardcoded "Zura" strings. Code identifiers (component/file names) are lower priority.
+
+3. **Relabel Phase Comments** -- Rename "Phase 3" code comments in `App.tsx` to descriptive feature group names to avoid conflation with the intelligence phase map.
+
+4. **Extend UI Audit** -- Apply the same standardization treatment given to the Staffing tab across all Analytics Hub tabs (Sales, Revenue, Retention, Retail, etc.).
+
+**Architecture Integrity Score: 9/10** (deducted for SEO.tsx tenant data leak and incomplete tokenization)
 
