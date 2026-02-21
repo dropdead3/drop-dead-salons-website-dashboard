@@ -1,24 +1,20 @@
 
-
-## Improve Schedule Grid Line Visibility
+## Make 15-Minute Grid Lines Theme-Aware
 
 ### Problem
-The time slot grid lines in the scheduling calendar are nearly invisible due to very low opacity border classes (`border-border/60`, `border-border/40`, `border-border/20`), making it difficult to distinguish between time slots.
+The quarter-hour (:15, :45) grid lines use a fixed opacity (`border-border/35`) that doesn't adapt well to both light and dark modes -- too faint in light mode, potentially too strong in dark mode.
 
-### Changes
+### Change
 
-**File: `src/components/dashboard/schedule/DayView.tsx`** (lines 130-134)
+**File: `src/components/dashboard/schedule/DayView.tsx`** (line 134)
 
-Increase the border opacity for all three grid line tiers:
+Replace the static opacity class with theme-responsive classes using Tailwind's `dark:` modifier:
 
-| Slot Type | Current | New |
+| Line Type | Current | New |
 |-----------|---------|-----|
-| Hour mark (:00) | `border-t border-border/60` | `border-t border-border` (full opacity, solid) |
-| Half-hour (:30) | `border-t border-dotted border-border/40` | `border-t border-dashed border-border/60` |
-| Quarter-hour (:15, :45) | `border-t border-dotted border-border/20` | `border-t border-dotted border-border/35` |
+| Quarter-hour (:15, :45) | `border-border/35` | `border-border/50 dark:border-border/30` |
+| Half-hour (:30) | `border-border/60` | `border-border/70 dark:border-border/50` |
 
-This creates a clear visual hierarchy:
-- **Hour lines**: Solid, full contrast -- anchors for quick scanning
-- **Half-hour lines**: Dashed, moderate contrast -- secondary rhythm
-- **Quarter-hour lines**: Dotted, subtle but visible -- fine granularity without clutter
-
+This makes the subdivider lines:
+- **Darker in light mode** (increased from /35 to /50 for quarter-hour, /60 to /70 for half-hour) for better visibility
+- **Lighter in dark mode** (appropriate reduced opacity to avoid harshness against dark backgrounds)
