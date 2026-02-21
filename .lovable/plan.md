@@ -1,39 +1,41 @@
 
+## Show Uncategorized Services After Category Deletion
 
-## Wire Add-On Assignments Between Cards
+### The Problem
 
-### Root Cause
+When you delete a service category, the services in it keep their old category name in the database, but the UI only renders services grouped by entries in the `service_category_colors` table. Since the color row is deleted, those services become invisible -- there's no way to find, reassign, or manage them.
 
-There are two bugs preventing assignments from being saved:
+### The Fix
 
-1. **Edit flow returns wrong data shape**: When editing an existing add-on and selecting categories, the save handler calls `data?.id` to get the add-on ID. But the update hook returns `{ data: <row>, organizationId }`, so `data?.id` is `undefined` -- the assignment creation is silently skipped.
+Add an "Uncategorized" section at the bottom of the Services Hub that automatically appears when any services exist whose category doesn't match a configured category.
 
-2. **Create flow only works if categories are selected during initial creation**: Most users create the add-on first, then try to assign it to categories by editing it. This hits bug #1.
+### How It Will Work
 
-### Fix
+1. After the sortable category accordion, compute which services are "orphaned" (their `category` value doesn't match any `localOrder` category name)
+2. If any orphaned services exist, render an "Uncategorized" section with a muted style
+3. Each service row works the same as normal -- you can click to edit, reassign to a real category, toggle active/inactive, or delete
+4. The section disappears automatically once all orphaned services are reassigned or removed
 
-**File: `ServiceAddonsLibrary.tsx`**
+### Technical Details
 
-Update `onSuccessWithAssignment` to handle both create and edit return shapes:
+**File: `ServicesSettingsContent.tsx`**
 
-```tsx
-const onSuccessWithAssignment = (result: any) => {
-  // Create returns the row directly; Update returns { data: row, organizationId }
-  const addonId = editingId || result?.id || result?.data?.id;
-  if (addonId && selectedCategoryIds.length > 0) {
-    // ... existing assignment creation logic (unchanged)
-  }
-  resetForm();
-};
-```
+1. **Compute uncategorized services** (new `useMemo` after `servicesByCategory`):
+   ```
+   const uncategorizedServices = allServices that have a category
+   NOT matching any localOrder category_name, OR have null/empty category
+   ```
 
-The simplest fix: when editing, we already have `editingId` in scope -- use that instead of trying to extract it from the mutation result. For creates, `result?.id` still works.
+2. **Render section** after the `</DndContext>` block and before the add-on cards:
+   - A collapsible card/section styled with muted tones
+   - Header: "Uncategorized" with a count badge
+   - Lists orphaned services using the same service row pattern (name, price, margin badge, edit/delete actions)
+   - Each service is editable via the existing `ServiceEditorDialog`, allowing reassignment to an active category
 
-### What Changes
+3. **No database changes needed** -- this is purely a UI visibility fix
 
-| File | Change |
-|------|--------|
-| `ServiceAddonsLibrary.tsx` | Fix `onSuccessWithAssignment` to use `editingId` for edits, fixing the data shape mismatch (~line 225) |
+### Changes
 
-One-line fix. No database or schema changes needed. The `service_addon_assignments` table and the Booking Add-On Recommendations card are already correctly wired -- assignments just weren't being created due to the ID extraction bug.
-
+| File | What |
+|------|------|
+| `ServicesSettingsContent.tsx` | Add uncategorized services computation + render section below the category accordion |
