@@ -165,7 +165,9 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
 
   // Preferred stylist data
   const { data: preferredStylist } = usePreferredStylist(client?.preferred_stylist_id);
-  const { data: teamMembers } = useTeamDirectory(undefined, { organizationId: selectedOrganization?.id });
+  const { data: allTeamMembers } = useTeamDirectory(undefined, { organizationId: selectedOrganization?.id });
+  const SERVICE_PROVIDER_ROLES = ['stylist', 'stylist_assistant', 'booth_renter'];
+  const teamMembers = allTeamMembers?.filter(m => m.roles?.some((r: string) => SERVICE_PROVIDER_ROLES.includes(r)));
 
   const startEditing = () => {
     if (!client) return;
