@@ -93,7 +93,7 @@ export default function Payroll() {
             </Alert>
           )}
 
-          <EnforcementGateBanner gateKey="gate_commission_model" advisory>
+          <EnforcementGateBanner gateKey="gate_commission_model">
           {showWizard ? (
             <RunPayrollWizard
               onComplete={() => setShowWizard(false)} 

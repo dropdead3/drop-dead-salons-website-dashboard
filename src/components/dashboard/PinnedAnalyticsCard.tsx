@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { format, startOfMonth, endOfMonth, subDays, startOfWeek } from 'date-fns';
 import { VisibilityGate, useElementVisibility } from '@/components/visibility';
+import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { Card } from '@/components/ui/card';
 import { AggregateSalesCard, DateRange as SalesDateRange } from '@/components/dashboard/AggregateSalesCard';
@@ -610,9 +611,11 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     case 'locations_rollup':
       return (
         <VisibilityGate elementKey="locations_rollup">
-          <PinnableCard elementKey="locations_rollup" elementName="Locations Rollup" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
-            <LocationsRollupCard filterContext={filterContext} dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
-          </PinnableCard>
+          <EnforcementGateBanner gateKey="gate_margin_baselines">
+            <PinnableCard elementKey="locations_rollup" elementName="Locations Rollup" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+              <LocationsRollupCard filterContext={filterContext} dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
+            </PinnableCard>
+          </EnforcementGateBanner>
         </VisibilityGate>
       );
     case 'service_mix':

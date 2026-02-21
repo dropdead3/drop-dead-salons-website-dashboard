@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { VisibilityGate } from '@/components/visibility';
+import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { AggregateSalesCard } from '@/components/dashboard/AggregateSalesCard';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
@@ -404,16 +405,18 @@ export function CommandCenterAnalytics() {
       case 'locations_rollup':
         return (
           <VisibilityGate key={cardId} elementKey="locations_rollup">
-            <PinnableCard elementKey="locations_rollup" elementName="Locations Rollup" category="Command Center">
-              <LocationsRollupCard
-                filterContext={{
-                  locationId: 'all',
-                  dateRange,
-                }}
-                dateFrom={dateFilters.dateFrom}
-                dateTo={dateFilters.dateTo}
-              />
-            </PinnableCard>
+            <EnforcementGateBanner gateKey="gate_margin_baselines">
+              <PinnableCard elementKey="locations_rollup" elementName="Locations Rollup" category="Command Center">
+                <LocationsRollupCard
+                  filterContext={{
+                    locationId: 'all',
+                    dateRange,
+                  }}
+                  dateFrom={dateFilters.dateFrom}
+                  dateTo={dateFilters.dateTo}
+                />
+              </PinnableCard>
+            </EnforcementGateBanner>
           </VisibilityGate>
         );
       case 'service_mix':
