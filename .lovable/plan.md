@@ -1,47 +1,24 @@
 
 
-## Fix: Break Scheduling Bug + Front Desk Team Search
+## Improve Schedule Grid Line Visibility
 
-### Root Cause
-
-The "Schedule Break" button fails silently because the `create_break_request` database function tries to insert a `reason` value into the `time_off_requests` table, but that column doesn't exist. The RPC call errors out, and the toast shows "Failed to schedule break."
+### Problem
+The time slot grid lines in the scheduling calendar are nearly invisible due to very low opacity border classes (`border-border/60`, `border-border/40`, `border-border/20`), making it difficult to distinguish between time slots.
 
 ### Changes
 
-**1. Database Migration -- Add `reason` column**
+**File: `src/components/dashboard/schedule/DayView.tsx`** (lines 130-134)
 
-Add the missing `reason` column to `time_off_requests`:
-```sql
-ALTER TABLE public.time_off_requests
-  ADD COLUMN IF NOT EXISTS reason TEXT DEFAULT 'break';
-```
+Increase the border opacity for all three grid line tiers:
 
-This makes the RPC function work as designed.
+| Slot Type | Current | New |
+|-----------|---------|-----|
+| Hour mark (:00) | `border-t border-border/60` | `border-t border-border` (full opacity, solid) |
+| Half-hour (:30) | `border-t border-dotted border-border/40` | `border-t border-dashed border-border/60` |
+| Quarter-hour (:15, :45) | `border-t border-dotted border-border/20` | `border-t border-dotted border-border/35` |
 
-**2. Front Desk Team Member Search (AddBreakForm.tsx)**
-
-Currently, admins/managers/front desk see a simple `<Select>` dropdown to pick a team member. For front desk users (and admins), replace this with a searchable input using `cmdk` (already installed) or a simple filtered input:
-
-- Add a text input above the dropdown that filters team members by name
-- Front desk roles (`front_desk`, `receptionist`) will be treated like admin for the break form's team selector (they need to schedule breaks for stylists)
-- Stylists keep the current behavior: auto-selected to themselves, no team picker shown
-
-**3. Auto-select logged-in stylist**
-
-For users with stylist/stylist_assistant roles, the break always schedules for themselves (current behavior already works via `defaultStylistId || user?.id`). No change needed here.
-
-### Technical Details
-
-**File: Database Migration**
-- Add `reason TEXT DEFAULT 'break'` column to `time_off_requests`
-
-**File: `src/components/dashboard/schedule/AddBreakForm.tsx`**
-- Expand `isAdmin` check to include `front_desk` and `receptionist` roles
-- Replace the `<Select>` with a searchable input + filtered list using a text `<Input>` and filtering `teamMembers` by the search query
-- Keep the auto-selection logic for non-admin/non-front-desk users (stylists schedule for themselves)
-
-### Summary
-- One database migration (add missing column)
-- One component update (searchable team picker for front desk)
-- Fixes the core bug preventing any break from being scheduled
+This creates a clear visual hierarchy:
+- **Hour lines**: Solid, full contrast -- anchors for quick scanning
+- **Half-hour lines**: Dashed, moderate contrast -- secondary rhythm
+- **Quarter-hour lines**: Dotted, subtle but visible -- fine granularity without clutter
 
