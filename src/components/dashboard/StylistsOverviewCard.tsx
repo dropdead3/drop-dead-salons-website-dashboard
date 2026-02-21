@@ -1,13 +1,17 @@
-import { Users, MapPin } from 'lucide-react';
+import { Users, MapPin, Settings } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useStylistLevelsSimple } from '@/hooks/useStylistLevels';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { tokens } from '@/lib/design-tokens';
 
 
 export function StylistsOverviewCard() {
+  const navigate = useNavigate();
   // Fetch stylists with their levels to show counts
   const { data: stylistsByLevel } = useQuery({
     queryKey: ['stylists-by-level'],
@@ -39,17 +43,27 @@ export function StylistsOverviewCard() {
 
   return (
     <Card className="p-6">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0">
-          <Users className="w-5 h-5 text-chart-5" />
-        </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="font-display text-base tracking-wide">STYLISTS BY LEVEL</h2>
-            <MetricInfoTooltip description="Breaks down your team by assigned stylist level. Use this to ensure healthy distribution across experience tiers and plan promotions." />
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0">
+            <Users className="w-5 h-5 text-chart-5" />
           </div>
-          <p className="text-xs text-muted-foreground">Team composition by experience tier</p>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="font-display text-base tracking-wide">STYLISTS BY LEVEL</h2>
+              <MetricInfoTooltip description="Breaks down your team by assigned stylist level. Use this to ensure healthy distribution across experience tiers and plan promotions." />
+            </div>
+            <p className="text-xs text-muted-foreground">Team composition by experience tier</p>
+          </div>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className={tokens.button.cardAction}
+          onClick={() => navigate('/dashboard/admin/settings', { state: { scrollTo: 'levels' } })}
+        >
+          <Settings className="w-4 h-4" /> Configure
+        </Button>
       </div>
       
       <div className="space-y-3">
