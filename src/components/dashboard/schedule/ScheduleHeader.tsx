@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, addDays, isToday, startOfWeek } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { isClosedOnDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
 import { 
   ChevronLeft, 
   ChevronRight,
@@ -49,7 +50,7 @@ interface ScheduleHeaderProps {
   stylists: Array<{ user_id: string; display_name: string | null; full_name: string }>;
   selectedLocation: string;
   onLocationChange: (locationId: string) => void;
-  locations: Array<{ id: string; name: string; city?: string | null }>;
+  locations: Array<{ id: string; name: string; city?: string | null; hours_json?: HoursJson | null; holiday_closures?: HolidayClosure[] | null }>;
   onNewBooking: () => void;
   canCreate?: boolean;
   calendarFilters: CalendarFilterState;
@@ -290,22 +291,49 @@ export function ScheduleHeader({
 
         {/* Center: Quick Day Buttons */}
         <div className="flex items-center gap-1">
-          <button
-            onClick={goToToday}
-            className={cn(
-              'flex flex-col items-center justify-center min-w-[56px] px-3 py-2 rounded-lg text-sm font-sans transition-all duration-200',
-              isToday(currentDate)
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'bg-background border border-input text-foreground hover:bg-accent hover:text-accent-foreground'
-            )}
-          >
-            <span className="font-medium text-xs tracking-wide">Today</span>
-            <span className="text-[10px] opacity-70">{format(new Date(), 'MMM d')}</span>
-          </button>
+          {(() => {
+            const selectedLoc = locations.find(l => l.id === selectedLocation);
+            const todayClosed = selectedLoc
+              ? isClosedOnDate(selectedLoc.hours_json ?? null, selectedLoc.holiday_closures ?? null, new Date())
+              : { isClosed: false };
+
+            const todayButton = (
+              <button
+                onClick={goToToday}
+                className={cn(
+                  'flex flex-col items-center justify-center min-w-[56px] px-3 py-2 rounded-lg text-sm font-sans transition-all duration-200',
+                  isToday(currentDate)
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'bg-background border border-input text-foreground hover:bg-accent hover:text-accent-foreground',
+                  todayClosed.isClosed && !isToday(currentDate) && 'opacity-60'
+                )}
+              >
+                <span className="font-medium text-xs tracking-wide">Today</span>
+                <span className="text-[10px] opacity-70">{format(new Date(), 'MMM d')}</span>
+                {todayClosed.isClosed && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-destructive mt-0.5" />
+                )}
+              </button>
+            );
+
+            return todayClosed.isClosed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>{todayButton}</TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>{todayClosed.reason && todayClosed.reason !== 'Regular hours' ? `Closed — ${todayClosed.reason}` : 'Closed'}</p>
+                </TooltipContent>
+              </Tooltip>
+            ) : todayButton;
+          })()}
           {quickDays.map((day) => {
             const isSelected = format(day, 'yyyy-MM-dd') === format(currentDate, 'yyyy-MM-dd');
             const isTodayDate = isToday(day);
-            return (
+            const selectedLoc = locations.find(l => l.id === selectedLocation);
+            const closed = selectedLoc
+              ? isClosedOnDate(selectedLoc.hours_json ?? null, selectedLoc.holiday_closures ?? null, day)
+              : { isClosed: false };
+
+            const btn = (
               <button
                 key={day.toISOString()}
                 onClick={() => {
@@ -317,12 +345,27 @@ export function ScheduleHeader({
                   isSelected
                     ? 'bg-secondary text-secondary-foreground shadow-sm font-medium'
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                  isTodayDate && !isSelected && 'text-primary border border-primary/20'
+                  isTodayDate && !isSelected && 'text-primary border border-primary/20',
+                  closed.isClosed && !isSelected && 'opacity-60'
                 )}
               >
                 <span className="text-xs font-medium tracking-wide">{format(day, 'EEE')}</span>
                 <span className="text-[10px] opacity-70">{format(day, 'd')}</span>
+                {closed.isClosed && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-destructive mt-0.5" />
+                )}
               </button>
+            );
+
+            return closed.isClosed ? (
+              <Tooltip key={day.toISOString()}>
+                <TooltipTrigger asChild>{btn}</TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>{closed.reason && closed.reason !== 'Regular hours' ? `Closed — ${closed.reason}` : 'Closed'}</p>
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <span key={day.toISOString()}>{btn}</span>
             );
           })}
         </div>
