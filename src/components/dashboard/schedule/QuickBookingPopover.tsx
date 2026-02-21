@@ -15,7 +15,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { 
+import {
   Search, 
   Clock, 
   DollarSign,
@@ -30,7 +30,8 @@ import {
   MapPin,
   Scissors,
   Info,
-  User
+  User,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -53,6 +54,7 @@ import { ServiceAddonToast } from './ServiceAddonToast';
 import { useAddonAssignmentMaps } from '@/hooks/useServiceAddonAssignments';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useServiceCategoryColors } from '@/hooks/useServiceCategoryColors';
+import { useServiceAddons } from '@/hooks/useServiceAddons';
 import type { ServiceAddon } from '@/hooks/useServiceAddons';
 
 type QuickBookingMode = 'popover' | 'panel';
@@ -89,6 +91,8 @@ interface PhorestClient {
 type Step = 'service' | 'location' | 'client' | 'stylist' | 'confirm';
 
 const STEPS: Step[] = ['service', 'location', 'client', 'stylist', 'confirm'];
+
+const ADDONS_CATEGORY = '__addons__';
 
 // Sort categories with consultation first
 const sortCategories = (categories: string[]): string[] => {
@@ -204,11 +208,12 @@ export function QuickBookingPopover({
 
   // Add-on recommendations (new system)
   const { effectiveOrganization } = useOrganizationContext();
+  const { data: addonLibrary = [] } = useServiceAddons(effectiveOrganization?.id);
   const { byCategoryId, byServiceId } = useAddonAssignmentMaps(effectiveOrganization?.id);
 
   // When a category is selected, show add-on toast after 800ms if not dismissed
   useEffect(() => {
-    if (!selectedCategory) {
+    if (!selectedCategory || selectedCategory === ADDONS_CATEGORY) {
       setShowAddonToast(false);
       return;
     }
@@ -250,10 +255,18 @@ export function QuickBookingPopover({
       .slice(0, 3);
   }, [selectedCategory, showAddonToast, byCategoryId, byServiceId, categoryColorsList, selectedServices, services]);
 
-  // Get selected service details (for totals calculation)
+  // Get selected service details (for totals calculation) — excludes addon: prefixed IDs
   const selectedServiceDetails = useMemo(() => {
-    return services.filter(s => selectedServices.includes(s.phorest_service_id));
+    return services.filter(s => selectedServices.filter(id => !id.startsWith('addon:')).includes(s.phorest_service_id));
   }, [services, selectedServices]);
+
+  // Get selected add-on details from the library
+  const selectedAddonDetails = useMemo(() => {
+    return selectedServices
+      .filter(id => id.startsWith('addon:'))
+      .map(id => addonLibrary.find(a => `addon:${a.id}` === id))
+      .filter(Boolean) as ServiceAddon[];
+  }, [selectedServices, addonLibrary]);
 
   const canViewAllClients = roles.some(r => ['admin', 'manager', 'super_admin', 'receptionist'].includes(r));
 
@@ -431,12 +444,16 @@ export function QuickBookingPopover({
   }, [step, filteredStylists, selectedStylist, roles, user?.id, selectedClient, highestStepReached, stylistFirstMode]);
 
   const totalDuration = useMemo(() => {
-    return selectedServiceDetails.reduce((sum, s) => sum + s.duration_minutes, 0);
-  }, [selectedServiceDetails]);
+    const serviceDur = selectedServiceDetails.reduce((sum, s) => sum + s.duration_minutes, 0);
+    const addonDur = selectedAddonDetails.reduce((sum, a) => sum + (a.duration_minutes || 0), 0);
+    return serviceDur + addonDur;
+  }, [selectedServiceDetails, selectedAddonDetails]);
 
   const totalPrice = useMemo(() => {
-    return selectedServiceDetails.reduce((sum, s) => sum + (s.price || 0), 0);
-  }, [selectedServiceDetails]);
+    const servicePrice = selectedServiceDetails.reduce((sum, s) => sum + (s.price || 0), 0);
+    const addonPrice = selectedAddonDetails.reduce((sum, a) => sum + a.price, 0);
+    return servicePrice + addonPrice;
+  }, [selectedServiceDetails, selectedAddonDetails]);
 
   const selectedStylistData = useMemo(() => {
     return stylists.find(s => s.user_id === selectedStylist);
@@ -451,13 +468,14 @@ export function QuickBookingPopover({
   }, [selectedStylistData]);
 
   const levelBasedTotalPrice = useMemo(() => {
+    const addonTotal = selectedAddonDetails.reduce((sum, a) => sum + a.price, 0);
     if (!selectedLevelSlug) return totalPrice;
     
     return selectedServiceDetails.reduce((sum, service) => {
       const levelPrice = getLevelPrice(service.id, selectedLevelSlug);
       return sum + (levelPrice ?? service.price ?? 0);
-    }, 0);
-  }, [selectedServiceDetails, selectedLevelSlug, totalPrice, getLevelPrice]);
+    }, 0) + addonTotal;
+  }, [selectedServiceDetails, selectedAddonDetails, selectedLevelSlug, totalPrice, getLevelPrice]);
 
   // Create booking mutation
   const createBooking = useMutation({
@@ -474,7 +492,8 @@ export function QuickBookingPopover({
           branch_id: selectedLocation,
           client_id: selectedClient.phorest_client_id,
           staff_id: stylistMapping.phorest_staff_id,
-          service_ids: selectedServices,
+          service_ids: selectedServices.filter(id => !id.startsWith('addon:')),
+          addon_ids: selectedAddonDetails.map(a => ({ id: a.id, name: a.name, price: a.price, duration: a.duration_minutes })),
           start_time: startDateTime,
           notes: bookingNotes || undefined,
         },
@@ -661,6 +680,16 @@ export function QuickBookingPopover({
 
   // Handle selecting a service that's unqualified for the pre-selected stylist
   const handleServiceToggle = (phorestServiceId: string) => {
+    // Add-on IDs skip qualification checks
+    if (phorestServiceId.startsWith('addon:')) {
+      setSelectedServices(prev =>
+        prev.includes(phorestServiceId)
+          ? prev.filter(id => id !== phorestServiceId)
+          : [...prev, phorestServiceId]
+      );
+      return;
+    }
+    
     const isQualified = isServiceQualifiedForPreSelected(phorestServiceId);
     
     if (!isQualified && !selectedServices.includes(phorestServiceId)) {
@@ -1049,7 +1078,48 @@ export function QuickBookingPopover({
                             </button>
                           );
                         })}
-                      {services.filter(s => s.name.toLowerCase().includes(serviceSearch.toLowerCase())).length === 0 && (
+                      {/* Add-on search results */}
+                      {addonLibrary
+                        .filter(a => a.name.toLowerCase().includes(serviceSearch.toLowerCase()))
+                        .map((addon) => {
+                          const addonKey = `addon:${addon.id}`;
+                          const isSelected = selectedServices.includes(addonKey);
+                          return (
+                            <button
+                              key={addonKey}
+                              className={cn(
+                                'w-full flex items-center justify-between p-2.5 rounded-lg text-left transition-all',
+                                isSelected ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-muted/70'
+                              )}
+                              onClick={() => handleServiceToggle(addonKey)}
+                            >
+                              <div className="flex-1 min-w-0 mr-2">
+                                <div className="flex items-center gap-1.5 font-medium text-sm truncate">
+                                  <Sparkles className="h-3 w-3 text-accent-foreground shrink-0" />
+                                  {addon.name}
+                                </div>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  {addon.duration_minutes && (
+                                    <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                                      <Clock className="h-3 w-3" />+{addon.duration_minutes}m
+                                    </span>
+                                  )}
+                                  <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                                    {formatCurrencyWhole(addon.price)}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className={cn(
+                                'w-4.5 h-4.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
+                                isSelected ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/30'
+                              )}>
+                                {isSelected && <Check className="h-2.5 w-2.5" />}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      {services.filter(s => s.name.toLowerCase().includes(serviceSearch.toLowerCase())).length === 0 &&
+                       addonLibrary.filter(a => a.name.toLowerCase().includes(serviceSearch.toLowerCase())).length === 0 && (
                         <div className="text-center py-4 text-muted-foreground text-sm">
                           No services match "{serviceSearch}"
                         </div>
@@ -1090,6 +1160,33 @@ export function QuickBookingPopover({
                           </button>
                         );
                       })}
+                      {/* Virtual Add-Ons category */}
+                      {addonLibrary.length > 0 && (
+                        (() => {
+                          const addonSelectedCount = selectedServices.filter(id => id.startsWith('addon:')).length;
+                          return (
+                            <button
+                              key={ADDONS_CATEGORY}
+                              className="w-full flex items-center gap-3 text-left transition-all -mx-3 w-[calc(100%+1.5rem)] px-4 py-3 hover:bg-muted/60"
+                              onClick={() => setSelectedCategory(ADDONS_CATEGORY)}
+                            >
+                              <div 
+                                className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium shrink-0 bg-accent text-accent-foreground"
+                              >
+                                <Sparkles className="h-4 w-4" />
+                              </div>
+                              <div className="flex flex-col min-w-0 flex-1">
+                                <span className="text-sm font-medium truncate">Add-Ons</span>
+                              </div>
+                              {addonSelectedCount > 0 && (
+                                <span className="shrink-0 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-medium">
+                                  {addonSelectedCount} selected
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })()
+                      )}
                     </div>
                   ) : (
                     <div className="text-center py-6 space-y-2">
@@ -1100,6 +1197,50 @@ export function QuickBookingPopover({
                       </p>
                     </div>
                   )}
+                </>
+              ) : selectedCategory === ADDONS_CATEGORY ? (
+                <>
+                  <div className="bg-muted -mx-3 px-3 py-1.5 mb-2">
+                    <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                      Add-Ons
+                    </h4>
+                  </div>
+                  <div className="space-y-1">
+                    {addonLibrary.map((addon) => {
+                      const addonKey = `addon:${addon.id}`;
+                      const isSelected = selectedServices.includes(addonKey);
+                      return (
+                        <button
+                          key={addon.id}
+                          className={cn(
+                            'w-full flex items-center justify-between p-2.5 rounded-lg text-left transition-all',
+                            isSelected ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-muted/70'
+                          )}
+                          onClick={() => handleServiceToggle(addonKey)}
+                        >
+                          <div className="flex-1 min-w-0 mr-2">
+                            <div className="font-medium text-sm truncate">{addon.name}</div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {addon.duration_minutes && (
+                                <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                                  <Clock className="h-3 w-3" />+{addon.duration_minutes}m
+                                </span>
+                              )}
+                              <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                                {formatCurrencyWhole(addon.price)}
+                              </span>
+                            </div>
+                          </div>
+                          <div className={cn(
+                            'w-4.5 h-4.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
+                            isSelected ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/30'
+                          )}>
+                            {isSelected && <Check className="h-2.5 w-2.5" />}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </>
               ) : (
                 <>
@@ -1233,6 +1374,13 @@ export function QuickBookingPopover({
                     {selectedServiceDetails.map(s => (
                       <Badge key={s.id} variant="outline" className="text-xs font-normal px-2 py-0.5 pr-1 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors" onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.phorest_service_id))}>
                         {s.name}
+                        <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                      </Badge>
+                    ))}
+                    {selectedAddonDetails.map(a => (
+                      <Badge key={a.id} variant="outline" className="text-xs font-normal px-2 py-0.5 pr-1 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors border-accent" onClick={() => setSelectedServices(prev => prev.filter(id => id !== `addon:${a.id}`))}>
+                        <Sparkles className="h-2.5 w-2.5 text-accent-foreground" />
+                        {a.name}
                         <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                       </Badge>
                     ))}
@@ -1556,6 +1704,22 @@ export function QuickBookingPopover({
                       {service.price !== null && (
                         <span className="font-medium text-xs">{formatCurrencyWhole(service.price)}</span>
                       )}
+                    </div>
+                  ))}
+                  {selectedAddonDetails.map((addon) => (
+                    <div key={addon.id} className="flex items-center justify-between p-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-md bg-accent/30 flex items-center justify-center">
+                          <Sparkles className="h-3 w-3 text-accent-foreground" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-xs">{addon.name}</div>
+                          <div className="text-[10px] text-muted-foreground">
+                            {addon.duration_minutes ? `+${addon.duration_minutes}m` : 'Add-on'}
+                          </div>
+                        </div>
+                      </div>
+                      <span className="font-medium text-xs">{formatCurrencyWhole(addon.price)}</span>
                     </div>
                   ))}
                 </div>
