@@ -1,4 +1,4 @@
-# Drop Dead Salon - Robots.txt
+# Robots.txt
 
 User-agent: Googlebot
 Allow: /
@@ -16,4 +16,4 @@ User-agent: *
 Allow: /
 
 # Sitemap location
-Sitemap: https://dropdeadsalon.com/sitemap.xml
+Sitemap: https://getzura.com/sitemap.xml

@@ -68,7 +68,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
-import DropDeadLogo from '@/assets/dd-secondary-logo.svg';
+import DropDeadLogo from '@/assets/brand-logo-secondary.svg';
 import { QRCodeFullScreen } from '@/components/dashboard/QRCodeFullScreen';
 import { formatRelativeTime } from '@/lib/format';
 import { ImageWithSkeleton } from '@/components/ui/image-skeleton';

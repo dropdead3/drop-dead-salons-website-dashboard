@@ -138,10 +138,10 @@ import {
   footerNavItems as footerNavFromConfig,
   websiteNavItems as websiteNavFromConfig,
 } from '@/config/dashboardNav';
-import Logo from '@/assets/dd-secondary-logo.svg';
-import LogoWhite from '@/assets/dd-secondary-logo-white.svg';
-import LogoIcon from '@/assets/dd-secondary-logo.svg';
-import LogoIconWhite from '@/assets/dd-secondary-logo-white.svg';
+import Logo from '@/assets/brand-logo-secondary.svg';
+import LogoWhite from '@/assets/brand-logo-secondary-white.svg';
+import LogoIcon from '@/assets/brand-logo-secondary.svg';
+import LogoIconWhite from '@/assets/brand-logo-secondary-white.svg';
 // Dark mode is now scoped via DashboardThemeContext
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { NextClientIndicator } from '@/components/dashboard/NextClientIndicator';

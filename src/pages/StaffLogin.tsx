@@ -14,7 +14,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, Eye, EyeOff, Mail, CheckCircle } from 'lucide-react';
-import Logo from '@/assets/dd-secondary-logo.svg';
+import Logo from '@/assets/brand-logo-secondary.svg';
 import { z } from 'zod';
 import { useCheckInvitation, useAcceptInvitation } from '@/hooks/useStaffInvitations';
 import { useDebounce } from '@/hooks/use-debounce';
