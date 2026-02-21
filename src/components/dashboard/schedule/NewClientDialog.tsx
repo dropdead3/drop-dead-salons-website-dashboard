@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { usePOSConfig } from '@/hooks/usePOSData';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
@@ -72,7 +73,16 @@ export function NewClientDialog({
   const SERVICE_PROVIDER_ROLES = ['stylist', 'stylist_assistant', 'booth_renter'];
   const teamMembers = allTeamMembers?.filter(m => m.roles?.some((r: string) => SERVICE_PROVIDER_ROLES.includes(r)));
   const bypassDuplicateCheck = useRef(false);
+  const { data: posConfig } = usePOSConfig();
 
+  const clientDescription = useMemo(() => {
+    const base = 'Create a new client in the system.';
+    if (posConfig?.posType && posConfig.syncEnabled) {
+      const name = posConfig.posType.charAt(0).toUpperCase() + posConfig.posType.slice(1);
+      return `${base} They will be synced to ${name}.`;
+    }
+    return base;
+  }, [posConfig?.posType, posConfig?.syncEnabled]);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [gender, setGender] = useState('Female');
@@ -195,8 +205,8 @@ export function NewClientDialog({
             <UserPlus className="h-5 w-5" />
             Add New Client
           </DialogTitle>
-          <DialogDescription>
-            Create a new client in the system. They will be synced to Phorest.
+         <DialogDescription>
+            {clientDescription}
           </DialogDescription>
         </DialogHeader>
 
