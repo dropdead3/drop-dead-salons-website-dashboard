@@ -326,7 +326,7 @@ export function ServicesSettingsContent() {
                 <Palette className="w-5 h-5 text-primary" />
                 <CardTitle className={tokens.heading.section}>SERVICE CATEGORIES</CardTitle>
               </div>
-              <Button size={tokens.button.card} onClick={() => { setCategoryDialogMode('create'); setEditingCategory(null); setCategoryDialogOpen(true); }}>
+              <Button variant="outline" className={tokens.button.cardAction} onClick={() => { setCategoryDialogMode('create'); setEditingCategory(null); setCategoryDialogOpen(true); }}>
                 <Plus className="w-4 h-4 mr-1" /> Add Category
               </Button>
             </div>
@@ -453,7 +453,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                 <Scissors className="w-5 h-5 text-primary" />
                 <CardTitle className={tokens.heading.section}>SERVICES</CardTitle>
               </div>
-              <Button size={tokens.button.card} onClick={() => openCreateService()}>
+              <Button variant="outline" className={tokens.button.cardAction} onClick={() => openCreateService()}>
                 <Plus className="w-4 h-4 mr-1" /> Add Service
               </Button>
             </div>
