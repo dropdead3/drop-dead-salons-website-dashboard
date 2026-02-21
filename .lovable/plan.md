@@ -1,25 +1,24 @@
 
-# Rename Location to "Preferred Location" and Show Full Address
 
-## What Changes
+# Default Preferred Location to Scheduler's Active Location
 
-1. **Rename label** from "Location *" to "Preferred Location" in both the collapsed and expanded views of the location field in the New Client Dialog.
+## Problem
 
-2. **Default to scheduler's active location** -- already happening via `defaultLocationId` prop. No change needed here.
+When opening the New Client dialog, the "Preferred Location" field shows "Select preferred location" instead of pre-selecting the scheduler's currently toggled location. This happens because `NewBookingSheet` doesn't pass the scheduler's location to `NewClientDialog`.
 
-3. **Show full address** in the dropdown options and the collapsed display. Instead of just "North Mesa", show something like:
-   - "North Mesa -- 2036 N Gilbert Rd Ste 1, Mesa, AZ 85203"
+## Changes
 
-## Technical Details
+### 1. `src/components/dashboard/schedule/NewBookingSheet.tsx`
 
-**File Modified:** `src/components/dashboard/schedule/NewClientDialog.tsx`
+- Pass `defaultLocationId={selectedLocation}` to the `NewClientDialog` component (currently missing this prop)
+- If `selectedLocation` is empty when the dialog opens, it will still show the placeholder (no regression)
 
-### Changes
+### 2. `src/components/dashboard/schedule/NewClientDialog.tsx`
 
-- **Line 243**: Change `"Location: "` to `"Preferred Location: "`
-- **Line 245**: Change display from `loc.name` to `loc.name + " -- " + loc.address + ", " + loc.city` (full address)
-- **Line 260**: Change label from `"Location *"` to `"Preferred Location"`
-- **Lines 267-268**: Change dropdown option text from `loc.name` to include address, e.g. `{loc.name} -- {loc.address}, {loc.city}`
-- **Line 263**: Update placeholder from `"Select a location"` to `"Select preferred location"`
+- Add a `useEffect` to sync `locationId` with `defaultLocationId` when the dialog opens -- ensuring that if the prop updates after initial mount (e.g. user changes scheduler location, then opens the dialog), the field reflects the current scheduler location
+- This covers both `QuickBookingPopover` and `NewBookingSheet` flows
 
-The `locations` data already includes `address` and `city` fields, so no new queries are needed. Address formatting will gracefully handle missing fields by only showing what is available.
+## Result
+
+The "Preferred Location" field will automatically default to whichever location is currently selected in the scheduler, across all booking flows.
+
