@@ -6097,7 +6097,7 @@ export type Database = {
           source_detail: string | null
           specialties: string
           updated_at: string
-          why_drop_dead: string
+          why_join_us: string
         }
         Insert: {
           assigned_to?: string | null
@@ -6119,7 +6119,7 @@ export type Database = {
           source_detail?: string | null
           specialties: string
           updated_at?: string
-          why_drop_dead: string
+          why_join_us: string
         }
         Update: {
           assigned_to?: string | null
@@ -6141,7 +6141,7 @@ export type Database = {
           source_detail?: string | null
           specialties?: string
           updated_at?: string
-          why_drop_dead?: string
+          why_join_us?: string
         }
         Relationships: []
       }

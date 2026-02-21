@@ -11,7 +11,7 @@ export interface JobApplication {
   experience: string;
   client_book: string;
   specialties: string;
-  why_drop_dead: string;
+  why_join_us: string;
   message: string | null;
   source: string;
   source_detail: string | null;
@@ -204,7 +204,7 @@ export function useCreateApplication() {
       experience: string;
       client_book: string;
       specialties: string;
-      why_drop_dead: string;
+      why_join_us: string;
       message?: string;
       source?: string;
       source_detail?: string;

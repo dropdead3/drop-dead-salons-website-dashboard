@@ -84,13 +84,13 @@ import { useSignaturePresets, SignatureConfig } from '@/hooks/useSignaturePreset
 import { SignaturePresetActions } from './SignaturePresetActions';
 
 // Import brand logos - black versions
-import brandLogoPrimary from '@/assets/drop-dead-logo.svg';
-import brandLogoSecondary from '@/assets/dd-secondary-logo.svg';
+import brandLogoPrimary from '@/assets/brand-logo-primary.svg';
+import brandLogoSecondary from '@/assets/brand-logo-secondary.svg';
 import brandIcon from '@/assets/brand-icon.svg';
 import brandWordmark from '@/assets/brand-wordmark.svg';
 // Import brand logos - white versions
-import brandLogoPrimaryWhite from '@/assets/drop-dead-logo-white.svg';
-import brandLogoSecondaryWhite from '@/assets/dd-secondary-logo-white.svg';
+import brandLogoPrimaryWhite from '@/assets/brand-logo-primary-white.svg';
+import brandLogoSecondaryWhite from '@/assets/brand-logo-secondary-white.svg';
 import brandIconWhite from '@/assets/brand-icon-white.svg';
 import brandWordmarkWhite from '@/assets/brand-wordmark-white.svg';
 
@@ -109,16 +109,16 @@ interface BrandLogo {
 const brandLogos: BrandLogo[] = [
   // Primary Logo variants
   {
-    id: 'drop-dead-main-black',
-    baseId: 'drop-dead-main',
+    id: 'brand-primary-black',
+    baseId: 'brand-primary',
     name: 'Primary Logo',
     src: brandLogoPrimary,
     description: 'Primary wordmark logo',
     variant: 'black',
   },
   {
-    id: 'drop-dead-main-white',
-    baseId: 'drop-dead-main',
+    id: 'brand-primary-white',
+    baseId: 'brand-primary',
     name: 'Primary Logo',
     src: brandLogoPrimaryWhite,
     description: 'Primary wordmark logo',
@@ -126,16 +126,16 @@ const brandLogos: BrandLogo[] = [
   },
   // Secondary Logo variants
   {
-    id: 'dd-secondary-black',
-    baseId: 'dd-secondary',
+    id: 'brand-secondary-black',
+    baseId: 'brand-secondary',
     name: 'Secondary Logo',
     src: brandLogoSecondary,
     description: 'Secondary icon logo',
     variant: 'black',
   },
   {
-    id: 'dd-secondary-white',
-    baseId: 'dd-secondary',
+    id: 'brand-secondary-white',
+    baseId: 'brand-secondary',
     name: 'Secondary Logo',
     src: brandLogoSecondaryWhite,
     description: 'Secondary icon logo',
@@ -722,9 +722,9 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         </div>`;
       }
       case 'footer': {
-        const defaultFooterConfig = { showLogo: true, logoId: 'drop-dead-main-white', showSocialIcons: true, copyrightText: '© 2026 All rights reserved.', logoSize: 'large' as const, logoPosition: 'center' as const };
+        const defaultFooterConfig = { showLogo: true, logoId: 'brand-primary-white', showSocialIcons: true, copyrightText: '© 2026 All rights reserved.', logoSize: 'large' as const, logoPosition: 'center' as const };
         const footerConfig = block.footerConfig ? { ...defaultFooterConfig, ...block.footerConfig } : defaultFooterConfig;
-        const logoId = (footerConfig.logoId && footerConfig.logoId.length > 0) ? footerConfig.logoId : 'drop-dead-main-white';
+        const logoId = (footerConfig.logoId && footerConfig.logoId.length > 0) ? footerConfig.logoId : 'brand-primary-white';
         const logo = getLogoById(logoId) || brandLogos.find(l => l.variant === 'white') || brandLogos[0];
         const bgColor = block.styles.backgroundColor || '#1a1a1a';
         const textColor = block.styles.textColor || '#f5f0e8';
@@ -783,7 +783,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         </div>`;
       }
       case 'header': {
-        const headerConfig = block.headerConfig || { showLogo: true, logoId: 'drop-dead-main-black', showNavLinks: true, logoPosition: 'left', navLinksPosition: 'right', logoSize: 'medium' };
+        const headerConfig = block.headerConfig || { showLogo: true, logoId: 'brand-primary-black', showNavLinks: true, logoPosition: 'left', navLinksPosition: 'right', logoSize: 'medium' };
         const logo = getLogoById(headerConfig.logoId) || brandLogos[0];
         const bgColor = block.styles.backgroundColor || '#1a1a1a';
         const textColor = block.styles.textColor || '#f5f0e8';
@@ -1139,7 +1139,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
         ],
         footerConfig: {
           showLogo: true,
-          logoId: 'drop-dead-main-white',
+          logoId: 'brand-primary-white',
           logoSize: 'large' as const,
           logoPosition: 'center' as const,
           showSocialIcons: true,
@@ -1205,7 +1205,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
     targetBlockId: string;
     position: 'above' | 'below';
   } | null>(null);
-  const [selectedTheme, setSelectedTheme] = useState<string>('drop-dead-premium');
+  const [selectedTheme, setSelectedTheme] = useState<string>('premium-dark');
   const [customThemes, setCustomThemes] = useState<EmailTheme[]>([]);
   const [isCreateThemeOpen, setIsCreateThemeOpen] = useState(false);
   const [editingThemeId, setEditingThemeId] = useState<string | null>(null);
@@ -1390,7 +1390,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
 
       setCustomThemes(prev => prev.filter(t => t.id !== themeId));
       if (selectedTheme === themeId) {
-        setSelectedTheme('drop-dead');
+        setSelectedTheme('premium-dark');
       }
       toast.success('Theme deleted');
     } catch (error: any) {
@@ -1672,7 +1672,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
         ],
         footerConfig: {
           showLogo: true,
-          logoId: 'drop-dead-main-white',
+          logoId: 'brand-primary-white',
           logoSize: 'large' as const,
           logoPosition: 'center' as const,
           showSocialIcons: true,
@@ -3032,7 +3032,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.dividerColor }} />
                             </div>
                             <div className="text-[10px] font-medium truncate flex items-center gap-1">
-                              {theme.id === 'drop-dead-premium' && <Crown className="w-3 h-3 text-amber-500" />}
+                              {theme.id === 'premium-dark' && <Crown className="w-3 h-3 text-amber-500" />}
                               {theme.name}
                             </div>
                           </div>
@@ -3776,7 +3776,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                       // Ensure footerConfig always has proper defaults
                       const defaultConfig = { 
                         showLogo: true, 
-                        logoId: 'drop-dead-main-white', 
+                        logoId: 'brand-primary-white', 
                         logoSize: 'large' as const, 
                         logoPosition: 'center' as const, 
                         showSocialIcons: true, 
@@ -4012,7 +4012,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             {selectedBlock.headerConfig?.showLogo && (
                               <div className="space-y-2">
                                 <Select
-                                  value={selectedBlock.headerConfig?.logoId || 'drop-dead-main-black'}
+                                  value={selectedBlock.headerConfig?.logoId || 'brand-primary-black'}
                                   onValueChange={(v) => {
                                     updateBlock(selectedBlock.id, {
                                       headerConfig: {
@@ -5533,10 +5533,10 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           );
                         })()}
                         {block.type === 'footer' && (() => {
-                          const defaultFooterConfig = { showLogo: true, logoId: 'drop-dead-main-white', logoSize: 'large' as const, logoPosition: 'center' as const, showSocialIcons: true, copyrightText: '© 2026 All rights reserved.' };
+                          const defaultFooterConfig = { showLogo: true, logoId: 'brand-primary-white', logoSize: 'large' as const, logoPosition: 'center' as const, showSocialIcons: true, copyrightText: '© 2026 All rights reserved.' };
                           const footerConfig = block.footerConfig ? { ...defaultFooterConfig, ...block.footerConfig } : defaultFooterConfig;
                           // Ensure logoId is never empty/undefined
-                          const logoId = (footerConfig.logoId && footerConfig.logoId.length > 0) ? footerConfig.logoId : 'drop-dead-main-white';
+                          const logoId = (footerConfig.logoId && footerConfig.logoId.length > 0) ? footerConfig.logoId : 'brand-primary-white';
                           const logo = getLogoById(logoId) || brandLogos.find(l => l.variant === 'white') || brandLogos[0];
                           const enabledLinks = (block.socialLinks || []).filter(l => l.enabled);
                           const logoSizeMap = { xs: '50px', small: '80px', medium: '120px', large: '160px', xl: '220px' };
@@ -5584,7 +5584,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           );
                         })()}
                         {block.type === 'header' && (() => {
-                          const headerConfig = block.headerConfig || { showLogo: true, logoId: 'drop-dead-main-white', showNavLinks: true };
+                          const headerConfig = block.headerConfig || { showLogo: true, logoId: 'brand-primary-white', showNavLinks: true };
                           const logo = getLogoById(headerConfig.logoId) || brandLogos[0];
                           const enabledLinks = (block.navLinks || []).filter(l => l.enabled);
                           const logoSizeMap = { xs: '50px', small: '80px', medium: '120px', large: '160px', xl: '220px' };

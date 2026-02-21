@@ -1,0 +1,1 @@
+ALTER TABLE public.job_applications RENAME COLUMN why_drop_dead TO why_join_us;
