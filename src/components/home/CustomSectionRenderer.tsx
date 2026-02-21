@@ -34,7 +34,7 @@ export function CustomSectionRenderer({ sectionId, sectionType }: CustomSectionR
       return (
         <section className={cn('py-16 px-4', bg)}>
           <div className={cn('max-w-3xl mx-auto', `text-${config.alignment || 'center'}`)}>
-            {config.heading && <h2 className="text-3xl font-display font-bold mb-4">{config.heading as string}</h2>}
+            {config.heading && <h2 className="text-3xl font-display font-medium mb-4">{config.heading as string}</h2>}
             {config.body && <p className="text-muted-foreground whitespace-pre-line">{config.body as string}</p>}
           </div>
         </section>
@@ -47,7 +47,7 @@ export function CustomSectionRenderer({ sectionId, sectionType }: CustomSectionR
         <section className="py-16 px-4">
           <div className={cn('max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center', isRight && 'direction-rtl')}>
             <div className={isRight ? 'order-2 md:order-1' : ''}>
-              {config.heading && <h2 className="text-3xl font-display font-bold mb-4">{config.heading as string}</h2>}
+              {config.heading && <h2 className="text-3xl font-display font-medium mb-4">{config.heading as string}</h2>}
               {config.body && <p className="text-muted-foreground mb-6">{config.body as string}</p>}
               {config.button_text && config.button_url && (
                 <Button asChild>
@@ -57,7 +57,7 @@ export function CustomSectionRenderer({ sectionId, sectionType }: CustomSectionR
             </div>
             <div className={isRight ? 'order-1 md:order-2' : ''}>
               {config.image_url && (
-                <img src={config.image_url as string} alt={config.heading as string || 'Section image'} className="rounded-2xl w-full object-cover" />
+                <img src={config.image_url as string} alt={config.heading as string || 'Section image'} className="rounded-xl w-full object-cover" />
               )}
             </div>
           </div>
@@ -78,9 +78,9 @@ export function CustomSectionRenderer({ sectionId, sectionType }: CustomSectionR
       return (
         <section className="py-16 px-4">
           <div className="max-w-4xl mx-auto">
-            {config.heading && <h2 className="text-3xl font-display font-bold mb-6 text-center">{config.heading as string}</h2>}
+            {config.heading && <h2 className="text-3xl font-display font-medium mb-6 text-center">{config.heading as string}</h2>}
             {embedUrl && (
-              <div className="aspect-video rounded-2xl overflow-hidden">
+              <div className="aspect-video rounded-xl overflow-hidden">
                 <iframe src={embedUrl} className="w-full h-full" allowFullScreen allow="autoplay" />
               </div>
             )}
@@ -95,7 +95,7 @@ export function CustomSectionRenderer({ sectionId, sectionType }: CustomSectionR
       return (
         <section className={cn('py-16 px-4', bgClass)}>
           <div className="max-w-3xl mx-auto text-center">
-            {config.heading && <h2 className="text-3xl font-display font-bold mb-3">{config.heading as string}</h2>}
+            {config.heading && <h2 className="text-3xl font-display font-medium mb-3">{config.heading as string}</h2>}
             {config.description && <p className="mb-6 opacity-80">{config.description as string}</p>}
             {config.button_text && config.button_url && (
               <Button variant={variant === 'primary' ? 'secondary' : 'default'} asChild>

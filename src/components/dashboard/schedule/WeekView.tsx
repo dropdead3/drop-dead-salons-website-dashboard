@@ -192,7 +192,7 @@ function AppointmentCard({
               <div className="text-xs font-medium truncate flex items-center gap-0.5">
                 {(appointment as any).is_redo && <RotateCcw className="h-2.5 w-2.5 text-amber-500 shrink-0" />}
                 {appointment.recurrence_group_id && <Repeat className="h-2.5 w-2.5 opacity-60 shrink-0" />}
-                {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[7px] px-0.5 rounded-sm font-semibold shrink-0">AST</span>}
+                {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[7px] px-0.5 rounded-sm font-medium shrink-0">AST</span>}
                 {!isAssisting && hasAssistants && <Users className="h-2.5 w-2.5 opacity-60 shrink-0" />}
                 {appointment.client_name}
               </div>
@@ -200,7 +200,7 @@ function AppointmentCard({
               <>
                 <div className="text-xs font-medium truncate flex items-center gap-0.5">
                   {appointment.recurrence_group_id && <Repeat className="h-3 w-3 opacity-60 shrink-0" />}
-                  {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-semibold shrink-0">ASSISTING</span>}
+                  {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-medium shrink-0">ASSISTING</span>}
                   {!isAssisting && hasAssistants && <Users className="h-3 w-3 opacity-60 shrink-0" />}
                   {appointment.client_name} {appointment.client_phone}
                 </div>
@@ -210,7 +210,7 @@ function AppointmentCard({
               <>
                 <div className="text-xs font-medium truncate flex items-center gap-0.5">
                   {appointment.recurrence_group_id && <Repeat className="h-3 w-3 opacity-60 shrink-0" />}
-                  {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-semibold shrink-0">ASSISTING</span>}
+                  {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-medium shrink-0">ASSISTING</span>}
                   {!isAssisting && hasAssistants && <Users className="h-3 w-3 opacity-60 shrink-0" />}
                   {appointment.client_name} {appointment.client_phone}
                 </div>

@@ -7,7 +7,7 @@ interface TestimonialsPreviewProps {
 
 function TestimonialCard() {
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 space-y-4 min-w-[280px]">
+    <div className="bg-card border border-border rounded-xl p-6 space-y-4 min-w-[280px]">
       {/* Stars */}
       <div className="flex gap-0.5">
         {[...Array(5)].map((_, i) => (

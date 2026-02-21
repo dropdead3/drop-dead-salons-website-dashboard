@@ -32,7 +32,7 @@ export function ProviderCard({
     return (
       <div
         className={cn(
-          'group relative overflow-hidden rounded-2xl border-2 p-5 transition-all duration-300',
+          'group relative overflow-hidden rounded-xl border-2 p-5 transition-all duration-300',
           'bg-gradient-to-br from-card/80 to-card',
           'hover:shadow-xl hover:-translate-y-1 hover:border-primary/30',
           !isAvailable && 'opacity-70'
@@ -96,7 +96,7 @@ export function ProviderCard({
   return (
     <div
       className={cn(
-        'group relative overflow-hidden rounded-2xl border-2 transition-all duration-300',
+        'group relative overflow-hidden rounded-xl border-2 transition-all duration-300',
         'bg-gradient-to-br from-card/90 via-card to-card/80',
         'hover:shadow-2xl hover:-translate-y-2 hover:border-primary/40',
         'backdrop-blur-sm',
@@ -126,7 +126,7 @@ export function ProviderCard({
         {/* Header */}
         <div className="flex items-start gap-4">
           <div 
-            className="p-4 rounded-2xl transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg"
+            className="p-4 rounded-xl transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg"
             style={{ 
               background: `linear-gradient(135deg, ${provider.gradientFrom}25, ${provider.gradientTo}15)`,
               color: provider.brandColor,

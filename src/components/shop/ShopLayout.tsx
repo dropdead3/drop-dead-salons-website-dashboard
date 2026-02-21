@@ -55,7 +55,7 @@ export function ShopLayout({ children, fullWebsiteEnabled, theme }: ShopLayoutPr
             ) : (
               <Store className="w-6 h-6 text-primary" />
             )}
-            <span className="font-display text-lg font-semibold text-foreground">{organization.name}</span>
+            <span className="font-display text-lg font-medium text-foreground">{organization.name}</span>
           </Link>
         </div>
       </header>

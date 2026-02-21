@@ -202,7 +202,7 @@ function ActionItemCard({ item, index, onRequestGuidance }: { item: ActionItem; 
 
 function LoadingSkeleton() {
   return (
-    <Card className="rounded-2xl">
+    <Card className="rounded-xl">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -300,7 +300,7 @@ export function AIInsightsCard() {
         elementName="AI Business Insights"
         category="Dashboard Home"
       >
-        <Card className="rounded-2xl max-h-[600px] overflow-y-auto" onWheel={(e) => e.stopPropagation()}>
+        <Card className="rounded-xl max-h-[600px] overflow-y-auto" onWheel={(e) => e.stopPropagation()}>
           {!activeGuidance && (
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">

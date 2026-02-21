@@ -89,7 +89,7 @@ export function DashboardSetupWizard({ onComplete, roleTemplateKey }: DashboardS
             exit={{ opacity: 0, y: -20 }}
             className="text-center max-w-2xl"
           >
-            <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl flex items-center justify-center mx-auto mb-6">
               <Sparkles className="w-8 h-8 text-primary" />
             </div>
             

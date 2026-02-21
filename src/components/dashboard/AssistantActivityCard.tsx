@@ -79,11 +79,11 @@ export function AssistantActivityCard() {
         {/* Summary stats */}
         <div className="flex items-center gap-4 mt-2 text-sm flex-wrap">
           <div>
-            <span className="font-semibold text-foreground">{totalAssignments}</span>
+            <span className="font-medium text-foreground">{totalAssignments}</span>
             <span className="text-muted-foreground ml-1">total assists</span>
           </div>
           <div>
-            <span className="font-semibold text-foreground">{uniqueAssistants}</span>
+            <span className="font-medium text-foreground">{uniqueAssistants}</span>
             <span className="text-muted-foreground ml-1">assistants active</span>
           </div>
           {totalAssistedRevenue > 0 && (

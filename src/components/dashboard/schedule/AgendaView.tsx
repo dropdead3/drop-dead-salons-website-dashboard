@@ -82,7 +82,7 @@ function AppointmentCard({
                     <Repeat className="h-3.5 w-3.5 text-muted-foreground" />
                   )}
                   {isAssisting && (
-                    <span className="bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5 rounded-sm font-semibold">ASSISTING</span>
+                    <span className="bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5 rounded-sm font-medium">ASSISTING</span>
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">{appointment.service_name}</p>
