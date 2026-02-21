@@ -1,24 +1,20 @@
 
 
-# Default Preferred Location to Scheduler's Active Location
+# Make New Client Dialog Responsive with Scroll
 
 ## Problem
+The "Add New Client" dialog extends beyond the viewport on smaller screens, cutting off content and the action buttons.
 
-When opening the New Client dialog, the "Preferred Location" field shows "Select preferred location" instead of pre-selecting the scheduler's currently toggled location. This happens because `NewBookingSheet` doesn't pass the scheduler's location to `NewClientDialog`.
+## Solution
+Add a maximum height constraint to the `DialogContent` and make the form body scrollable while keeping the header and footer buttons always visible.
 
-## Changes
+## Technical Details
 
-### 1. `src/components/dashboard/schedule/NewBookingSheet.tsx`
+**File:** `src/components/dashboard/schedule/NewClientDialog.tsx`
 
-- Pass `defaultLocationId={selectedLocation}` to the `NewClientDialog` component (currently missing this prop)
-- If `selectedLocation` is empty when the dialog opens, it will still show the placeholder (no regression)
+1. **DialogContent (line 192)**: Add `max-h-[85vh] flex flex-col` to constrain the dialog height to 85% of the viewport and enable flex column layout
+2. **Form element (line 203)**: Add `overflow-y-auto flex-1 min-h-0` so the form fields scroll independently while the header stays pinned above and the footer stays pinned below
+3. **DialogFooter**: Move the Cancel/Create Client buttons outside the scrollable form area (after the closing `</form>` tag) so they remain always visible at the bottom -- or wrap footer in a non-scrolling section
 
-### 2. `src/components/dashboard/schedule/NewClientDialog.tsx`
-
-- Add a `useEffect` to sync `locationId` with `defaultLocationId` when the dialog opens -- ensuring that if the prop updates after initial mount (e.g. user changes scheduler location, then opens the dialog), the field reflects the current scheduler location
-- This covers both `QuickBookingPopover` and `NewBookingSheet` flows
-
-## Result
-
-The "Preferred Location" field will automatically default to whichever location is currently selected in the scheduler, across all booking flows.
+This keeps the dialog title and action buttons always accessible regardless of viewport height, with smooth scrolling for the form fields in between.
 
