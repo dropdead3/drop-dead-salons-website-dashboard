@@ -13,6 +13,8 @@ import {
   TrendingUp,
   Link2,
   Users,
+  Download,
+  MessageSquare,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -31,7 +33,8 @@ import { PerformanceTrendChart } from '@/components/dashboard/sales/PerformanceT
 import { ClientInsightsCard } from '@/components/dashboard/sales/ClientInsightsCard';
 import { ServiceMixChart } from '@/components/dashboard/sales/ServiceMixChart';
 import { StylistLocationRevenueChart } from '@/components/dashboard/sales/StylistLocationRevenueChart';
-
+import { exportRedoCsv } from '@/lib/exportRedoCsv';
+import { Button } from '@/components/ui/button';
 export default function Stats() {
   const { user, roles } = useAuth();
   const [clientInsightsLocation, setClientInsightsLocation] = useState<string>('all');
@@ -357,10 +360,23 @@ export default function Stats() {
                       <TrendingUp className="w-5 h-5 text-primary" />
                       <h2 className="font-display text-sm tracking-wide">REDO & ADJUSTMENT INSIGHTS</h2>
                     </div>
-                    <Badge variant="outline" className="text-xs">Last 30 days</Badge>
+                    <div className="flex items-center gap-2">
+                      {redoData.totalRedos > 0 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs gap-1.5"
+                          onClick={() => exportRedoCsv(redoData, formatCurrencyWhole)}
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          Export CSV
+                        </Button>
+                      )}
+                      <Badge variant="outline" className="text-xs">Last 30 days</Badge>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-4 mb-6">
+                  <div className="grid grid-cols-5 gap-4 mb-6">
                     <div className="text-center">
                       <p className="text-2xl font-display tabular-nums">{redoData.totalRedos}</p>
                       <p className="text-xs text-muted-foreground">Redos</p>
@@ -382,6 +398,10 @@ export default function Stats() {
                       <p className="text-2xl font-display tabular-nums">{redoData.repeatRedoClients}</p>
                       <p className="text-xs text-muted-foreground">Repeat Clients</p>
                     </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-display tabular-nums text-destructive">{formatCurrencyWhole(redoData.commissionImpact)}</p>
+                      <p className="text-xs text-muted-foreground">Commission Impact</p>
+                    </div>
                   </div>
 
                   {redoData.byStylist.length > 0 && (
@@ -396,6 +416,15 @@ export default function Stats() {
                               <Badge variant={s.redoRate > 5 ? "destructive" : "secondary"} className="text-[10px] tabular-nums">
                                 {s.redoRate.toFixed(1)}%
                               </Badge>
+                              {s.redoRate > 5 && (
+                                <Link
+                                  to={`/dashboard/meetings/schedule?staffId=${s.staffUserId}&topic=redo-review`}
+                                  className="text-primary hover:text-primary/80 transition-colors"
+                                  title="Schedule coaching conversation"
+                                >
+                                  <MessageSquare className="w-3.5 h-3.5" />
+                                </Link>
+                              )}
                             </div>
                           </div>
                         ))}
