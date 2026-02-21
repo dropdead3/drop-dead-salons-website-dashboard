@@ -95,6 +95,27 @@ export function useBulkToggleCategoryQualifications() {
   });
 }
 
+/**
+ * Toggle the `is_booking` flag on an employee profile.
+ * Used by BookingVisibilityCard and any other UI that controls booking visibility.
+ */
+export function useToggleIsBooking() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, isBooking }: { userId: string; isBooking: boolean }) => {
+      const { error } = await supabase
+        .from('employee_profiles')
+        .update({ is_booking: isBooking })
+        .eq('user_id', userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['active-stylists'] });
+      qc.invalidateQueries({ queryKey: ['homepage-stylists'] });
+    },
+  });
+}
+
 /** Service-provider roles that should appear in the stylist selector */
 const SERVICE_PROVIDER_ROLES = ['stylist', 'stylist_assistant', 'booth_renter'] as const;
 

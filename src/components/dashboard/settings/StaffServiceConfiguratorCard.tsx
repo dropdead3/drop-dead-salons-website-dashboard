@@ -64,7 +64,7 @@ export function StaffServiceConfiguratorCard({ organizationId, categories, servi
   // Reset selected user when filters change and they're no longer in list
   const selectedStillVisible = filteredStylists.some(s => s.user_id === selectedUserId);
   if (selectedUserId && filteredStylists.length > 0 && !selectedStillVisible && !stylistsLoading) {
-    // Don't reset during loading
+    setTimeout(() => setSelectedUserId(''), 0);
   }
 
   // Build a set of service IDs that are explicitly deactivated

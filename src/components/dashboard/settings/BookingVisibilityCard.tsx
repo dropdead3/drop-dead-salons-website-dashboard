@@ -1,16 +1,18 @@
 import { useState, useMemo } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useActiveStylists } from '@/hooks/useStaffServiceConfigurator';
+import { useActiveStylists, useToggleIsBooking } from '@/hooks/useStaffServiceConfigurator';
 import { useToggleBookableOnline } from '@/hooks/useNativeServicesForWebsite';
 import { useUndoToast } from '@/hooks/useUndoToast';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { LocationSelect } from '@/components/ui/location-select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Accordion,
   AccordionContent,
@@ -18,25 +20,10 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Users, ShoppingBag, MapPin } from 'lucide-react';
+import { Users, ShoppingBag, Eye } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 
-// ─── Hooks ────────────────────────────────────────────────────────
-
-function useToggleIsBooking() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ userId, isBooking }: { userId: string; isBooking: boolean }) => {
-      const { error } = await supabase
-        .from('employee_profiles')
-        .update({ is_booking: isBooking })
-        .eq('user_id', userId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['active-stylists'] });
-    },
-  });
-}
+// ─── Local service+category query (lightweight, only fields needed here) ─────
 
 function useServicesWithCategories(orgId: string | undefined) {
   return useQuery({
@@ -71,16 +58,53 @@ function useServicesWithCategories(orgId: string | undefined) {
   });
 }
 
+// ─── Skeleton rows ───────────────────────────────────────────────
+
+function StylistSkeletonRows() {
+  return (
+    <div className="divide-y divide-border rounded-lg border">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="flex items-center justify-between px-4 py-3 gap-3">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <Skeleton className="h-4 w-28" />
+          </div>
+          <Skeleton className="h-5 w-9 rounded-full" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ServiceSkeletonRows() {
+  return (
+    <div className="space-y-2">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="border rounded-lg px-4 py-3">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-4 w-4 rounded" />
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-10 ml-auto" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Stylists Panel ──────────────────────────────────────────────
 
-function StylistsPanel({ orgId }: { orgId: string }) {
+interface StylistsPanelProps {
+  orgId: string;
+}
+
+function StylistsPanel({ orgId }: StylistsPanelProps) {
   const [locationId, setLocationId] = useState('all');
   const { data: stylists = [], isLoading } = useActiveStylists(orgId, locationId);
   const toggleBooking = useToggleIsBooking();
   const showUndo = useUndoToast();
 
-  // We need is_booking from employee_profiles — useActiveStylists returns it
-  const bookingCount = stylists.filter((s: any) => s.is_booking !== false).length;
+  const bookingCount = stylists.filter(s => s.is_booking !== false).length;
 
   const handleToggle = (userId: string, currentVal: boolean) => {
     const newVal = !currentVal;
@@ -105,14 +129,19 @@ function StylistsPanel({ orgId }: { orgId: string }) {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground py-6 text-center">Loading stylists…</p>
+        <StylistSkeletonRows />
       ) : stylists.length === 0 ? (
         <p className="text-sm text-muted-foreground py-6 text-center">No service providers found.</p>
       ) : (
         <div className="divide-y divide-border rounded-lg border">
-          {stylists.map((s: any) => {
+          {stylists.map(s => {
             const name = s.display_name || s.full_name || 'Unknown';
-            const initials = name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+            const initials = name
+              .split(' ')
+              .map((n: string) => n[0])
+              .join('')
+              .slice(0, 2)
+              .toUpperCase();
             const isBooking = s.is_booking !== false;
 
             return (
@@ -127,6 +156,7 @@ function StylistsPanel({ orgId }: { orgId: string }) {
                 <Switch
                   checked={isBooking}
                   onCheckedChange={() => handleToggle(s.user_id, isBooking)}
+                  disabled={toggleBooking.isPending}
                 />
               </div>
             );
@@ -167,20 +197,38 @@ function ServicesPanel({ orgId }: { orgId: string }) {
     );
   };
 
-  const handleToggleCategory = (catName: string, setTo: boolean) => {
+  const handleToggleCategory = async (catName: string, setTo: boolean) => {
     const catServices = grouped.get(catName) || [];
-    Promise.all(
-      catServices.map(s =>
-        supabase.from('services').update({ bookable_online: setTo }).eq('id', s.id)
-      )
-    ).then(() => {
+    const previousStates = catServices.map(s => ({ id: s.id, bookable_online: s.bookable_online }));
+
+    try {
+      await Promise.all(
+        catServices.map(s =>
+          supabase.from('services').update({ bookable_online: setTo }).eq('id', s.id),
+        ),
+      );
       qc.invalidateQueries({ queryKey: ['booking-visibility-services'] });
       qc.invalidateQueries({ queryKey: ['services-website'] });
-    });
+
+      showUndo(
+        setTo ? `All ${catName} services now bookable` : `All ${catName} services hidden`,
+        async () => {
+          await Promise.all(
+            previousStates.map(ps =>
+              supabase.from('services').update({ bookable_online: ps.bookable_online }).eq('id', ps.id),
+            ),
+          );
+          qc.invalidateQueries({ queryKey: ['booking-visibility-services'] });
+          qc.invalidateQueries({ queryKey: ['services-website'] });
+        },
+      );
+    } catch (err: any) {
+      toast.error('Failed to update category: ' + (err.message || 'Unknown error'));
+    }
   };
 
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground py-6 text-center">Loading services…</p>;
+    return <ServiceSkeletonRows />;
   }
 
   const totalOnline = services.filter(s => s.bookable_online).length;
@@ -207,10 +255,11 @@ function ServicesPanel({ orgId }: { orgId: string }) {
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <Checkbox
                     checked={allOn ? true : someOn ? 'indeterminate' : false}
-                    onCheckedChange={(checked) => {
+                    onCheckedChange={checked => {
                       handleToggleCategory(cat.category_name, !!checked);
                     }}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={e => e.stopPropagation()}
+                    disabled={toggleOnline.isPending}
                   />
                   <span className="text-sm font-medium truncate">{cat.category_name}</span>
                   <Badge variant="outline" className="text-[10px] ml-auto shrink-0">
@@ -226,6 +275,7 @@ function ServicesPanel({ orgId }: { orgId: string }) {
                       <Switch
                         checked={svc.bookable_online}
                         onCheckedChange={() => handleToggleService(svc.id, svc.bookable_online)}
+                        disabled={toggleOnline.isPending}
                       />
                     </div>
                   ))}
@@ -249,11 +299,12 @@ export function BookingVisibilityCard() {
 
   return (
     <Card className="lg:col-span-2">
-      <CardHeader>
-        <div>
-          <CardTitle className="font-display text-lg">STYLIST & SERVICE VISIBILITY</CardTitle>
-          <CardDescription>Control which stylists and services appear on your booking widget.</CardDescription>
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2">
+          <Eye className="w-5 h-5 text-primary" />
+          <CardTitle className={tokens.heading.section}>STYLIST & SERVICE VISIBILITY</CardTitle>
         </div>
+        <CardDescription>Control which stylists and services appear on your booking widget.</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="stylists">
