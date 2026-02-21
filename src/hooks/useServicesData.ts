@@ -18,6 +18,7 @@ export interface Service {
   allow_same_day_booking: boolean | null;
   lead_time_days: number | null;
   location_id: string | null;
+  organization_id: string | null;
   import_source: string | null;
   imported_at: string | null;
   created_at: string | null;
@@ -147,6 +148,7 @@ export function useService(serviceId: string | undefined) {
  */
 export function useCreateService() {
   const queryClient = useQueryClient();
+  const { effectiveOrganization } = useOrganizationContext();
 
   return useMutation({
     mutationFn: async (service: Partial<Service>) => {
@@ -168,6 +170,7 @@ export function useCreateService() {
           processing_time_minutes: service.processing_time_minutes ?? 0,
           requires_new_client_consultation: service.requires_new_client_consultation ?? false,
           location_id: service.location_id,
+          organization_id: service.organization_id || effectiveOrganization?.id || null,
           import_source: 'manual',
         })
         .select()
