@@ -1,8 +1,7 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Brain, BookOpen, Users, ShieldCheck } from 'lucide-react';
+import { Brain, BookOpen, Users, ShieldCheck } from 'lucide-react';
 import { PersonalityTab } from '@/components/zura-config/PersonalityTab';
 import { KnowledgeBaseTab } from '@/components/zura-config/KnowledgeBaseTab';
 import { RoleRulesTab } from '@/components/zura-config/RoleRulesTab';
@@ -16,20 +15,12 @@ export default function ZuraConfigPage() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-[1200px] mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-start gap-4">
-          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-            <Link to="/dashboard/admin/management">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl">Zura Configuration</h1>
-            <p className="text-muted-foreground mt-1">
-              Customize how Zura communicates, what she knows, and her boundaries
-            </p>
-          </div>
-        </div>
+        <DashboardPageHeader
+          title="Zura Configuration"
+          description="Customize how Zura communicates, what she knows, and her boundaries"
+          backTo="/dashboard/admin/management"
+          backLabel="Back to Management"
+        />
 
         {orgId ? (
           <Tabs defaultValue="personality" className="space-y-6">

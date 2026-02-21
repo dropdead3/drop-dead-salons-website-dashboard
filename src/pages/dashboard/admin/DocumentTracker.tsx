@@ -13,8 +13,8 @@ import { useStaffDocuments } from '@/hooks/useStaffDocuments';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { ArrowLeft, Plus, FileText, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Plus, FileText, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { differenceInDays, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 
@@ -91,15 +91,13 @@ export default function DocumentTracker() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
-        <div className="flex items-start gap-4">
-          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-            <Link to="/dashboard/admin/management"><ArrowLeft className="w-5 h-5" /></Link>
-          </Button>
-          <div className="flex-1">
-            <h1 className="font-display text-3xl lg:text-4xl">Document & License Tracker</h1>
-            <p className="text-muted-foreground mt-1">Track licenses, certifications, and compliance documents</p>
-          </div>
-          <Dialog open={open} onOpenChange={setOpen}>
+        <DashboardPageHeader
+          title="Document & License Tracker"
+          description="Track licenses, certifications, and compliance documents"
+          backTo="/dashboard/admin/management"
+          backLabel="Back to Management"
+          actions={
+            <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button><Plus className="w-4 h-4 mr-2" />Add Document</Button>
             </DialogTrigger>
@@ -154,7 +152,8 @@ export default function DocumentTracker() {
               </div>
             </DialogContent>
           </Dialog>
-        </div>
+          }
+        />
 
         {/* Summary Cards */}
         <div className="grid gap-4 sm:grid-cols-3">

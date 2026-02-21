@@ -22,6 +22,7 @@ import {
   UserCheck,
   RefreshCw,
   Building2,
+  ArrowLeft,
   ArrowRight,
   CalendarDays
 } from 'lucide-react';
@@ -277,8 +278,9 @@ export default function ReportsHub() {
         {/* Selected Report View */}
         {selectedReport ? (
           <div className="space-y-4">
-            <Button variant="ghost" size={tokens.button.inline} onClick={handleCloseReport}>
-              ← Back to Reports
+            <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground hover:text-foreground" onClick={handleCloseReport}>
+              <ArrowLeft className="w-4 h-4 mr-1.5" />
+              Back to Reports
             </Button>
             {renderSelectedReport()}
           </div>
