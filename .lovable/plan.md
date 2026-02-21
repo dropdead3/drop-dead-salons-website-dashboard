@@ -1,68 +1,60 @@
 
 
-## Archive and Restore for Categories and Services
+## Undo Feature for Services Page
 
-### What You Get
+### Approach
 
-- **Archive button** replaces the current delete (trash) icon on categories and services
-- **Archived section** appears at the bottom of each card when archived items exist, with a muted/collapsed style
-- **Restore button** on each archived item to bring it back
-- **Permanent delete** button only visible to the account owner (primary owner) on archived items
-- Categories and their services archive together -- archiving a category also archives its services
-- Restoring a category restores it and its services back to the active list
+Rather than a traditional Ctrl+Z undo (which gets complex with server-side mutations), this implements a **toast-based undo pattern** -- the same pattern used by Gmail, Slack, and Google Docs. After any destructive or significant action, a toast appears with an "Undo" button that reverses the operation within a few seconds.
 
-### Database Changes
+### How It Works
 
-Two new columns on each table:
+1. When you archive a category or service, toggle active/inactive, reorder categories, or delete a service, a toast appears at the bottom of the screen
+2. The toast shows what happened (e.g., "Archived 'Balayage'") with an **Undo** button
+3. Clicking Undo reverses the action immediately
+4. The toast auto-dismisses after 6 seconds -- after that, the action is final
 
-**`services` table:**
-- `is_archived` (boolean, default false)
-- `archived_at` (timestamptz, nullable)
+### Actions That Support Undo
 
-**`service_category_colors` table:**
-- `is_archived` (boolean, default false)
-- `archived_at` (timestamptz, nullable)
-
-### Hook Changes
-
-**`useServicesData.ts`:**
-- Main query filters `is_archived = false` (in addition to existing `is_active = true`)
-- New `useArchivedServices()` hook to fetch archived services
-- New `useArchiveService()` mutation (sets `is_archived=true, archived_at=now()`)
-- New `useRestoreService()` mutation (sets `is_archived=false, archived_at=null`)
-- New `usePermanentlyDeleteService()` mutation (actual DELETE, not soft-delete)
-
-**`useServiceCategoryColors.ts`:**
-- Main query filters `is_archived != true`
-- New `useArchivedCategories()` hook
-- New `useArchiveCategory()` mutation (archives category + all its services)
-- New `useRestoreCategory()` mutation (restores category + its services)
-- Existing `useDeleteCategory` becomes permanent delete (only used by primary owner on archived items)
-
-### UI Changes
-
-**`ServicesSettingsContent.tsx`:**
-
-1. **Category card**: Trash icon becomes Archive icon. Confirmation dialog updated to say "Archive" instead of "Delete"
-2. **Service rows**: Trash icon becomes Archive icon with updated confirmation
-3. **Archived Categories section**: Collapsible section at bottom of categories card showing archived categories with Restore and (owner-only) Delete buttons
-4. **Archived Services section**: Collapsible section at bottom of services card showing archived services with Restore and (owner-only) Delete buttons
-5. Primary owner check uses existing `useIsPrimaryOwner()` hook to gate permanent delete
-
-### Access Control
-
-| Action | Who Can Do It |
+| Action | Undo Behavior |
 |--------|--------------|
-| Archive a category or service | Super Admin, Admin, Manager |
-| Restore an archived item | Super Admin, Admin, Manager |
-| Permanently delete archived data | Primary Owner only |
+| Archive category | Restores category (and its services) |
+| Archive service | Restores service |
+| Toggle service active/inactive | Toggles back |
+| Reorder categories | Reverts to previous order |
+| Permanently delete (owner only) | No undo -- this remains a confirmed action with dialog |
+
+### Technical Details
+
+**New utility: `useUndoToast` hook**
+
+A small custom hook that wraps the existing `sonner` toast with undo capability:
+
+```
+function useUndoToast() {
+  return (message, undoFn) => {
+    toast(message, {
+      action: { label: 'Undo', onClick: undoFn },
+      duration: 6000,
+    });
+  };
+}
+```
+
+**File: `ServicesSettingsContent.tsx`**
+
+Each handler gets an undo callback:
+
+- **Archive category**: On success, show toast with undo that calls `restoreCategory.mutate()`
+- **Archive service**: On success, show toast with undo that calls `restoreService.mutate()`
+- **Toggle active**: On success, show toast with undo that toggles back
+- **Reorder**: Capture previous order before drag, show toast with undo that calls `reorderCategories.mutate()` with the old order
+
+No new files needed beyond the hook. No database changes.
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| Migration SQL | Add `is_archived`, `archived_at` to `services` and `service_category_colors` |
-| `src/hooks/useServicesData.ts` | Add archive/restore/permanent-delete mutations, filter archived from main query |
-| `src/hooks/useServiceCategoryColors.ts` | Add archive/restore hooks, filter archived from main query |
-| `src/components/dashboard/settings/ServicesSettingsContent.tsx` | Replace delete with archive, add archived sections with restore + owner-only delete |
+| `src/hooks/useUndoToast.ts` | New small hook wrapping sonner toast with undo action |
+| `src/components/dashboard/settings/ServicesSettingsContent.tsx` | Wire undo toasts into archive, toggle, and reorder handlers |
 
