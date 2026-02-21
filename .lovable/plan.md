@@ -1,89 +1,38 @@
 
-# Eliminate Hardcoded "Phorest" References from User-Facing UI
+# Improve Birthday Date Picker for Fast Year Navigation
 
-## Overview
+## Problem
+The current birthday selector uses a standard `Calendar` component that only allows navigating one month at a time. For a birthday field, users often need to go back 20-80 years, making this extremely tedious.
 
-Create a shared hook that resolves the active POS/CRM provider name dynamically, then update all 11 files with hardcoded "Phorest" user-facing strings to use it instead. Internal identifiers (variable names, table names, query keys, route paths) are out of scope.
+## Solution
+Replace the birthday `Calendar` with a custom picker that includes **month and year dropdown selects** above the day grid, allowing users to jump directly to any year/month. The `react-day-picker` library (already installed) supports `captionLayout="dropdown"` mode natively, along with `fromYear` and `toYear` props to define the selectable range.
 
-## Step 1: Create `usePOSProviderLabel` Hook
+## Technical Details
 
-**New file:** `src/hooks/usePOSProviderLabel.ts`
+**File:** `src/components/dashboard/schedule/NewClientDialog.tsx` (lines 346-354)
 
-A lightweight hook built on top of the existing `usePOSConfig()` that returns:
-- `providerName`: Title-cased provider name (e.g. "Phorest", "Boulevard") or `null` if none configured
-- `providerLabel`: Same as above but with "POS" fallback when no provider is set
-- `syncLabel`: e.g. "Phorest Sync" or "POS Sync"
-- `isConnected`: boolean
+Replace the current `Calendar` usage with dropdown caption mode:
 
-This centralizes all provider name logic in one place.
+```tsx
+<Calendar
+  mode="single"
+  selected={birthday}
+  onSelect={setBirthday}
+  disabled={(date) => date > new Date()}
+  initialFocus
+  captionLayout="dropdown"
+  fromYear={1920}
+  toYear={new Date().getFullYear()}
+  className={cn("p-3 pointer-events-auto")}
+/>
+```
 
-## Step 2: Update 11 Files
+**File:** `src/components/ui/calendar.tsx`
 
-### 2a. `PhorestWriteGateCard.tsx` (8 strings)
-- Import `usePOSProviderLabel`
-- Line 58: toast title -- "Phorest write-back" becomes `"{providerLabel} write-back"`
-- Lines 60-61: toast descriptions -- "sync to Phorest" / "Phorest will not be updated" become dynamic
-- Line 78: "manage Phorest write-back settings" becomes `"manage {providerLabel} write-back settings"`
-- Line 88: heading "Sync Changes to Phorest" becomes `"Sync Changes to {providerLabel}"`
-- Line 90: "pushed to your live Phorest system" becomes dynamic
-- Line 127: "without pushing to Phorest" becomes dynamic
-- Line 136: "Phorest data sync (reading FROM Phorest)" becomes dynamic
+Add styling for the dropdown elements that `react-day-picker` renders when `captionLayout="dropdown"` is used. The classNames config needs entries for:
+- `caption_dropdowns` -- container for the month/year selects
+- `vhidden` -- visually hidden labels (accessibility)
 
-### 2b. `SidebarSyncStatusWidget.tsx` (2 strings)
-- Line 121: tooltip "Phorest Sync" becomes `syncLabel`
-- Line 141: label "Phorest Sync" becomes `syncLabel`
+The dropdowns themselves are native `<select>` elements rendered by the library, styled via the `caption_dropdowns` class to sit inline within the calendar header.
 
-### 2c. `PhorestSyncPopout.tsx` (2 strings)
-- Line 188: tooltip "Phorest Sync Status" becomes `"{syncLabel} Status"`
-- Line 196: header "Phorest Sync" becomes `syncLabel`
-
-### 2d. `StaffMatchingSuggestions.tsx` (1 string)
-- Line 100: "Link your team to Phorest to track individual stats" becomes `"Link your team to {providerLabel} to track individual stats"`
-
-### 2e. `ProductCategoryChart.tsx` (1 string)
-- Line 81: "Product data syncs from Phorest sales transactions" becomes `"Product data syncs from {providerLabel} sales transactions"`
-
-### 2f. `AssistantRequestsCalendar.tsx` (2 strings)
-- Line 296: tooltip "Phorest Conflict" becomes `"{providerLabel} Conflict"` (or "Schedule Conflict" if no provider)
-- Line 348: legend label "Phorest Conflict" becomes dynamic
-
-### 2g. `LeaderboardContent.tsx` (2 strings)
-- Line 460: "Live data from Phorest" becomes `"Live data from {providerLabel}"`
-- Line 466: "Connect Phorest to see live rankings" becomes `"Connect {providerLabel} to see live rankings"`
-
-### 2h. `Stats.tsx` (4 strings)
-- Line 162: heading "PHOREST DATA - THIS WEEK" becomes `"{providerLabel} DATA - THIS WEEK"`
-- Line 197: "Your account isn't linked to Phorest yet" becomes dynamic with `providerLabel`
-- Line 269: badge "Phorest Data" becomes `"{providerLabel} Data"`
-- Line 304: "Link your Phorest account to see live conversion metrics" becomes dynamic
-
-### 2i. `PhorestSettings.tsx` (6 strings)
-- Line 247: toast "a Phorest staff member" becomes `"a {providerLabel} staff member"`
-- Line 311: heading "PHOREST INTEGRATION" becomes `"{providerLabel} INTEGRATION"`
-- Line 313: "Manage Phorest API connection" becomes dynamic
-- Line 514: "Link Team Members to Phorest Staff" becomes dynamic
-- Line 516: description "Phorest staff profiles" becomes dynamic
-- Line 608: placeholder "Select Phorest staff" becomes dynamic
-- Line 655: table header "Phorest Name" becomes `"{providerLabel} Name"`
-
-### 2j. `AccountIntegrationsCard.tsx` (1 string)
-- Line 66: label "Phorest" becomes `providerLabel`
-
-### 2k. `SystemHealth.tsx` (1 string)
-- Line 166: "Last Phorest Sync" becomes `"Last {syncLabel}"`
-
-## What This Does NOT Touch
-
-- Internal variable/type names (phorestData, PhorestPerformer, etc.)
-- Database table names (phorest_appointments, phorest_sync_log, etc.)
-- Hook names (usePhorestSync, usePhorestConnection, etc.)
-- Query keys (phorest-write-enabled, etc.)
-- Edge function names and internals
-- Route paths (/dashboard/admin/phorest-settings)
-- The `usePhorestRequestConflicts` hook name and internal logic
-
-## Risk Mitigation
-
-- The new hook falls back gracefully: if `usePOSConfig()` returns null (no config table yet), `providerLabel` defaults to "POS" -- never shows a blank string
-- All changes are string-only replacements in JSX/template literals; no logic, data flow, or component structure changes
-- Existing functionality remains identical -- this is purely a display-layer refactor
+This is a minimal change -- two files, no new dependencies, and the standard `Calendar` component continues to work normally everywhere else (the dropdown behavior only activates when `captionLayout="dropdown"` is passed).
