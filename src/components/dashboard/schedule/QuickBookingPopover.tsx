@@ -915,6 +915,23 @@ export function QuickBookingPopover({
             </div>
           </div>
           <div className="flex items-center gap-1">
+            {!viewingClientProfile && step !== 'client' && step !== 'confirm' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-full"
+                    onClick={() => {
+                      setShowNewClientDialog(true);
+                    }}
+                  >
+                    <UserPlus className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>New Client</TooltipContent>
+              </Tooltip>
+            )}
             {canGoForward && !viewingClientProfile && (
               <Button
                 variant="ghost"
