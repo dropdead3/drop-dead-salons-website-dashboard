@@ -18,7 +18,7 @@ import { Phone, User, Heart, Smartphone, Users, Repeat, RotateCcw } from 'lucide
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { QuickBookingPopover } from './QuickBookingPopover';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
-import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getGlassCategoryStyle } from '@/utils/categoryColors';
+import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
 import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
 
 interface WeekViewProps {
@@ -117,7 +117,7 @@ function AppointmentCard({
         <div
           className={cn(
             'absolute left-1 right-1 rounded-sm px-2 py-1 cursor-pointer transition-all hover:shadow-lg hover:z-20 overflow-hidden',
-            !displayGradient && !document.documentElement.classList.contains('dark') && 'border-l-4',
+            !displayGradient && 'border-l-4',
             !useCategoryColor && !displayGradient && statusColors.bg,
             !useCategoryColor && !displayGradient && statusColors.border,
             !useCategoryColor && !displayGradient && statusColors.text,
@@ -131,15 +131,11 @@ function AppointmentCard({
           ...(displayGradient ? {
             background: displayGradient.background,
             color: displayGradient.textColor,
-          } : useCategoryColor && (
-            document.documentElement.classList.contains('dark')
-              ? getGlassCategoryStyle(catColor.bg)
-              : {
-                  backgroundColor: catColor.bg,
-                  color: catColor.text,
-                  borderLeftColor: catColor.bg,
-                }
-          )),
+          } : useCategoryColor && {
+              backgroundColor: catColor.bg,
+              color: catColor.text,
+              borderLeftColor: catColor.bg,
+            }),
           }}
           onClick={onClick}
         >

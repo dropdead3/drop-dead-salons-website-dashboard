@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { getCategoryColor, getCategoryAbbreviation, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getGlassCategoryStyle } from '@/utils/categoryColors';
+import { getCategoryColor, getCategoryAbbreviation, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
 
 interface CalendarColorPreviewProps {
   colorMap: Record<string, { bg: string; text: string; abbr: string }>;
@@ -149,7 +149,7 @@ export function CalendarColorPreview({ colorMap }: CalendarColorPreviewProps) {
                     key={aptIndex}
                     className={cn(
                       'absolute left-0.5 right-0.5 rounded-sm overflow-hidden',
-                      !displayGradient && !document.documentElement.classList.contains('dark') && 'border-l-2',
+                      !displayGradient && 'border-l-2',
                       'shadow-sm',
                       displayGradient && 'shadow-lg'
                     )}
@@ -158,15 +158,11 @@ export function CalendarColorPreview({ colorMap }: CalendarColorPreviewProps) {
                       ...(displayGradient ? {
                         background: displayGradient.background,
                         color: displayGradient.textColor,
-                      } : (
-                        document.documentElement.classList.contains('dark')
-                          ? getGlassCategoryStyle(colors.bg)
-                          : {
-                              backgroundColor: colors.bg,
-                              borderLeftColor: colors.bg,
-                              color: colors.text,
-                            }
-                      )),
+                      } : {
+                        backgroundColor: colors.bg,
+                        borderLeftColor: colors.bg,
+                        color: colors.text,
+                      }),
                     }}
                   >
                     {/* Glass stroke overlay for gradient */}

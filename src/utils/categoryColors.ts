@@ -1,5 +1,3 @@
-import type React from 'react';
-
 // Special gradient styles collection - shared across the app
 export const SPECIAL_GRADIENTS: Record<string, {
   id: string;
@@ -135,51 +133,6 @@ export function getCategoryColor(
   return {
     ...DEFAULT_COLOR,
     abbr: getCategoryAbbreviation(categoryName),
-  };
-}
-
-/**
- * Convert a hex color to rgba string
- */
-function hexToRgba(hex: string, alpha: number): string {
-  const h = hex.replace('#', '');
-  const r = parseInt(h.substring(0, 2), 16);
-  const g = parseInt(h.substring(2, 4), 16);
-  const b = parseInt(h.substring(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-/**
- * Lighten a hex color to a pastel tint for dark-mode text legibility.
- * Returns an HSL string at ~82% lightness preserving the original hue.
- */
-function lightenForDarkMode(hex: string): string {
-  const h = hex.replace('#', '');
-  const r = parseInt(h.substring(0, 2), 16) / 255;
-  const g = parseInt(h.substring(2, 4), 16) / 255;
-  const b = parseInt(h.substring(4, 6), 16) / 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let hue = 0;
-  if (max !== min) {
-    const d = max - min;
-    if (max === r) hue = ((g - b) / d + (g < b ? 6 : 0)) * 60;
-    else if (max === g) hue = ((b - r) / d + 2) * 60;
-    else hue = ((r - g) / d + 4) * 60;
-  }
-  return `hsl(${Math.round(hue)}, 45%, 82%)`;
-}
-
-/**
- * Get glassmorphic style object for dark-mode calendar blocks.
- * Converts a solid category hex color into a translucent glass panel.
- */
-export function getGlassCategoryStyle(hexBg: string): React.CSSProperties {
-  return {
-    backgroundColor: hexToRgba(hexBg, 0.22),
-    backdropFilter: 'blur(12px)',
-    WebkitBackdropFilter: 'blur(12px)',
-    border: `1px solid ${hexToRgba(hexBg, 0.35)}`,
-    color: lightenForDarkMode(hexBg),
   };
 }
 
