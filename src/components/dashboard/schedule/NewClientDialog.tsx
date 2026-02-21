@@ -68,7 +68,9 @@ export function NewClientDialog({
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { data: locations = [] } = useLocations();
-  const { data: teamMembers } = useTeamDirectory();
+  const { data: allTeamMembers } = useTeamDirectory();
+  const SERVICE_PROVIDER_ROLES = ['stylist', 'stylist_assistant', 'booth_renter'];
+  const teamMembers = allTeamMembers?.filter(m => m.roles?.some((r: string) => SERVICE_PROVIDER_ROLES.includes(r)));
   const bypassDuplicateCheck = useRef(false);
 
   const [firstName, setFirstName] = useState('');
