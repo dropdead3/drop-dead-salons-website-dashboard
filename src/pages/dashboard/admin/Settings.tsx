@@ -82,7 +82,7 @@ import { StylistLevelsContent } from '@/components/dashboard/settings/StylistLev
 
 import { CommandCenterContent } from '@/components/dashboard/settings/CommandCenterContent';
 import { BusinessSettingsDialog } from '@/components/dashboard/settings/BusinessSettingsDialog';
-import { ScheduleSettingsContent } from '@/components/dashboard/settings/ScheduleSettingsContent';
+
 import { LocationsSettingsContent } from '@/components/dashboard/settings/LocationsSettingsContent';
 import { DayRateSettingsContent } from '@/components/dashboard/settings/DayRateSettingsContent';
 import { RoleAccessConfigurator } from '@/components/dashboard/settings/RoleAccessConfigurator';
@@ -137,7 +137,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'access-hub' | 'schedule' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | 'website' | null;
+type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'access-hub' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | 'website' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -586,7 +586,8 @@ export default function Settings() {
   // Initialize activeCategory from query param
   const initialCategory = (() => {
     const param = searchParams.get('category');
-    if (param && param in { business: 1, email: 1, sms: 1, 'service-flows': 1, users: 1, onboarding: 1, integrations: 1, system: 1, program: 1, levels: 1, 'access-hub': 1, schedule: 1, locations: 1, dayrate: 1, forms: 1, loyalty: 1, feedback: 1, leaderboard: 1, 'team-rewards': 1, kiosk: 1, services: 1, 'retail-products': 1, website: 1 }) {
+    if (param === 'schedule') return 'services' as SettingsCategory;
+    if (param && param in { business: 1, email: 1, sms: 1, 'service-flows': 1, users: 1, onboarding: 1, integrations: 1, system: 1, program: 1, levels: 1, 'access-hub': 1, locations: 1, dayrate: 1, forms: 1, loyalty: 1, feedback: 1, leaderboard: 1, 'team-rewards': 1, kiosk: 1, services: 1, 'retail-products': 1, website: 1 }) {
       return param as SettingsCategory;
     }
     return null;
@@ -797,12 +798,6 @@ export default function Settings() {
       label: 'Roles & Controls Hub',
       description: 'Modules, role visibility & permissions',
       icon: Shield,
-    },
-    schedule: {
-      id: 'schedule',
-      label: 'Schedule',
-      description: 'Calendar colors & preferences',
-      icon: CalendarDays,
     },
     locations: {
       id: 'locations',
@@ -1409,7 +1404,7 @@ export default function Settings() {
 
 
 
-          {activeCategory === 'schedule' && <ScheduleSettingsContent />}
+          
 
           {activeCategory === 'services' && <ServicesSettingsContent />}
 
