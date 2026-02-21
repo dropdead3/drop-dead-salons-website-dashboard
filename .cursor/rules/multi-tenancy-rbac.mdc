@@ -1,9 +1,38 @@
 ---
-description: Non-negotiable data isolation and access control rules. Every table, query, and UI component must respect multi-tenancy and role-based access.
+description: Non-negotiable multi-tenancy architecture, data isolation, terminology, and access control rules. Every table, query, UI component, and copy must respect these boundaries.
 alwaysApply: true
 ---
 
-# Multi-Tenancy & RBAC
+# Multi-Tenancy Architecture & RBAC
+
+## Non-Negotiable Definitions
+
+- **{{PLATFORM_NAME}} / Platform**: the global software system and infrastructure layer.
+- **Organization**: a tenant account inside {{PLATFORM_NAME}} owned by a business operator.
+- **User**: a human identity that belongs to an Organization.
+- **Role**: permissions assigned to a User within an Organization.
+- **Location**: a business unit within an Organization.
+- **Client**: an end-customer record belonging to an Organization (and optionally a Location).
+
+These terms are **never interchangeable**.
+
+## Entity Hierarchy Model
+
+Always design and scope features to this tree:
+
+```
+Global (Platform scope)
+  → Organization (tenant scope)
+    → Location (business unit scope)
+      → Team / Staff (optional)
+        → Client / Appointments / Inventory / etc. (domain objects)
+```
+
+### Scoping Rules
+- All business data is tenant-scoped (Organization).
+- No cross-Organization data access unless explicitly Platform-admin tooling with strict safeguards.
+- All analytics, recommendations, alerts, and briefs must be scoped to Organization and optionally Location.
+- Never imply that {{PLATFORM_NAME}} itself "has locations" or "has clients." Organizations do.
 
 ## Data Isolation (Non-Negotiable)
 
@@ -66,3 +95,21 @@ const isLeadership = roles.includes('super_admin') || roles.includes('manager');
 - Prefer permission checks over role checks when a permission exists
 - Never hardcode role names in components if a permission covers the use case
 - ProtectedRoute component wraps all authenticated dashboard routes
+
+## Naming & Terminology Enforcement
+
+### Language Rules for UI, Copy, and Code
+- "Platform" always refers to {{PLATFORM_NAME}} system-level behavior (global).
+- "Organization" always refers to the tenant account.
+- "Account" may be used only as a UI-friendly synonym for Organization, but must map to the same entity and never to Platform.
+- Avoid using "business" as an entity name in code when Organization exists. Use Organization consistently.
+
+If any screen, component, API, or copy uses these terms incorrectly, it must be corrected before shipping.
+
+## Feature Design Guardrails
+
+### Prevent Global/Tenant Confusion
+- Global branding tokenization (`{{PLATFORM_NAME}}` etc.) applies to Platform identity only, never tenant entities.
+- Tenant settings belong to Organization, not Platform.
+- Default to tenant isolation: data, alerts, permissions, and recommendations never leak across Organizations.
+- Any Platform-level admin capability must be isolated into explicit Platform Admin surfaces and must never be accessible to regular tenant users.
