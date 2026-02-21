@@ -40,6 +40,7 @@ import {
   useDeleteCommissionOverride,
 } from '@/hooks/useStylistCommissionOverrides';
 import { CommissionOverrideDialog } from './CommissionOverrideDialog';
+import { StylistLevelAssignments } from './StylistLevelAssignments';
 import type { StylistCommissionOverride } from '@/hooks/useStylistCommissionOverrides';
 
 type LocalStylistLevel = {
@@ -489,6 +490,11 @@ export function StylistLevelsContent() {
           )}
         </CardContent>
       </Card>
+
+      {/* Level Assignments */}
+      {orgId && dbLevels && dbLevels.length > 0 && (
+        <StylistLevelAssignments orgId={orgId} levels={dbLevels} />
+      )}
 
       {/* Commission Overrides Section */}
       {orgId && (
