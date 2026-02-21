@@ -1,49 +1,65 @@
 
 
-## Seamless Sidebar Popout Menu Design
+## Enhance Service Add-Ons Configurator
 
-### What We're Fixing
+### Overview
 
-The collapsed sidebar popover menus (the flyout panels that appear when clicking icons like the gear/Settings icon) currently float next to the sidebar with a small gap. The goal is to:
+Three targeted improvements to the add-on library form and the booking flow's duration calculation, based on your screenshot and feedback.
 
-1. Add more visual spacing between the sidebar icon and the popover
-2. Create a seamless visual connection so the popover feels anchored to the clicked icon rather than floating independently
+---
 
-### Design Approach
+### 1. Embedded Dollar Signs on Currency Inputs
 
-Create a "bridge" effect using a CSS pseudo-element or wrapper that visually connects the popover to its trigger icon. This involves:
+The price and cost fields currently show plain number inputs with no visual indication they represent dollar amounts. We will add a `$` prefix icon inside these inputs using the existing `Input` component pattern (a wrapper div with an absolutely positioned icon and left padding).
 
-- Increasing `sideOffset` from 8 to 12-16px for breathing room
-- Adding a subtle connecting shape (a small triangular notch/arrow or a blurred bridge element) on the left edge of the popover, aligned with the trigger icon
-- Matching the popover's background and border styling to create the "seamlessly connected" illusion
-- Adding a soft glow or shadow that extends toward the trigger
+**Files:** `ServiceAddonsLibrary.tsx`
 
-### Technical Changes
+---
 
-**1. Custom PopoverContent variant for sidebar flyouts**
+### 2. Add-On Duration Adds to Total Service Time
 
-Create a reusable `SidebarPopoverContent` wrapper that adds:
-- A left-pointing notch/arrow via `::before` pseudo-element
-- Increased `sideOffset` (16px)
-- Matching glassmorphic styling (`bg-card/90 backdrop-blur-xl border-border/50`)
-- A subtle connecting shadow that bridges toward the sidebar
+Currently, the booking flow calculates `totalDuration` by summing only the selected services' durations. Add-on duration is displayed but never added to the total appointment time.
 
-**2. Update both popover locations**
+We will update the `totalDuration` calculation in all three booking components to include accepted add-on durations:
+- `QuickBookingPopover.tsx` -- the primary booking path
+- `BookingWizard.tsx` -- the walk-in/full wizard path
+- `NewBookingSheet.tsx` -- the sheet-based booking path
 
-| File | Change |
-|------|--------|
-| `src/components/dashboard/CollapsibleNavGroup.tsx` (line 186) | Replace `PopoverContent` with new `SidebarPopoverContent` |
-| `src/components/dashboard/SidebarNavContent.tsx` (line 676) | Replace `PopoverContent` with new `SidebarPopoverContent` |
+This ensures that when a stylist adds an Olaplex Treatment (+25 min), the appointment block correctly extends by that duration. The add-on toast already shows the duration; now it will be additive.
 
-**3. The visual connector**
+**Files:** `QuickBookingPopover.tsx`, `BookingWizard.tsx`, `NewBookingSheet.tsx`
 
-A small arrow/notch on the left side of the popover panel, positioned at the vertical center of the trigger icon. This is achieved with a CSS `::before` element using border-triangle or clip-path technique, colored to match the popover background. Combined with a subtle box-shadow that bleeds leftward, this creates the illusion of a single connected surface.
+---
 
-### Files to Create/Modify
+### 3. Streamlined Category and Service Assignment from the Library
 
-| File | Action |
-|------|--------|
-| `src/components/dashboard/SidebarPopoverContent.tsx` | **New** -- custom popover content with arrow connector and glassmorphic styling |
-| `src/components/dashboard/CollapsibleNavGroup.tsx` | Swap `PopoverContent` for `SidebarPopoverContent` |
-| `src/components/dashboard/SidebarNavContent.tsx` | Swap `PopoverContent` for `SidebarPopoverContent` |
+The current form has a "linked service" picker at the bottom grouped by inferred categories. The user wants a clearer two-step flow: first pick a category (or choose "Entire Category"), then optionally narrow to a specific service.
+
+We will replace the single linked-service picker with a two-step inline selector:
+
+1. **Category dropdown** -- lists all configured service categories from `categories` prop. Includes an "Apply to Entire Category" option that auto-creates a category-level assignment.
+2. **Service dropdown** -- appears only when a specific category is selected and user wants to link to a single service. Filtered to services in the chosen category.
+
+This replaces the existing `linked_service_id` picker and also integrates the quick-assign functionality directly into the form, so the user does not need to go to the assignments card for common operations.
+
+**Files:** `ServiceAddonsLibrary.tsx`
+
+---
+
+### Technical Details
+
+| File | Changes |
+|------|---------|
+| `ServiceAddonsLibrary.tsx` | Wrap price and cost inputs with `$` prefix icon; replace linked-service picker with category-first then service selector; integrate direct category assignment from the form |
+| `QuickBookingPopover.tsx` | Add accepted add-on durations to `totalDuration` memo |
+| `BookingWizard.tsx` | Add accepted add-on durations to `totalDuration` memo |
+| `NewBookingSheet.tsx` | Add accepted add-on durations to `totalDuration` memo |
+
+**No database changes needed.** The `service_addon_assignments` table and `linked_service_id` column already support both category and service-level targeting.
+
+### Sequencing
+
+1. Dollar sign prefixes on price/cost inputs
+2. Category-first assignment picker in add-on form
+3. Duration additive logic across all booking flows
 
