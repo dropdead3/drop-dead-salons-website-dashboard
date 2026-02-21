@@ -295,7 +295,8 @@ export function ServicesSettingsContent() {
 
   return (
     <TooltipProvider>
-      <div className="space-y-6">
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Categories Section */}
         <Card>
           <CardHeader>
@@ -549,6 +550,9 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
           </CardContent>
         </Card>
 
+        </div>{/* end row 1 grid */}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Service Add-Ons Library */}
         {resolvedOrgId && <ServiceAddonsLibrary organizationId={resolvedOrgId} />}
 
@@ -560,6 +564,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
             servicesByCategory={servicesByCategory}
           />
         )}
+        </div>{/* end row 2 grid */}
 
         {/* Unified Service Editor Dialog (create + edit) */}
         <ServiceEditorDialog
