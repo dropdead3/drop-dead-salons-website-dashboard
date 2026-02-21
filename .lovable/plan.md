@@ -1,26 +1,20 @@
 
-## Right-Click to Add Break on Desktop
+## Fix Faux Bolding on Time Slot Badge
 
-### What Changes
-Right-clicking an available time slot in the Day View will open a small context menu with an "Add Break" option. Selecting it will open the break form pre-filled with that slot's time and stylist. This provides a faster workflow for admins and stylists scheduling breaks without going through the full booking popover first.
+### Problem
+The time badge currently uses `style={{ fontWeight: 700 }}` inline, but Aeonik Pro only ships weights 400 and 500. Weight 700 triggers ugly browser-synthesized (faux) bolding -- exactly what the screenshot shows.
 
-### How It Works
-1. Right-click an empty time slot in the Day View
-2. A minimal context menu appears at the cursor position with "Add Break"
-3. Clicking it opens the AddBreakForm in a popover/dialog pre-filled with the slot's date, time, and stylist
+### Solution
+Switch the time badge to use **Termina** (`font-display`) instead of Aeonik Pro. Termina naturally reads heavier and more architectural at `font-medium` (500), eliminating the need for any synthetic bolding. This also aligns with the design system rule that Termina is used for stats and labels.
 
-### Technical Detail
-
-**File: `src/pages/dashboard/Schedule.tsx`**
-- Add state for a "break context menu": `{ open, x, y, date, time, stylistId }`.
-- Add a new handler `handleSlotContextMenu(stylistId, time, mouseEvent)` that prevents the default browser context menu, captures cursor position, and sets the break context menu state.
-- Pass `onSlotContextMenu` down to `DayView`.
-- Render a small absolutely-positioned menu (or use Radix `ContextMenu`) at the cursor coordinates with a single "Add Break" item.
-- When clicked, render the `AddBreakForm` inside a Dialog/Popover anchored to that position.
+### Changes
 
 **File: `src/components/dashboard/schedule/DayView.tsx`**
-- Accept a new optional prop: `onSlotContextMenu?: (stylistId: string, time: string, e: React.MouseEvent) => void`.
-- In the `DroppableSlot` (renamed `TimeSlot`), add `onContextMenu` to the slot div that calls `onSlotContextMenu` for available (non-past) slots, passing the mouse event for positioning.
-- Pass `onSlotContextMenu` through from the parent `DayView` component to each `DroppableSlot`.
+- Remove `fontWeight: 700` from both badge inline styles (available slot badge and past-slot tooltip)
+- Add `font-display font-medium tracking-wide` classes to the badge divs
 
-**Scope**: Day View only (Week View slots don't have per-stylist context, so we'll keep it to Day View where the stylist is known). This can be extended to Week View later if desired.
+**File: `src/components/dashboard/schedule/WeekView.tsx`**
+- Remove `fontWeight: 700` from the badge inline style
+- Add `font-display font-medium tracking-wide` classes to the badge div
+
+This keeps the badge visually prominent using a real font weight rather than faux bolding.
