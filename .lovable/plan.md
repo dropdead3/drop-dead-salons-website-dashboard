@@ -1,99 +1,76 @@
 
 
-## Close Add-On Attachment Gaps
+## Enhance Service Add-Ons Configurator
 
-### Overview
-Five gaps exist between the add-on configuration system and the booking/checkout experience. This plan addresses each one to create a complete, auditable add-on lifecycle.
+### Current State
 
----
+The add-on system has two cards in the bento grid:
+1. **Service Add-Ons Library** (left) -- define reusable add-ons with name, price, cost, duration, linked service
+2. **Booking Add-On Recommendations** (right) -- assign add-ons to categories or individual services via expandable rows
 
-### Gap 1: Link Add-On Events to Appointments
+The assignment card already supports both category-level and service-level assignments. The booking popover then surfaces these as smart recommendations.
 
-**Problem:** `booking_addon_events` has no `appointment_id` -- add-on revenue cannot be traced to specific visits.
+### Enhancements
 
-**Fix:**
-- Add `appointment_id` (nullable UUID) column to `booking_addon_events`
-- After appointment creation succeeds in QuickBookingPopover, backfill the `appointment_id` on the event row
-- This enables per-appointment add-on revenue reporting
+#### 1. Bulk "Assign to All Categories" Action
 
----
+Add a quick action at the top of the Assignments card to assign an add-on to every category at once. This is common for universal add-ons like "Olaplex Treatment" or "Deep Conditioning" that apply across all service types.
 
-### Gap 2: Resilient Add-On Attachment (Not Name-Matching)
+- A "Bulk Assign" button opens a small dropdown to pick an add-on
+- On selection, it creates assignments for all categories that don't already have that add-on
+- Shows a confirmation count: "Assigned to 6 categories"
 
-**Problem:** The current `onAdd` handler matches add-ons to phorest services by exact name. If the name doesn't match, the add-on silently fails.
+#### 2. Description Field for Add-Ons
 
-**Fix:**
-- Add a `linked_service_id` column to `service_addons` (nullable) so admins can optionally map an add-on directly to a service
-- In the `onAdd` handler, try `linked_service_id` first, then fall back to name-matching
-- If neither resolves, show a warning toast: "Could not find matching service for [addon name]"
-- This eliminates silent failures
+Add an optional `description` field to the add-on library form. This text surfaces in the booking toast so stylists understand _why_ to recommend the add-on (e.g., "Repairs bonds after lightening services").
 
----
+- New text input in the create/edit form
+- Displayed as a subtitle in the add-on list items
+- Surfaced in the ServiceAddonToast during booking
 
-### Gap 3: Add-On Awareness in Checkout
+**Database**: The `service_addons` table already has a `description` column (nullable text), so no migration is needed.
 
-**Problem:** `CheckoutSummarySheet` shows no add-on breakdown, margin visibility, or upsell impact.
+#### 3. Visual Improvements to the Library Card
 
-**Fix:**
-- Query `booking_addon_events` for the current appointment at checkout time
-- Display an "Add-Ons" section in the checkout summary showing each add-on with its price and margin badge
-- Show a subtotal line for add-on revenue contribution
-- This gives stylists and managers visibility into the upsell impact per transaction
+- Show a count badge on the card header (e.g., "4 add-ons")
+- Add an empty state icon (Package) instead of just text
+- Show the linked service name (not just "Linked") in the add-on row for clarity
+- Group services in the linked-service picker by category for easier navigation
 
----
+#### 4. Drag-to-Reorder Add-Ons in the Library
 
-### Gap 4: Track Declined Add-On Suggestions
+Allow admins to reorder add-ons in the library via drag handles. The `display_order` column already exists -- it just needs a UI.
 
-**Problem:** Only acceptance is logged. Dismissals are not tracked, making true attachment rate calculation impossible.
+- Use `@dnd-kit/sortable` (already installed) to add drag handles to the add-on list
+- On reorder, batch-update `display_order` values
+- Order persists and controls the order add-ons appear in booking recommendations
 
-**Fix:**
-- Add a `status` column to `booking_addon_events` with values: `accepted`, `declined`, `dismissed`
-- When the toast is dismissed, log one event per suggestion with `status = 'dismissed'`
-- Update the stylist performance analytics to calculate: `attachment_rate = accepted / (accepted + dismissed)`
-- The lever engine can then flag low attachment rates for coaching
+#### 5. Quick-Assign from Library Card
+
+When hovering an add-on in the library, show a small "Assign" shortcut that opens a popover to pick a target category or service without needing to go to the assignments card.
 
 ---
 
-### Gap 5: Add-On Duration Consistency
+### Technical Details
 
-**Problem:** Add-on duration_minutes may differ from the matched phorest service duration, causing scheduling inaccuracies.
+**Files to modify:**
 
-**Fix:**
-- This is inherently handled when the add-on resolves to a real service (the service's duration is used for scheduling)
-- Add a validation step in the add-on admin UI: when `linked_service_id` is set, show a warning if the add-on's `duration_minutes` differs from the linked service's duration
-- This is advisory only -- no blocking logic -- but surfaces data inconsistencies early
+| File | Changes |
+|------|---------|
+| `src/components/dashboard/settings/ServiceAddonsLibrary.tsx` | Description field in form, count badge, linked service name display, drag-to-reorder with dnd-kit, category-grouped service picker, quick-assign popover |
+| `src/components/dashboard/settings/ServiceAddonAssignmentsCard.tsx` | Bulk "Assign to All" action at top of card |
+| `src/hooks/useServiceAddons.ts` | New `useReorderServiceAddons` mutation for batch display_order updates |
+| `src/components/dashboard/schedule/ServiceAddonToast.tsx` | Show add-on description subtitle if available |
 
----
+**No database migration needed** -- all columns (`description`, `display_order`, `linked_service_id`) already exist.
 
-### Database Changes
-
-```text
-ALTER TABLE booking_addon_events
-  ADD COLUMN appointment_id UUID REFERENCES phorest_appointments(id),
-  ADD COLUMN status TEXT NOT NULL DEFAULT 'accepted'
-    CHECK (status IN ('accepted', 'declined', 'dismissed'));
-
-ALTER TABLE service_addons
-  ADD COLUMN linked_service_id TEXT;
-```
-
-### Files to Modify
-
-| File | Change |
-|------|--------|
-| `booking_addon_events` table | Add `appointment_id` and `status` columns |
-| `service_addons` table | Add `linked_service_id` column |
-| `QuickBookingPopover.tsx` | Backfill appointment_id after creation; use linked_service_id; log dismissals |
-| `CheckoutSummarySheet.tsx` | Add add-on breakdown section with margin badges |
-| `ServiceAddonToast.tsx` | Pass dismiss metadata for decline tracking |
-| `ServiceAddonsLibraryCard.tsx` | Add optional linked service picker in add-on form |
-| `useStylistAddonAttachment.ts` | Update analytics to calculate attachment rate from accepted vs dismissed |
+**Dependencies already installed:** `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`.
 
 ### Sequencing
 
-1. Database migration (add columns)
-2. Admin UI: linked_service_id picker in add-on form
-3. Booking flow: resilient attachment + dismiss tracking + appointment_id backfill
-4. Checkout: add-on breakdown display
-5. Analytics: attachment rate calculation update
+1. Library card enhancements (description, count badge, linked service name, grouped picker)
+2. Drag-to-reorder in library
+3. Bulk assign action on assignments card
+4. Quick-assign popover from library
+5. Toast description surfacing
 
