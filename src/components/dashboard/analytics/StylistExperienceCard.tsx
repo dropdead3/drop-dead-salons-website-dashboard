@@ -192,12 +192,12 @@ export function StylistExperienceCard({ locationId, dateRange = '30days' }: Styl
   }, {} as Record<string, number>);
 
   return (
-    <Card className="mt-6">
+    <Card className={tokens.card.wrapper}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0">
-              <Users className="h-5 w-5 text-chart-4" />
+              <Users className={tokens.card.icon} />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -219,10 +219,10 @@ export function StylistExperienceCard({ locationId, dateRange = '30days' }: Styl
               <TooltipContent side="left" className="max-w-xs">
                 <p className="font-medium mb-1">How scores are calculated:</p>
                 <ul className="text-xs space-y-1">
-                  <li>• <strong>Rebook Rate (35%)</strong> - Client books next visit at checkout</li>
-                  <li>• <strong>Tip Rate (30%)</strong> - Average tip as % of service total</li>
-                  <li>• <strong>Retention (20%)</strong> - Client returns within 90 days</li>
-                  <li>• <strong>Retail (15%)</strong> - Product sales % of total</li>
+                  <li>• <span className="font-medium">Rebook Rate (35%)</span> - Client books next visit at checkout</li>
+                  <li>• <span className="font-medium">Tip Rate (30%)</span> - Average tip as % of service total</li>
+                  <li>• <span className="font-medium">Retention (20%)</span> - Client returns within 90 days</li>
+                  <li>• <span className="font-medium">Retail (15%)</span> - Product sales % of total</li>
                 </ul>
                 <p className="text-xs text-muted-foreground mt-2">
                   Minimum 5 appointments required for scoring

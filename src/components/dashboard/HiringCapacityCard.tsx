@@ -204,10 +204,10 @@ export function HiringCapacityCard({ className }: HiringCapacityCardProps) {
             </div>
           </div>
           <Button 
-            variant="ghost" 
+            variant="outline" 
             size="sm"
             onClick={handleConfigure}
-            className="gap-1 text-muted-foreground hover:text-foreground"
+            className={tokens.button.cardAction}
           >
             <Settings className="h-4 w-4" />
             Configure
@@ -253,7 +253,7 @@ export function HiringCapacityCard({ className }: HiringCapacityCardProps) {
 
             {/* Location Breakdown */}
             <div className="space-y-0">
-              <h4 className="text-sm font-medium text-muted-foreground mb-2">By Location (Sorted by Priority)</h4>
+              <h4 className={cn(tokens.heading.subsection, "mb-2")}>By Location (Sorted by Priority)</h4>
               {locations.map(location => (
                 <LocationRow key={location.id} location={location} />
               ))}
@@ -262,7 +262,7 @@ export function HiringCapacityCard({ className }: HiringCapacityCardProps) {
             {/* 90-Day Forecast Section */}
             {!isForecastLoading && forecast && (
               <div className="border-t pt-4 mt-4">
-                <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
+                <h4 className={cn(tokens.heading.subsection, "mb-3 flex items-center gap-2")}>
                   <TrendingUp className="h-4 w-4 text-primary" />
                   90-Day Hiring Forecast
                 </h4>

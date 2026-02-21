@@ -30,20 +30,20 @@ export function StaffingContent({ workload, isLoading, locationId, dateRange = '
         <StaffingTrendChart />
       </div>
 
-      {/* Stylist Workload Distribution */}
-      <StylistWorkloadCard 
-        workload={workload}
-        isLoading={isLoading}
-      />
+      {/* Standalone cards with consistent spacing */}
+      <div className="space-y-6">
+        <StylistWorkloadCard 
+          workload={workload}
+          isLoading={isLoading}
+        />
 
-      {/* Staff Revenue Leaderboard */}
-      <StaffRevenueLeaderboard locationId={locationId} />
+        <StaffRevenueLeaderboard locationId={locationId} />
 
-      {/* Client Experience Scorecard */}
-      <StylistExperienceCard 
-        locationId={locationId} 
-        dateRange={dateRange}
-      />
+        <StylistExperienceCard 
+          locationId={locationId} 
+          dateRange={dateRange}
+        />
+      </div>
     </>
   );
 }

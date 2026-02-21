@@ -69,7 +69,7 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
 
   if (isLoading) {
     return (
-      <Card className="mb-6">
+      <Card className={tokens.card.wrapper}>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-3">
             <Skeleton className="w-10 h-10 rounded-lg" />
@@ -95,13 +95,18 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
   
   if (activeWorkload.length === 0) {
     return (
-      <Card className="mb-6">
+      <Card className={tokens.card.wrapper}>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary" />
-              Stylist Workload Distribution
-            </CardTitle>
+            <div className="flex items-center gap-3">
+              <div className={tokens.card.iconBox}>
+                <Users className={tokens.card.icon} />
+              </div>
+              <div>
+                <CardTitle className={tokens.card.title}>STYLIST WORKLOAD DISTRIBUTION</CardTitle>
+                <CardDescription>Appointment volume and balance across service providers</CardDescription>
+              </div>
+            </div>
             <Button
               variant="ghost"
               size={tokens.button.card}
@@ -149,7 +154,7 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
   }));
 
   return (
-    <Card className="mb-6">
+    <Card className={tokens.card.wrapper}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -239,7 +244,7 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
         {/* Efficiency Metrics Section */}
         {topByEfficiency.length > 0 && (
           <div className="mt-6 pt-4 border-t">
-            <h4 className="text-sm font-medium mb-4 flex items-center gap-2">
+            <h4 className={cn(tokens.heading.subsection, "mb-4 flex items-center gap-2")}>
               <DollarSign className="h-4 w-4 text-primary" />
               Productivity per Appointment
             </h4>
