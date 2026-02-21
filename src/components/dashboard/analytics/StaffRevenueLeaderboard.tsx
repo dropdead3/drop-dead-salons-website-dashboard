@@ -13,6 +13,7 @@ import { usePerformanceThreshold } from '@/hooks/usePerformanceThreshold';
 import { PerformanceThresholdSettings } from './PerformanceThresholdSettings';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { formatCurrency as formatCurrencyUtil, formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
@@ -72,7 +73,7 @@ export function StaffRevenueLeaderboard({ locationId }: StaffRevenueLeaderboardP
   
   return (
     <>
-      <Card className="mt-6">
+      <Card className={tokens.card.wrapper}>
         <CardHeader className="pb-3">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -110,8 +111,9 @@ export function StaffRevenueLeaderboard({ locationId }: StaffRevenueLeaderboardP
                   ))}
                 </FilterTabsList>
               </Tabs>
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setSettingsOpen(true)}>
+              <Button variant="outline" size="sm" className={tokens.button.cardAction} onClick={() => setSettingsOpen(true)}>
                 <Settings className="w-4 h-4" />
+                Settings
               </Button>
             </div>
           </div>

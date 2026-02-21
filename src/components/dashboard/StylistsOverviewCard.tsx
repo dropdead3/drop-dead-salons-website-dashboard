@@ -8,6 +8,7 @@ import { useStylistLevelsSimple } from '@/hooks/useStylistLevels';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { tokens } from '@/lib/design-tokens';
+import { cn } from '@/lib/utils';
 
 
 export function StylistsOverviewCard() {
@@ -42,11 +43,11 @@ export function StylistsOverviewCard() {
   };
 
   return (
-    <Card className="p-6">
+    <Card className={cn(tokens.card.wrapper, "p-6")}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0">
-            <Users className="w-5 h-5 text-chart-5" />
+          <div className={tokens.card.iconBox}>
+            <Users className={tokens.card.icon} />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -151,9 +152,9 @@ export function StaffOverviewCard() {
   ).length || 0;
 
   return (
-    <Card className="p-6">
+    <Card className={cn(tokens.card.wrapper, "p-6")}>
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0">
+        <div className={tokens.card.iconBox}>
           <MapPin className="w-5 h-5 text-primary" />
         </div>
         <div>
