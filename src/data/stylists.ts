@@ -31,7 +31,7 @@ export const stylists: Stylist[] = [
   {
     id: "1",
     name: "Kristi D.",
-    instagram: "@dropdeadkristi",
+    instagram: "@stylist_kristi",
     level: "LEVEL 3 STYLIST",
     specialties: ["BLONDING", "CREATIVE COLOR", "EXTENSIONS"],
     imageUrl: kristiImage,

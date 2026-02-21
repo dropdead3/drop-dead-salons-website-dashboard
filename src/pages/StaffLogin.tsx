@@ -290,7 +290,7 @@ export default function StaffLogin() {
                     setEmail(e.target.value);
                     setEmailError(null);
                   }}
-                  placeholder="you@dropdeadsalon.com"
+                  placeholder="you@yoursalon.com"
                   required
                   className={`h-12 bg-card border-border pr-10 ${emailError ? 'border-destructive' : ''} ${invitation && !isLogin ? 'border-green-500' : ''}`}
                 />

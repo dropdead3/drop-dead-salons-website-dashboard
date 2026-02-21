@@ -1070,11 +1070,11 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
           borderRadius: '12px 12px 0 0'
         },
         navLinks: [
-          { label: 'Dashboard Login', url: 'https://www.dropdeadsalon.com/login', enabled: true },
+          { label: 'Dashboard Login', url: '/login', enabled: true },
         ],
         headerConfig: {
           showLogo: true,
-          logoId: 'dd-secondary-white',
+           logoId: 'brand-secondary-white',
           logoSize: 'small' as const,
           logoPosition: 'left' as const,
           showNavLinks: true,
@@ -1133,9 +1133,9 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
           borderRadius: '0 0 12px 12px'
         },
         socialLinks: [
-          { platform: 'instagram' as const, url: 'https://instagram.com/dropdeadsalon', enabled: true },
+          { platform: 'instagram' as const, url: '', enabled: false },
           { platform: 'tiktok' as const, url: '', enabled: false },
-          { platform: 'email' as const, url: 'contact@dropdeadsalon.com', enabled: true },
+          { platform: 'email' as const, url: '', enabled: false },
         ],
         footerConfig: {
           showLogo: true,
@@ -1659,16 +1659,16 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
       ...(type === 'link' && { linkUrl: '{{dashboard_url}}' }),
       ...(type === 'social' && { 
         socialLinks: [
-          { platform: 'instagram' as const, url: 'https://instagram.com/dropdeadhair', enabled: true },
-          { platform: 'tiktok' as const, url: 'https://tiktok.com/@dropdeadhair', enabled: true },
-          { platform: 'email' as const, url: 'hello@dropdeadhair.com', enabled: true },
+          { platform: 'instagram' as const, url: '', enabled: false },
+          { platform: 'tiktok' as const, url: '', enabled: false },
+          { platform: 'email' as const, url: '', enabled: false },
         ]
       }),
       ...(type === 'footer' && {
         socialLinks: [
-          { platform: 'instagram' as const, url: 'https://instagram.com/dropdeadsalon', enabled: true },
+          { platform: 'instagram' as const, url: '', enabled: false },
           { platform: 'tiktok' as const, url: '', enabled: false },
-          { platform: 'email' as const, url: 'contact@dropdeadsalon.com', enabled: true },
+          { platform: 'email' as const, url: '', enabled: false },
         ],
         footerConfig: {
           showLogo: true,
@@ -1681,11 +1681,11 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
       }),
       ...(type === 'header' && {
         navLinks: [
-          { label: 'Dashboard Login', url: 'https://www.dropdeadsalon.com/login', enabled: true },
+          { label: 'Dashboard Login', url: '/login', enabled: true },
         ],
         headerConfig: {
           showLogo: true,
-          logoId: 'dd-secondary-white',
+          logoId: 'brand-secondary-white',
           logoSize: 'small' as const,
           logoPosition: 'left' as const,
           showNavLinks: true,
@@ -4522,8 +4522,8 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           ...(type === 'link' && { linkUrl: '{{dashboard_url}}' }),
                           ...(type === 'social' && { 
                             socialLinks: [
-                              { platform: 'instagram' as const, url: 'https://instagram.com/dropdeadsalon', enabled: true },
-                              { platform: 'email' as const, url: 'contact@dropdeadsalon.com', enabled: true },
+                              { platform: 'instagram' as const, url: '', enabled: false },
+                              { platform: 'email' as const, url: '', enabled: false },
                             ]
                           }),
                         };

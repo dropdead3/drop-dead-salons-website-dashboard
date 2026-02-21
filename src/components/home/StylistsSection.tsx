@@ -47,7 +47,7 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
     experience: "",
     clientBook: "",
     specialties: "",
-    whyDropDead: "",
+    whyJoinUs: "",
   });
 
   const validateForm = () => {
@@ -59,7 +59,7 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
     if (!formData.experience) missingFields.push("Experience");
     if (!formData.clientBook) missingFields.push("Current Client Book");
     if (!formData.specialties.trim()) missingFields.push("Your Specialties");
-    if (!formData.whyDropDead.trim()) missingFields.push("Why Us");
+    if (!formData.whyJoinUs.trim()) missingFields.push("Why Us");
     
     // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -279,8 +279,8 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
         <div>
           <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Why Us? *</label>
           <textarea
-            value={formData.whyDropDead}
-            onChange={(e) => handleChange("whyDropDead", e.target.value)}
+            value={formData.whyJoinUs}
+            onChange={(e) => handleChange("whyJoinUs", e.target.value)}
             placeholder="Tell us what excites you about joining our team..."
             rows={3}
             className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 resize-none"

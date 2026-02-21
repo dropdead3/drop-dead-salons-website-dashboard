@@ -169,7 +169,7 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
               Are you a returning client? You don't need a new-client consult.
             </p>
             <a
-              href="https://booking.dropdeadsalon.com"
+              href="#"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-xs font-sans font-medium text-foreground hover:opacity-70 transition-opacity"
