@@ -263,7 +263,7 @@ export function ScheduleHeader({
                 variant="ghost"
                 size="icon"
                 className="text-[hsl(40,20%,92%)]/70 hover:text-[hsl(40,20%,92%)] hover:bg-[hsl(40,20%,92%)]/10"
-                onClick={() => navigate('/dashboard/admin/settings?category=schedule')}
+                onClick={() => navigate('/dashboard/admin/settings?category=services')}
               >
                 <Settings className="h-4 w-4" />
               </Button>
