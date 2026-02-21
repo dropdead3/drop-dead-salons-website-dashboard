@@ -1,34 +1,44 @@
 
 
-## Fix: Replace Grayed-Out Avatar with Urgent "No Services" Badge
+## Redesign Quick Day Buttons in Schedule Header
 
-### Problem
-Empty categories (like Vivids) apply `opacity-50` to the avatar, making it look washed out and breaking the gradient visual. The user wants the avatar at full opacity with an urgent badge instead.
+### What Changes
 
-### Changes
+The day selector buttons in the secondary navigation bar (Today, Sat, Sun, Mon...) will be redesigned from pill-shaped buttons to elegant rectangular buttons with:
 
-**File: `src/components/dashboard/settings/ServicesSettingsContent.tsx`**
+1. **Rounded rectangle shape** -- slight border radius instead of fully rounded pills
+2. **Date subtext** -- the numeric date (e.g., "21") displayed below the day abbreviation
+3. **Refined styling** -- cleaner visual hierarchy with the day name on top and date below
 
-1. **Remove `opacity-50`** from the avatar button className (line 341) -- the avatar will always render at full color regardless of service count.
+### File to Change
 
-2. **Replace the "Empty" italic text** (line 390-391) with an urgent-style badge. Instead of showing muted italic "Empty", render a small red badge reading "No services" using the same visual language as `NavBadge` (destructive background, small text, rounded).
+**`src/components/dashboard/schedule/ScheduleHeader.tsx`** (lines 292-325)
 
-The badge will be inline next to the category name subtext area:
+### Design
+
+Current:
 ```
-Vivids
-[No services]   <-- small red/destructive badge
+[ Today ] [ Sat ] [ Sun ] [ Mon ] [ Tue ] [ Wed ] [ Thu ] [ Fri ]
 ```
 
-### Technical Detail
+New:
+```
+[ Today ] [  Sat  ] [  Sun  ] [  Mon  ] [  Tue  ] [  Wed  ] [  Thu  ] [  Fri  ]
+[  Feb 21 ] [  22  ] [   23  ] [   24  ] [   25  ] [   26  ] [   27  ] [   28  ]
+```
 
-- Line 341: Remove `isEmpty && "opacity-50"` from the `cn()` call
-- Lines 390-392: Replace the empty-state text with a small inline badge:
-  ```tsx
-  {isEmpty 
-    ? <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-destructive/15 text-destructive border border-destructive/25">No services</span>
-    : <p className={tokens.body.muted}>{serviceCount} service{serviceCount !== 1 ? 's' : ''}</p>
-  }
-  ```
+Each button becomes a two-line element:
+- **Line 1**: Day abbreviation (e.g., "Sat") or "Today"
+- **Line 2**: Date number (e.g., "22") or formatted date for Today (e.g., "Feb 21")
 
-This keeps the avatar vibrant and shifts the "empty" signal to a clear, urgent badge that matches the platform's alert styling conventions.
+### Technical Details
+
+- Replace the `Button` components with custom `button` elements using `rounded-lg` (slight radius) instead of the default `rounded-full`
+- Each button uses `flex-col` layout for stacked day + date
+- Active state: solid background with contrast text
+- Today button: primary accent styling
+- Hover: subtle background lift
+- Dimensions: slightly wider (`min-w-[56px]`) and taller (`py-2`) to accommodate two lines
+- The "Today" label shows "Today" on line 1 and the short date (e.g., "Feb 21") on line 2
+- Other days show the 3-letter abbreviation on line 1 and just the day number on line 2
 
