@@ -280,14 +280,24 @@ export function StylistLevelsContent() {
 
       {/* Levels List */}
       <Card>
-        <CardHeader className="flex flex-row items-center space-y-0 gap-3">
-          <div className={tokens.card.iconBox}>
-            <Layers className={tokens.card.icon} />
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <div className="flex items-center gap-3">
+            <div className={tokens.card.iconBox}>
+              <Layers className={tokens.card.icon} />
+            </div>
+            <div>
+              <CardTitle className={tokens.card.title}>EXPERIENCE LEVELS</CardTitle>
+              <CardDescription>Define experience tiers with default commission rates.</CardDescription>
+            </div>
           </div>
-          <div>
-            <CardTitle className={tokens.card.title}>EXPERIENCE LEVELS</CardTitle>
-            <CardDescription>Define experience tiers with default commission rates.</CardDescription>
-          </div>
+          <Button
+            variant="outline"
+            size={tokens.button.card}
+            className={tokens.button.cardAction}
+            onClick={() => setIsAddingNew(true)}
+          >
+            <Plus className="w-4 h-4" /> Add Level
+          </Button>
         </CardHeader>
         <CardContent className="space-y-2">
           {levels.map((level, index) => {
@@ -456,12 +466,7 @@ export function StylistLevelsContent() {
               <Button size={tokens.button.inline} onClick={handleAddNew} disabled={!newLevelName.trim()}>Add</Button>
               <Button size={tokens.button.inline} variant="ghost" onClick={() => { setIsAddingNew(false); setNewLevelName(''); }}>Cancel</Button>
             </div>
-          ) : (
-            <Button variant="outline" className="w-full" onClick={() => setIsAddingNew(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Level
-            </Button>
-          )}
+          ) : null}
         </CardContent>
       </Card>
 
