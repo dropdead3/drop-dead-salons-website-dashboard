@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 
 interface CategoryFormDialogProps {
   open: boolean;
@@ -12,14 +12,35 @@ interface CategoryFormDialogProps {
   isPending: boolean;
   initialName?: string;
   mode: 'create' | 'rename';
+  existingCategories?: string[];
 }
 
-export function CategoryFormDialog({ open, onOpenChange, onSubmit, isPending, initialName, mode }: CategoryFormDialogProps) {
+function isSimilar(a: string, b: string): boolean {
+  const la = a.toLowerCase().trim();
+  const lb = b.toLowerCase().trim();
+  if (la === lb) return true;
+  // Plural detection
+  if (la + 's' === lb || lb + 's' === la) return true;
+  if (la + 'es' === lb || lb + 'es' === la) return true;
+  // Substring check
+  if (la.length > 3 && lb.length > 3 && (la.includes(lb) || lb.includes(la))) return true;
+  return false;
+}
+
+export function CategoryFormDialog({ open, onOpenChange, onSubmit, isPending, initialName, mode, existingCategories = [] }: CategoryFormDialogProps) {
   const [name, setName] = useState(initialName || '');
 
   useEffect(() => {
     if (open) setName(initialName || '');
   }, [open, initialName]);
+
+  const similarWarning = useMemo(() => {
+    if (!name.trim()) return null;
+    const match = existingCategories.find(
+      existing => existing !== initialName && isSimilar(name.trim(), existing)
+    );
+    return match || null;
+  }, [name, existingCategories, initialName]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +68,12 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmit, isPending, in
               placeholder="e.g. Hair Color, Nails, Skincare"
               autoFocus
             />
+            {similarWarning && (
+              <div className="flex items-center gap-1.5 text-amber-600 text-xs">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                <span>Similar to existing category "{similarWarning}"</span>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
