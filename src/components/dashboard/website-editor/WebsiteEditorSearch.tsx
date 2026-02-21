@@ -12,11 +12,11 @@ import { useNativeServicesForWebsite } from '@/hooks/useNativeServicesForWebsite
 
 // Mock testimonials (same as TestimonialsContent)
 const testimonials = [
-  { id: '1', title: "Love this place!", author: "Lexi V.", text: "I love Drop Dead! The owner picks literally THE BEST hair stylist..." },
+  { id: '1', title: "Love this place!", author: "Lexi V.", text: "I love this place! The owner picks literally THE BEST hair stylist..." },
   { id: '2', title: "You won't be disappointed", author: "Melissa C.", text: "The salon itself is beautiful and so unique..." },
-  { id: '3', title: "Best wefts ever!!", author: "Lexi K.", text: "I have loved every product from Drop Dead so far..." },
+  { id: '3', title: "Best wefts ever!!", author: "Lexi K.", text: "I have loved every product so far..." },
   { id: '4', title: "Best extensions", author: "Darian F.", text: "These extensions were so easily filled my clients hair long..." },
-  { id: '5', title: "Absolutely stunning results", author: "Morgan S.", text: "I've been going to Drop Dead for over a year now..." },
+  { id: '5', title: "Absolutely stunning results", author: "Morgan S.", text: "I've been going here for over a year now..." },
   { id: '6', title: "Hair transformation goals", author: "Jamie L.", text: "Went from damaged, over-processed hair to the healthiest..." },
 ];
 

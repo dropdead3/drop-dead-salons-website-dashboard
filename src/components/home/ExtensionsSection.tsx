@@ -212,7 +212,7 @@ export function ExtensionsSection() {
                     <span className="text-xs tracking-[0.2em] text-muted-foreground uppercase">Change Your Look Instantly</span>
                   </div>
                   <p className="text-sm text-foreground leading-relaxed">
-                    Add instant volume, length, and/or temporary color accents with Drop Dead Extensions & the Drop Dead Method.
+                    Add instant volume, length, and/or temporary color accents with our premium extensions &amp; signature method.
                   </p>
                 </div>
                 <button

@@ -33,7 +33,7 @@ function ApplicationForm({ onClose }: { onClose: () => void }) {
     if (!formData.experience) missingFields.push("Experience");
     if (!formData.clientBook) missingFields.push("Current Client Book");
     if (!formData.specialties.trim()) missingFields.push("Your Specialties");
-    if (!formData.whyDropDead.trim()) missingFields.push("Why Drop Dead");
+    if (!formData.whyDropDead.trim()) missingFields.push("Why Us");
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.email.trim() && !emailRegex.test(formData.email)) {
@@ -114,7 +114,7 @@ function ApplicationForm({ onClose }: { onClose: () => void }) {
           transition={{ duration: 0.4, delay: 0.5 }}
           className="text-foreground/60 text-sm max-w-sm mx-auto mb-6"
         >
-          Thank you for your interest in joining Drop Dead. We'll review your application and get back to you soon.
+          Thank you for your interest in joining our team. We'll review your application and get back to you soon.
         </motion.p>
         
         <motion.div
@@ -232,7 +232,7 @@ function ApplicationForm({ onClose }: { onClose: () => void }) {
         </div>
 
         <div>
-          <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Why Drop Dead? *</label>
+          <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Why Us? *</label>
           <textarea
             value={formData.whyDropDead}
             onChange={(e) => handleChange("whyDropDead", e.target.value)}
@@ -280,7 +280,7 @@ export function JoinTeamSection() {
                 </span>
               </div>
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-display mb-6">
-                Work at Drop Dead
+                Work With Us
               </h2>
               <p className="text-lg text-foreground/60 mb-8 max-w-xl mx-auto">
                 Are you a passionate stylist looking for your next opportunity? 
@@ -353,7 +353,7 @@ export function JoinTeamSection() {
                   </span>
                 </div>
                 <h2 className="text-2xl md:text-3xl font-display mb-3">
-                  Apply to Drop Dead
+                  Apply Now
                 </h2>
                 <p className="text-foreground/60 text-sm">
                   Fill out the form below and we'll be in touch soon.

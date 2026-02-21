@@ -141,7 +141,7 @@ export function FAQSection() {
             
             <div className="space-y-4 text-foreground/80 mb-8">
               <p>
-                At Drop Dead Hair Studio, it's simple—Death to Bad Hair is more than a motto; it's our mission.
+                At our studio, it's simple—Death to Bad Hair is more than a motto; it's our mission.
               </p>
               <p>
                 We're here to deliver bold transformations and flawless results with every visit. Our policies help keep things smooth, respectful of everyone's time, and ensure you always leave loving your hair. Take a moment to review our FAQs and policies—because great hair days shouldn't come with surprises, just killer confidence.

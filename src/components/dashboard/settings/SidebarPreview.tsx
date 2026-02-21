@@ -73,7 +73,7 @@ export function SidebarPreview({
       {/* Logo area */}
       <div className="p-4 border-b border-border">
         <span className="font-display text-sm uppercase tracking-wider text-foreground">
-          DROP DEAD
+          SALON
         </span>
         <p className="text-xs text-muted-foreground mt-1">Staff Dashboard</p>
       </div>

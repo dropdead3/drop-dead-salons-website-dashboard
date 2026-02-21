@@ -37,7 +37,7 @@ export const stylists: Stylist[] = [
     imageUrl: kristiImage,
     locations: ["north-mesa", "val-vista-lakes"],
     isBooking: false,
-    bio: "Founder & creative director of Drop Dead Salon. Passionate about transforming hair and empowering stylists to reach their full potential."
+    bio: "Founder & creative director. Passionate about transforming hair and empowering stylists to reach their full potential."
   },
   {
     id: "2",

@@ -104,7 +104,7 @@ const policies: Policy[] = [
   {
     category: "Payment & Cards on File",
     question: "How does payment authorization work?",
-    answer: "By booking an appointment, clients authorize Drop Dead to securely store their card and charge applicable fees in accordance with policy."
+    answer: "By booking an appointment, clients authorize the salon to securely store their card and charge applicable fees in accordance with policy."
   },
   // Creative Color
   {
@@ -161,7 +161,7 @@ const policies: Policy[] = [
     category: "Social Media & Photo Consent",
     question: "Do you take photos for social media?",
     answer: [
-      "With client consent, Drop Dead may take photos or videos for marketing or portfolio use.",
+      "With client consent, the salon may take photos or videos for marketing or portfolio use.",
       "Photos may include hair only or full face (depending on guest preference).",
       "Clients may decline photography at any time without explanation."
     ]
@@ -193,7 +193,7 @@ const policies: Policy[] = [
     category: "Professional Conduct",
     question: "What behavior is expected in the salon?",
     answer: [
-      "Drop Dead maintains a respectful, inclusive and positive environment.",
+      "The salon maintains a respectful, inclusive and positive environment.",
       "Disrespectful, harassing or aggressive behavior will result in refusal of service.",
       "We reserve the right to deny service to any client for any lawful reason."
     ]
@@ -201,8 +201,8 @@ const policies: Policy[] = [
   // Right to Refuse
   {
     category: "Right to Refuse Service",
-    question: "Can Drop Dead refuse service?",
-    answer: "Drop Dead reserves the right to refuse service for any lawful reason to protect the safety, culture and environment of the salon."
+    question: "Can the salon refuse service?",
+    answer: "The salon reserves the right to refuse service for any lawful reason to protect the safety, culture and environment of the business."
   }
 ];
 
@@ -275,8 +275,8 @@ export default function Policies() {
   return (
     <Layout>
       <SEO 
-        title="Salon Policies | Drop Dead Hair Studio"
-        description="Review Drop Dead Hair Studio's client policies including booking requirements, cancellation fees, extension warranties, and service agreements."
+        title="Salon Policies"
+        description="Review our client policies including booking requirements, cancellation fees, extension warranties, and service agreements."
       />
       
       <section 
@@ -316,7 +316,7 @@ export default function Policies() {
               
               <div className="space-y-4 text-foreground/80 mb-8">
                 <p>
-                  The following policies reflect Drop Dead Hair Studio's commitment to elevated hospitality, transparent communication and a seamless luxury guest experience.
+                  The following policies reflect our commitment to elevated hospitality, transparent communication and a seamless luxury guest experience.
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Please review these policies before your appointment. By booking with us, you agree to these terms.

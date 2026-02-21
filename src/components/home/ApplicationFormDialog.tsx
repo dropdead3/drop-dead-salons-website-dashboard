@@ -33,7 +33,7 @@ const applicationSchema = z.object({
   experience: z.string().min(1, "Please select your experience level"),
   clientBook: z.string().min(1, "Please select your current client book size"),
   specialties: z.string().trim().min(1, "Please tell us about your specialties").max(500, "Specialties must be less than 500 characters"),
-  whyDropDead: z.string().trim().min(1, "Please tell us why you want to work at Drop Dead").max(500, "Response must be less than 500 characters"),
+  whyDropDead: z.string().trim().min(1, "Please tell us why you want to join our team").max(500, "Response must be less than 500 characters"),
   message: z.string().trim().max(1000, "Message must be less than 1000 characters").optional(),
 });
 
@@ -241,7 +241,7 @@ export function ApplicationFormDialog({ open, onOpenChange }: ApplicationFormDia
                 name="whyDropDead"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs uppercase tracking-wider">What's the biggest reason you want to work at Drop Dead? *</FormLabel>
+                    <FormLabel className="text-xs uppercase tracking-wider">What's the biggest reason you want to join our team? *</FormLabel>
                     <FormControl>
                       <Textarea 
                         placeholder="Tell us what excites you about joining our team..." 

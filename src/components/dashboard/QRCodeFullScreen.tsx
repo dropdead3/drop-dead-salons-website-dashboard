@@ -65,7 +65,7 @@ export function QRCodeFullScreen({ isOpen, onClose, url }: QRCodeFullScreenProps
             <div className="text-center space-y-2">
               <img 
                 src={DropDeadLogoWhite} 
-                alt="Drop Dead" 
+                alt="Staff Portal" 
                 className="h-8 mx-auto"
               />
               <p className="text-[hsl(40,30%,70%)] text-sm tracking-[0.3em] uppercase font-medium">

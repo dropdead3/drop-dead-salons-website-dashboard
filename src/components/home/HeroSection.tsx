@@ -150,7 +150,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
               </Eyebrow>
             </motion.div>
 
-            {/* Main headline - Always two lines: "Drop Dead" on first, rotating word on second */}
+            {/* Main headline - Always two lines: brand on first, rotating word on second */}
             <motion.h1
               className="font-display text-[clamp(2.25rem,8vw,5.5rem)] font-normal text-foreground leading-[0.95] flex flex-col items-center"
               style={{ y: headlineY, filter: headingBlurFilter }}

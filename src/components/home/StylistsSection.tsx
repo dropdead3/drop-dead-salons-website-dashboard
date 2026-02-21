@@ -59,7 +59,7 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
     if (!formData.experience) missingFields.push("Experience");
     if (!formData.clientBook) missingFields.push("Current Client Book");
     if (!formData.specialties.trim()) missingFields.push("Your Specialties");
-    if (!formData.whyDropDead.trim()) missingFields.push("Why Drop Dead");
+    if (!formData.whyDropDead.trim()) missingFields.push("Why Us");
     
     // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -143,7 +143,7 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
           transition={{ duration: 0.4, delay: 0.5 }}
           className="text-foreground/60 text-sm max-w-sm mx-auto mb-6"
         >
-          Thank you for your interest in joining Drop Dead. We'll review your application and get back to you soon.
+          Thank you for your interest in joining our team. We'll review your application and get back to you soon.
         </motion.p>
         
         <motion.div
@@ -180,7 +180,7 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
           </p>
         </div>
         <h3 className="text-2xl md:text-3xl font-display mb-2">
-          Apply to Drop Dead
+          Apply Now
         </h3>
         <p className="text-foreground/60 text-sm">
           Fill out the form below and we'll be in touch soon.
@@ -277,7 +277,7 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
         </div>
 
         <div>
-          <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Why Drop Dead? *</label>
+          <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Why Us? *</label>
           <textarea
             value={formData.whyDropDead}
             onChange={(e) => handleChange("whyDropDead", e.target.value)}
@@ -356,7 +356,7 @@ function JoinTeamCardComponent({
             </p>
           </div>
           <h3 className="text-2xl md:text-3xl font-display mb-3">
-            Work at Drop Dead
+            Work With Us
           </h3>
           <p className="text-foreground/60 text-sm max-w-sm mx-auto mb-5">
             Passionate stylist looking for your next opportunity? We'd love to hear from you.

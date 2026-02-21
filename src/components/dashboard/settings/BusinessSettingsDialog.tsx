@@ -399,7 +399,7 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
                     id="business_name"
                     value={formData.business_name}
                     onChange={(e) => handleChange('business_name', e.target.value)}
-                    placeholder="Drop Dead"
+                    placeholder="Your Business Name"
                     required
                   />
                 </div>
@@ -409,7 +409,7 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
                     id="legal_name"
                     value={formData.legal_name}
                     onChange={(e) => handleChange('legal_name', e.target.value)}
-                    placeholder="Drop Dead Gorgeous LLC"
+                    placeholder="Your Legal Entity Name LLC"
                   />
                 </div>
               </div>
