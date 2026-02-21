@@ -3136,6 +3136,72 @@ export type Database = {
           },
         ]
       }
+      client_merge_log: {
+        Row: {
+          before_snapshots: Json
+          created_at: string
+          field_resolutions: Json
+          id: string
+          is_undone: boolean
+          organization_id: string
+          performed_at: string
+          performed_by: string
+          primary_client_id: string
+          reparenting_counts: Json
+          secondary_client_ids: string[]
+          undo_expires_at: string
+          undone_at: string | null
+          undone_by: string | null
+        }
+        Insert: {
+          before_snapshots?: Json
+          created_at?: string
+          field_resolutions?: Json
+          id?: string
+          is_undone?: boolean
+          organization_id: string
+          performed_at?: string
+          performed_by: string
+          primary_client_id: string
+          reparenting_counts?: Json
+          secondary_client_ids: string[]
+          undo_expires_at?: string
+          undone_at?: string | null
+          undone_by?: string | null
+        }
+        Update: {
+          before_snapshots?: Json
+          created_at?: string
+          field_resolutions?: Json
+          id?: string
+          is_undone?: boolean
+          organization_id?: string
+          performed_at?: string
+          performed_by?: string
+          primary_client_id?: string
+          reparenting_counts?: Json
+          secondary_client_ids?: string[]
+          undo_expires_at?: string
+          undone_at?: string | null
+          undone_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_merge_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_merge_log_primary_client_id_fkey"
+            columns: ["primary_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_notes: {
         Row: {
           client_id: string
@@ -3221,76 +3287,139 @@ export type Database = {
       }
       clients: {
         Row: {
+          address_line1: string | null
+          address_line2: string | null
           average_spend: number | null
+          birthday: string | null
+          city: string | null
+          client_since: string | null
+          country: string | null
           created_at: string | null
           email: string | null
+          email_normalized: string | null
           external_id: string | null
           first_name: string
+          gender: string | null
           id: string
           import_job_id: string | null
           import_source: string | null
           imported_at: string | null
           is_active: boolean | null
+          is_placeholder: boolean
           is_vip: boolean | null
           last_name: string
           last_visit_date: string | null
+          lead_source: string | null
           location_id: string | null
+          merged_at: string | null
+          merged_by: string | null
+          merged_into_client_id: string | null
           mobile: string | null
           notes: string | null
           organization_id: string | null
           phone: string | null
+          phone_normalized: string | null
+          phorest_client_id: string | null
           preferred_stylist_id: string | null
+          reminder_email_opt_in: boolean | null
+          reminder_sms_opt_in: boolean | null
+          state: string | null
+          status: string
+          tags: string[] | null
           total_spend: number | null
           updated_at: string | null
           visit_count: number | null
+          zip: string | null
         }
         Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
           average_spend?: number | null
+          birthday?: string | null
+          city?: string | null
+          client_since?: string | null
+          country?: string | null
           created_at?: string | null
           email?: string | null
+          email_normalized?: string | null
           external_id?: string | null
           first_name: string
+          gender?: string | null
           id?: string
           import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
           is_active?: boolean | null
+          is_placeholder?: boolean
           is_vip?: boolean | null
           last_name: string
           last_visit_date?: string | null
+          lead_source?: string | null
           location_id?: string | null
+          merged_at?: string | null
+          merged_by?: string | null
+          merged_into_client_id?: string | null
           mobile?: string | null
           notes?: string | null
           organization_id?: string | null
           phone?: string | null
+          phone_normalized?: string | null
+          phorest_client_id?: string | null
           preferred_stylist_id?: string | null
+          reminder_email_opt_in?: boolean | null
+          reminder_sms_opt_in?: boolean | null
+          state?: string | null
+          status?: string
+          tags?: string[] | null
           total_spend?: number | null
           updated_at?: string | null
           visit_count?: number | null
+          zip?: string | null
         }
         Update: {
+          address_line1?: string | null
+          address_line2?: string | null
           average_spend?: number | null
+          birthday?: string | null
+          city?: string | null
+          client_since?: string | null
+          country?: string | null
           created_at?: string | null
           email?: string | null
+          email_normalized?: string | null
           external_id?: string | null
           first_name?: string
+          gender?: string | null
           id?: string
           import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
           is_active?: boolean | null
+          is_placeholder?: boolean
           is_vip?: boolean | null
           last_name?: string
           last_visit_date?: string | null
+          lead_source?: string | null
           location_id?: string | null
+          merged_at?: string | null
+          merged_by?: string | null
+          merged_into_client_id?: string | null
           mobile?: string | null
           notes?: string | null
           organization_id?: string | null
           phone?: string | null
+          phone_normalized?: string | null
+          phorest_client_id?: string | null
           preferred_stylist_id?: string | null
+          reminder_email_opt_in?: boolean | null
+          reminder_sms_opt_in?: boolean | null
+          state?: string | null
+          status?: string
+          tags?: string[] | null
           total_spend?: number | null
           updated_at?: string | null
           visit_count?: number | null
+          zip?: string | null
         }
         Relationships: [
           {
@@ -3305,6 +3434,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_merged_into_client_id_fkey"
+            columns: ["merged_into_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {
@@ -17072,6 +17208,24 @@ export type Database = {
             }[]
           }
       current_user_is_coach: { Args: never; Returns: boolean }
+      find_duplicate_clients: {
+        Args: {
+          p_email?: string
+          p_exclude_client_id?: string
+          p_organization_id: string
+          p_phone?: string
+        }
+        Returns: {
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          last_visit_date: string
+          match_type: string
+          mobile: string
+          total_spend: number
+        }[]
+      }
       generate_secure_token: { Args: never; Returns: string }
       get_booth_renter_profile_id: {
         Args: { _user_id: string }

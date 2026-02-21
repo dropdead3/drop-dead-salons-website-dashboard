@@ -42,6 +42,7 @@ import {
   Brain,
   Globe,
   Search,
+  GitMerge,
 } from 'lucide-react';
 
 interface ManagementCardProps {
@@ -460,6 +461,13 @@ export default function ManagementHub() {
             title="Re-engagement"
             description="Win-back campaigns for inactive clients"
             colorClass="bg-teal-500/10 text-teal-600 dark:text-teal-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/merge-clients"
+            icon={GitMerge}
+            title="Merge Clients"
+            description="Deduplicate and consolidate client profiles safely"
+            colorClass="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
           />
         </CategorySection>
       </div>
