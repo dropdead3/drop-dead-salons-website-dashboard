@@ -21,6 +21,7 @@ import { AchievementBadgeStack } from '@/components/dashboard/AchievementBadge';
 import { AchievementsShowcase } from '@/components/dashboard/AchievementsShowcase';
 import { Link } from 'react-router-dom';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
 import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
 
 interface LeaderboardEntry {
@@ -159,6 +160,7 @@ export function LeaderboardContent() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const { formatCurrencyWhole } = useFormatCurrency();
+  const { providerLabel } = usePOSProviderLabel();
   const { formatDate } = useFormatDate();
   const [metric, setMetric] = useState<MetricType>('day');
   const [phorestCategory, setPhorestCategory] = useState<PhorestCategory>('overall');
@@ -457,13 +459,13 @@ export function LeaderboardContent() {
             <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
               <p className="text-xs text-primary font-sans text-center flex items-center justify-center gap-2">
                 <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                Live data from Phorest • {phorestData.length} team members
+                Live data from {providerLabel} • {phorestData.length} team members
               </p>
             </div>
           ) : (
             <div className="p-3 bg-muted/50 rounded-lg border border-dashed">
               <p className="text-xs text-muted-foreground font-sans text-center">
-                📊 Showing sample data • <Link to="/dashboard/admin/phorest" className="underline hover:text-foreground">Connect Phorest</Link> to see live rankings
+                📊 Showing sample data • <Link to="/dashboard/admin/phorest" className="underline hover:text-foreground">Connect {providerLabel}</Link> to see live rankings
               </p>
             </div>
           )}

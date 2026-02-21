@@ -17,6 +17,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
 
 interface SyncStatus {
   sync_type: string;
@@ -31,6 +32,8 @@ export function SidebarSyncStatusWidget({
   isCollapsed?: boolean;
   onNavClick?: () => void;
 }) {
+  const { syncLabel } = usePOSProviderLabel();
+
   // Fetch latest sync status for each type
   const { data: syncStatuses } = useQuery({
     queryKey: ['sidebar-sync-status'],
@@ -118,7 +121,7 @@ export function SidebarSyncStatusWidget({
           </Link>
         </TooltipTrigger>
         <TooltipContent side="right" className="space-y-1">
-          <p className="font-medium">Phorest Sync</p>
+          <p className="font-medium">{syncLabel}</p>
           <p className="text-xs text-muted-foreground">
             Appointments: {getTimeAgo(appointmentSync?.completed_at || null)} ago
           </p>
@@ -138,7 +141,7 @@ export function SidebarSyncStatusWidget({
     >
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-display uppercase tracking-wider text-foreground">
-          Phorest Sync
+          {syncLabel}
         </span>
         {getHealthIcon()}
       </div>

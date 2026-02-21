@@ -71,10 +71,12 @@ import { formatDistanceToNow } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { PhorestApiHealthDashboard } from '@/components/dashboard/PhorestApiHealthDashboard';
 import { PhorestWriteGateCard } from '@/components/dashboard/PhorestWriteGateCard';
+import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
 
 export default function PhorestSettings() {
   const { formatDate } = useFormatDate();
   const { toast } = useToast();
+  const { providerLabel } = usePOSProviderLabel();
   const queryClient = useQueryClient();
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedPhorestStaff, setSelectedPhorestStaff] = useState<PhorestStaffMember | null>(null);
@@ -244,7 +246,7 @@ export default function PhorestSettings() {
     if (!selectedUserId || !selectedPhorestStaff) {
       toast({
         title: 'Missing fields',
-        description: 'Please select both a team member and a Phorest staff member.',
+        description: `Please select both a team member and a ${providerLabel} staff member.`,
         variant: 'destructive',
       });
       return;
@@ -308,9 +310,9 @@ export default function PhorestSettings() {
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <h1 className="font-display text-3xl lg:text-4xl mb-2">PHOREST INTEGRATION</h1>
+            <h1 className="font-display text-3xl lg:text-4xl mb-2">{providerLabel.toUpperCase()} INTEGRATION</h1>
             <p className="text-muted-foreground font-sans">
-              Manage Phorest API connection and data synchronization.
+              Manage {providerLabel} API connection and data synchronization.
             </p>
           </div>
           <Button
@@ -511,9 +513,9 @@ export default function PhorestSettings() {
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="font-display text-lg">Link Team Members to Phorest Staff</h3>
+                  <h3 className="font-display text-lg">Link Team Members to {providerLabel} Staff</h3>
                   <p className="text-muted-foreground text-sm mt-1">
-                    Map your dashboard team members to their Phorest staff profiles. Staff at multiple locations can have multiple mappings.
+                    Map your dashboard team members to their {providerLabel} staff profiles. Staff at multiple locations can have multiple mappings.
                   </p>
                 </div>
                 
@@ -605,7 +607,7 @@ export default function PhorestSettings() {
                   }}
                 >
                   <SelectTrigger className="w-full md:w-80">
-                    <SelectValue placeholder="Select Phorest staff" />
+                    <SelectValue placeholder={`Select ${providerLabel} staff`} />
                   </SelectTrigger>
                   <SelectContent>
                     {filteredPhorestStaff.length === 0 ? (
@@ -652,7 +654,7 @@ export default function PhorestSettings() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Team Member</TableHead>
-                      <TableHead>Phorest Name</TableHead>
+                      <TableHead>{providerLabel} Name</TableHead>
                       <TableHead>Location</TableHead>
                       <TableHead>
                         <div className="flex items-center gap-1.5">

@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import { useProductCategoryBreakdown, ProductCategoryData } from '@/hooks/useSalesAnalytics';
 import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
 
@@ -35,6 +36,7 @@ interface ProductCategoryChartProps {
 export function ProductCategoryChart({ dateFrom, dateTo, locationId, filterContext }: ProductCategoryChartProps) {
   const { data, isLoading } = useProductCategoryBreakdown(dateFrom, dateTo, locationId);
   const { formatCurrencyWhole } = useFormatCurrency();
+  const { providerLabel } = usePOSProviderLabel();
 
   const topCategories = data?.slice(0, 6) || [];
   const totalRevenue = data?.reduce((sum, cat) => sum + cat.totalRevenue, 0) || 0;
@@ -78,7 +80,7 @@ export function ProductCategoryChart({ dateFrom, dateTo, locationId, filterConte
             <p className="text-center">
               No product sales data available
               <br />
-              <span className="text-xs">Product data syncs from Phorest sales transactions</span>
+              <span className="text-xs">Product data syncs from {providerLabel} sales transactions</span>
             </p>
           </div>
         ) : (

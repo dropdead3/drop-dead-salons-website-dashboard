@@ -25,6 +25,7 @@ import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
 import { useStylistAddonAttachment } from '@/hooks/useStylistAddonAttachment';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
+import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
 import { PhorestSyncButton } from '@/components/dashboard/PhorestSyncButton';
 import { PersonalGoalsCard } from '@/components/dashboard/sales/PersonalGoalsCard';
 import { TierProgressAlert } from '@/components/dashboard/sales/TierProgressAlert';
@@ -42,6 +43,7 @@ export default function Stats() {
 
   const { formatCurrency, formatCurrencyWhole } = useFormatCurrency();
   const { effectiveOrganization } = useOrganizationContext();
+  const { providerLabel } = usePOSProviderLabel();
   const orgId = effectiveOrganization?.id;
   const { data: marginData } = useAddonMarginAnalytics(orgId);
   const { data: redoData } = useRedoAnalytics(30);
@@ -159,7 +161,7 @@ export default function Stats() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Link2 className="w-5 h-5 text-primary" />
-                    <h2 className="font-display text-sm tracking-wide">PHOREST DATA - THIS WEEK</h2>
+                    <h2 className="font-display text-sm tracking-wide">{providerLabel.toUpperCase()} DATA - THIS WEEK</h2>
                   </div>
                   <div className="flex items-center gap-2">
                     <PhorestSyncButton syncType="reports" size="sm" />
@@ -194,7 +196,7 @@ export default function Stats() {
             {!isLinkedToPhorest && phorestConnection?.connected && (
               <Card className="p-4 bg-muted/50 border-dashed">
                 <p className="text-sm text-muted-foreground text-center">
-                  Your account isn't linked to Phorest yet. <Link to="/dashboard/admin/phorest" className="text-primary underline">Set up staff mapping</Link> to see your stats automatically.
+                  Your account isn't linked to {providerLabel} yet. <Link to="/dashboard/admin/phorest" className="text-primary underline">Set up staff mapping</Link> to see your stats automatically.
                 </p>
               </Card>
             )}
@@ -266,7 +268,7 @@ export default function Stats() {
                 {isLinkedToPhorest && (
                   <Badge variant="outline" className="text-xs">
                     <Link2 className="w-3 h-3 mr-1" />
-                    Phorest Data
+                    {providerLabel} Data
                   </Badge>
                 )}
               </div>
@@ -301,7 +303,7 @@ export default function Stats() {
               </div>
               {!isLinkedToPhorest && (
                 <p className="text-xs text-muted-foreground text-center mt-4">
-                  Link your Phorest account to see live conversion metrics
+                  Link your {providerLabel} account to see live conversion metrics
                 </p>
               )}
             </Card>

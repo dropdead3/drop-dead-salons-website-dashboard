@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSystemHealth, useRefreshSystemHealth } from '@/hooks/useSystemHealth';
 import { useLatestJobRuns, useJobStats } from '@/hooks/useEdgeFunctionLogs';
+import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -39,6 +40,7 @@ const STATUS_CONFIG = {
 export default function SystemHealthPage() {
   const { data: health, isLoading, refetch, isFetching } = useSystemHealth();
   const { data: latestRuns } = useLatestJobRuns();
+  const { syncLabel } = usePOSProviderLabel();
   const { data: stats } = useJobStats(24);
   const refreshHealth = useRefreshSystemHealth();
 
@@ -163,7 +165,7 @@ export default function SystemHealthPage() {
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-slate-400">Last Phorest Sync</span>
+              <span className="text-sm text-slate-400">Last {syncLabel}</span>
               {health?.syncStatus.phorestStatus === 'success' && (
                 <CheckCircle className="h-4 w-4 text-emerald-400" />
               )}

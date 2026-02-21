@@ -8,6 +8,7 @@ import {
 } from '@/components/platform/ui/PlatformCard';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { useOrganizationIntegrations } from '@/hooks/useOrganizationIntegrations';
+import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
 
 interface AccountIntegrationsCardProps {
   organizationId: string;
@@ -15,6 +16,7 @@ interface AccountIntegrationsCardProps {
 
 export function AccountIntegrationsCard({ organizationId }: AccountIntegrationsCardProps) {
   const { data: integrations, isLoading } = useOrganizationIntegrations(organizationId);
+  const { providerLabel } = usePOSProviderLabel();
 
   if (isLoading) {
     return (
@@ -63,7 +65,7 @@ export function AccountIntegrationsCard({ organizationId }: AccountIntegrationsC
                 <Calendar className="h-4 w-4 text-violet-400" />
               </div>
               <div>
-                <p className="font-medium text-[hsl(var(--platform-foreground))]">Phorest</p>
+                <p className="font-medium text-[hsl(var(--platform-foreground))]">{providerLabel}</p>
                 <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
                   {phorest?.connected 
                     ? `${phorest.branchCount} ${phorest.branchCount === 1 ? 'branch' : 'branches'}, ${phorest.staffMappingCount} staff`

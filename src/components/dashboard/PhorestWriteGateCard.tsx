@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { usePOSProviderLabel } from '@/hooks/usePOSProviderLabel';
 
 export function PhorestWriteGateCard() {
   const { toast } = useToast();
@@ -16,6 +17,7 @@ export function PhorestWriteGateCard() {
   const { data: isPrimaryOwner } = useIsPrimaryOwner();
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const { providerLabel } = usePOSProviderLabel();
 
   const { data: writeEnabled, isLoading } = useQuery({
     queryKey: ['phorest-write-enabled', orgId],
@@ -55,10 +57,10 @@ export function PhorestWriteGateCard() {
     onSuccess: (_, enabled) => {
       queryClient.invalidateQueries({ queryKey: ['phorest-write-enabled'] });
       toast({
-        title: enabled ? 'Phorest write-back enabled' : 'Phorest write-back disabled',
+        title: enabled ? `${providerLabel} write-back enabled` : `${providerLabel} write-back disabled`,
         description: enabled
-          ? 'Changes will now sync to Phorest.'
-          : 'Changes will only be saved locally. Phorest will not be updated.',
+          ? `Changes will now sync to ${providerLabel}.`
+          : `Changes will only be saved locally. ${providerLabel} will not be updated.`,
       });
     },
     onError: (error: any) => {
@@ -75,7 +77,7 @@ export function PhorestWriteGateCard() {
       <Card className="p-6">
         <div className="flex items-center gap-3 text-muted-foreground">
           <AlertCircle className="w-5 h-5" />
-          <p>Only the primary owner can manage Phorest write-back settings.</p>
+          <p>Only the primary owner can manage {providerLabel} write-back settings.</p>
         </div>
       </Card>
     );
@@ -85,9 +87,9 @@ export function PhorestWriteGateCard() {
     <Card className="p-6 space-y-6">
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <h3 className="font-display text-lg tracking-wide">Sync Changes to Phorest</h3>
+          <h3 className="font-display text-lg tracking-wide">Sync Changes to {providerLabel}</h3>
           <p className="text-sm text-muted-foreground max-w-md">
-            When enabled, bookings, appointment updates, and new clients will be pushed to your live Phorest system. 
+            When enabled, bookings, appointment updates, and new clients will be pushed to your live {providerLabel} system. 
             When disabled, all changes stay local only.
           </p>
         </div>
@@ -124,7 +126,7 @@ export function PhorestWriteGateCard() {
           </li>
           <li className="flex items-start gap-2">
             <span className="text-primary mt-0.5">•</span>
-            <span><span className="text-foreground">New clients</span> — client profiles are created locally without pushing to Phorest</span>
+            <span><span className="text-foreground">New clients</span> — client profiles are created locally without pushing to {providerLabel}</span>
           </li>
         </ul>
       </div>
@@ -133,7 +135,7 @@ export function PhorestWriteGateCard() {
         <div className="rounded-lg bg-muted/50 border border-border p-4 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-primary mt-0.5 shrink-0" />
           <div className="text-sm">
-            <p className="text-foreground">Phorest data sync (reading FROM Phorest) continues to work normally.</p>
+            <p className="text-foreground">{providerLabel} data sync (reading from {providerLabel}) continues to work normally.</p>
             <p className="text-muted-foreground mt-1">
               Only write operations (creating/updating appointments and clients) are blocked.
             </p>
