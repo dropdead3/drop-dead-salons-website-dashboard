@@ -134,7 +134,7 @@ import IncidentReports from "./pages/dashboard/admin/IncidentReports";
 import NewHireWizard from "./pages/dashboard/admin/NewHireWizard";
 import RenterOnboardWizard from "./pages/dashboard/admin/RenterOnboardWizard";
 
-// Phase 3: Points, Huddles, Training Enhancements
+// Engagement Features: Points, Huddles, Training Enhancements
 import RewardShop from "./pages/dashboard/RewardShop";
 import PointsConfig from "./pages/dashboard/admin/PointsConfig";
 import DailyHuddle from "./pages/dashboard/admin/DailyHuddle";
@@ -150,7 +150,7 @@ import TeamChat from "./pages/dashboard/TeamChat";
 import Campaigns from "./pages/dashboard/Campaigns";
 import CampaignDetail from "./pages/dashboard/CampaignDetail";
 
-// Phase 3: Client Engagement Tools
+// Client Engagement Tools
 import ClientFeedbackPage from "./pages/ClientFeedback";
 import ClientPortalPage from "./pages/ClientPortal";
 import FeedbackHub from "./pages/dashboard/admin/FeedbackHub";

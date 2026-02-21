@@ -18,6 +18,7 @@ import {
   useDeleteKnowledgeEntry,
   ZuraKnowledgeEntry,
 } from '@/hooks/useZuraConfig';
+import { AI_ASSISTANT_NAME_DEFAULT } from '@/lib/brand';
 
 interface KnowledgeBaseTabProps {
   organizationId: string;
@@ -113,7 +114,7 @@ export function KnowledgeBaseTab({ organizationId }: KnowledgeBaseTabProps) {
             <div className="text-center py-12 text-muted-foreground">
               <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-50" />
               <p>No knowledge entries yet</p>
-              <p className="text-xs mt-1">Add salon policies, product info, and FAQs for Zura to reference</p>
+              <p className="text-xs mt-1">{`Add salon policies, product info, and FAQs for ${AI_ASSISTANT_NAME_DEFAULT} to reference`}</p>
             </div>
           ) : (
             <Table>

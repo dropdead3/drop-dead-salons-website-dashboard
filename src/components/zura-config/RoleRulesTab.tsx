@@ -10,6 +10,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Save, Users } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { useZuraRoleRules, useUpsertRoleRule, ZuraRoleRule } from '@/hooks/useZuraConfig';
+import { AI_ASSISTANT_NAME_DEFAULT } from '@/lib/brand';
 
 interface RoleRulesTabProps {
   organizationId: string;
@@ -77,7 +78,7 @@ export function RoleRulesTab({ organizationId }: RoleRulesTabProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2"><Users className="h-5 w-5" /> Role-Specific Rules</CardTitle>
-          <CardDescription>Configure how Zura speaks to each role. Role rules override the org-level personality settings.</CardDescription>
+          <CardDescription>{`Configure how ${AI_ASSISTANT_NAME_DEFAULT} speaks to each role. Role rules override the org-level personality settings.`}</CardDescription>
         </CardHeader>
         <CardContent>
           <Accordion type="multiple" className="w-full">
@@ -141,7 +142,7 @@ export function RoleRulesTab({ organizationId }: RoleRulesTabProps) {
                         placeholder="Never share organizational financials or other team members' performance data"
                         rows={2}
                       />
-                      <p className="text-xs text-muted-foreground">Define what data Zura should NOT share with this role</p>
+                      <p className="text-xs text-muted-foreground">{`Define what data ${AI_ASSISTANT_NAME_DEFAULT} should NOT share with this role`}</p>
                     </div>
 
                     <div className="space-y-2">
@@ -152,7 +153,7 @@ export function RoleRulesTab({ organizationId }: RoleRulesTabProps) {
                         placeholder="End with a challenge or goal"
                         rows={2}
                       />
-                      <p className="text-xs text-muted-foreground">How Zura ends responses to this role</p>
+                      <p className="text-xs text-muted-foreground">{`How ${AI_ASSISTANT_NAME_DEFAULT} ends responses to this role`}</p>
                     </div>
 
                     <div className="flex justify-end">
