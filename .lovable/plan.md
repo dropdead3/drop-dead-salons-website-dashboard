@@ -1,30 +1,20 @@
 
 
-## Add Closure Indicators to Day Selector Buttons
+## Remove Card Styling from Unselected "Today" Button
 
-### What Changes
-When a location is closed on a particular day (due to regular hours or holiday closures), the quick day selector buttons in the schedule header will show a visual indicator, making it immediately clear which upcoming days are closed without having to click into each one.
+### Problem
+The "Today" button always has a border and background (`bg-background border border-input`) even when another day is selected, making it look like a second selected item and confusing the user.
 
-### Visual Design
-- **Closed day buttons**: A small red dot appears below the date number on any day the selected location is closed
-- **Tooltip on hover**: Shows "Closed" or "Closed -- [reason]" (e.g., "Closed -- Christmas Day") when hovering over a closed day button
-- **Muted styling**: Closed day text gets slightly reduced opacity to subtly de-emphasize unavailable days
+### Change
 
-### Technical Details
+**File: `src/components/dashboard/schedule/ScheduleHeader.tsx`** (line 307)
 
-**File: `src/components/dashboard/schedule/ScheduleHeader.tsx`**
+Update the Today button's unselected state to match the other unselected day buttons -- plain text with no border or background, only gaining emphasis on hover.
 
-1. Import `isClosedOnDate` and location types from `useLocations`, plus `ClosedBadge` and `Tooltip` components
-2. Expand the `locations` prop type to include `hours_json` and `holiday_closures` fields (or import full location data inside the component via `useLocations`)
-3. Inside the quick day button loop, call `isClosedOnDate(selectedLocationObj.hours_json, selectedLocationObj.holiday_closures, day)` for each day
-4. If closed, add:
-   - A small red dot indicator (`w-1 h-1 rounded-full bg-destructive`) beneath the date
-   - Reduced opacity on the button text
-   - Wrap the button in a Tooltip showing "Closed" or the closure reason
-5. Apply the same check to the "Today" button
+| State | Current | New |
+|-------|---------|-----|
+| Today selected | `bg-primary text-primary-foreground shadow-sm` | No change |
+| Today NOT selected | `bg-background border border-input text-foreground` | `text-muted-foreground hover:bg-accent hover:text-accent-foreground` |
 
-**File: `src/pages/dashboard/Schedule.tsx`** (if needed)
+This makes the unselected Today button visually identical to other unselected days (Sat, Sun, Tue, etc.), so only the truly selected day stands out.
 
-- Ensure the `locations` array passed to `ScheduleHeader` includes `hours_json` and `holiday_closures` -- check current query and expand if these fields are missing from the prop type
-
-**No new files or dependencies required.**
