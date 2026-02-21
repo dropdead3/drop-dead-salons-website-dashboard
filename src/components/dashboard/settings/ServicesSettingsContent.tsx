@@ -2,13 +2,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { 
-  Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors,
+  Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors, Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
@@ -23,7 +24,6 @@ import { useCreateCategory, useRenameCategory, useDeleteCategory } from '@/hooks
 import { useServicesData, useCreateService, useUpdateService, useDeleteService, type Service } from '@/hooks/useServicesData';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { CategoryFormDialog } from './CategoryFormDialog';
-import { ServiceFormDialog } from './ServiceFormDialog';
 import { ServiceEditorDialog } from './ServiceEditorDialog';
 import { ServiceAddonsLibrary } from './ServiceAddonsLibrary';
 import { ServiceAddonAssignmentsCard } from './ServiceAddonAssignmentsCard';
@@ -61,6 +61,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 // Curated color palette
 const CATEGORY_PALETTE = [
@@ -80,6 +81,17 @@ const GRADIENT_OPTIONS = Object.values(SPECIAL_GRADIENTS).map(g => ({
                'Luxurious purple',
 }));
 
+function computeMargin(price: number, cost: number | null): number | null {
+  if (cost == null || price <= 0) return null;
+  return ((price - cost) / price) * 100;
+}
+
+function MarginBadge({ margin }: { margin: number | null }) {
+  if (margin == null) return null;
+  const color = margin >= 50 ? 'text-emerald-600 bg-emerald-500/10' : margin >= 30 ? 'text-amber-600 bg-amber-500/10' : 'text-red-600 bg-red-500/10';
+  return <Badge variant="outline" className={cn('text-[10px] font-medium border-0 px-1.5 py-0', color)}>{Math.round(margin)}%</Badge>;
+}
+
 function SortableCategoryRow({ category, children }: { category: ServiceCategoryColor; children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: category.id });
   const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 10 : undefined, opacity: isDragging ? 0.9 : undefined };
@@ -96,7 +108,6 @@ function SortableCategoryRow({ category, children }: { category: ServiceCategory
 
 export function ServicesSettingsContent() {
   const { effectiveOrganization, userOrganizations } = useOrganizationContext();
-  // Resolved org: effective org first, fall back to first accessible org (unblocks platform/super admin users)
   const resolvedOrgId = effectiveOrganization?.id || userOrganizations[0]?.id;
   const { data: categories, isLoading: catsLoading } = useServiceCategoryColors();
   const { data: allServices, isLoading: servicesLoading } = useServicesData(undefined, resolvedOrgId);
@@ -108,9 +119,8 @@ export function ServicesSettingsContent() {
   const createService = useCreateService();
   const updateService = useUpdateService();
   const deleteService = useDeleteService();
+  const { formatCurrency } = useFormatCurrency();
 
-
-  // Filter to service categories only (not Block/Break)
   const serviceCategories = useMemo(() => 
     categories?.filter(c => !['Block', 'Break'].includes(c.category_name)) || [],
   [categories]);
@@ -118,7 +128,6 @@ export function ServicesSettingsContent() {
   const [localOrder, setLocalOrder] = useState<ServiceCategoryColor[]>([]);
   useEffect(() => { if (serviceCategories.length) setLocalOrder(serviceCategories); }, [serviceCategories]);
 
-  // Group services by category
   const servicesByCategory = useMemo(() => {
     const grouped: Record<string, Service[]> = {};
     allServices?.forEach(s => {
@@ -129,20 +138,25 @@ export function ServicesSettingsContent() {
     return grouped;
   }, [allServices]);
 
-
-
   // Dialog states
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [categoryDialogMode, setCategoryDialogMode] = useState<'create' | 'rename'>('create');
   const [editingCategory, setEditingCategory] = useState<ServiceCategoryColor | null>(null);
-  const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
-  const [serviceDialogMode, setServiceDialogMode] = useState<'create' | 'edit'>('create');
-  const [editingService, setEditingService] = useState<Service | null>(null);
-  const [presetCategory, setPresetCategory] = useState('');
   const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
   const [deleteCategoryName, setDeleteCategoryName] = useState('');
+
+  // Unified editor dialog (replaces ServiceFormDialog)
   const [editorDialogOpen, setEditorDialogOpen] = useState(false);
   const [editorService, setEditorService] = useState<Service | null>(null);
+  const [editorMode, setEditorMode] = useState<'create' | 'edit'>('edit');
+  const [editorPresetCategory, setEditorPresetCategory] = useState('');
+
+  // Delete service confirmation
+  const [deleteServiceId, setDeleteServiceId] = useState<string | null>(null);
+  const [deleteServiceName, setDeleteServiceName] = useState('');
+
+  // Search
+  const [searchQuery, setSearchQuery] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -198,16 +212,16 @@ export function ServicesSettingsContent() {
     });
   };
 
-  const handleServiceSubmit = (service: Partial<Service>) => {
-    if (serviceDialogMode === 'create') {
+  const handleEditorSubmit = (service: Partial<Service>) => {
+    if (editorMode === 'create') {
       createService.mutate(service, {
-        onSuccess: () => { setServiceDialogOpen(false); },
+        onSuccess: () => { setEditorDialogOpen(false); },
         onError: () => {},
       });
-    } else if (service.id) {
-      const { id, ...updates } = service;
+    } else if (editorService?.id) {
+      const { id, ...updates } = { id: editorService.id, ...service };
       updateService.mutate({ id, ...updates } as any, {
-        onSuccess: () => { setServiceDialogOpen(false); setEditingService(null); },
+        onSuccess: () => { setEditorDialogOpen(false); setEditorService(null); },
         onError: () => {},
       });
     }
@@ -216,6 +230,47 @@ export function ServicesSettingsContent() {
   const handleToggleActive = (service: Service) => {
     updateService.mutate({ id: service.id, is_active: !service.is_active });
   };
+
+  const handleDeleteService = () => {
+    if (!deleteServiceId) return;
+    deleteService.mutate(deleteServiceId, {
+      onSuccess: () => { setDeleteServiceId(null); setDeleteServiceName(''); },
+    });
+  };
+
+  const openCreateService = (categoryName?: string) => {
+    setEditorMode('create');
+    setEditorService(null);
+    setEditorPresetCategory(categoryName || serviceCategories[0]?.category_name || '');
+    setEditorDialogOpen(true);
+  };
+
+  const openEditService = (svc: Service) => {
+    setEditorMode('edit');
+    setEditorService(svc);
+    setEditorPresetCategory('');
+    setEditorDialogOpen(true);
+  };
+
+  // Filtered services for search
+  const filteredServicesByCategory = useMemo(() => {
+    if (!searchQuery.trim()) return servicesByCategory;
+    const q = searchQuery.toLowerCase();
+    const filtered: Record<string, Service[]> = {};
+    for (const [cat, svcs] of Object.entries(servicesByCategory)) {
+      const matches = svcs.filter(s => s.name.toLowerCase().includes(q));
+      if (matches.length > 0) filtered[cat] = matches;
+    }
+    return filtered;
+  }, [servicesByCategory, searchQuery]);
+
+  // Auto-expand accordion items when searching
+  const searchExpandedValues = useMemo(() => {
+    if (!searchQuery.trim()) return undefined;
+    return localOrder
+      .filter(cat => filteredServicesByCategory[cat.category_name]?.length)
+      .map(cat => cat.id);
+  }, [searchQuery, localOrder, filteredServicesByCategory]);
 
 
   if (catsLoading || servicesLoading) {
@@ -257,7 +312,7 @@ export function ServicesSettingsContent() {
                       const hasGradient = isGradientMarker(cat.color_hex);
                       const gradient = hasGradient ? getGradientFromMarker(cat.color_hex) : null;
                       const serviceCount = servicesByCategory[cat.category_name]?.length || 0;
-                      
+                      const isEmpty = serviceCount === 0;
 
                       return (
                         <SortableCategoryRow key={cat.id} category={cat}>
@@ -265,7 +320,10 @@ export function ServicesSettingsContent() {
                           <Popover>
                             <PopoverTrigger asChild>
                               <button
-                                className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-sans font-medium tracking-normal shrink-0 transition-transform hover:scale-105 ring-2 ring-offset-2 ring-offset-background ring-transparent hover:ring-primary/50"
+                                className={cn(
+                                  "w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-sans font-medium tracking-normal shrink-0 transition-transform hover:scale-105 ring-2 ring-offset-2 ring-offset-background ring-transparent hover:ring-primary/50",
+                                  isEmpty && "opacity-50"
+                                )}
                                 style={gradient ? { background: gradient.background, color: gradient.textColor } : { backgroundColor: cat.color_hex, color: cat.text_color_hex }}
                               >
                                 {abbr}
@@ -274,7 +332,6 @@ export function ServicesSettingsContent() {
                             <PopoverContent className="w-auto p-4" align="start">
                               <div className="space-y-3">
                                 <p className={tokens.body.emphasis}>{cat.category_name}</p>
-                                {/* Gradients */}
                                 <div className="space-y-1">
                                   <p className={tokens.label.tiny}>Special Styles</p>
                                   <div className="flex gap-2 flex-wrap">
@@ -293,7 +350,6 @@ export function ServicesSettingsContent() {
                                   </div>
                                 </div>
                                 <div className="h-px bg-border" />
-                                {/* Solid colors */}
                                 <div className="space-y-1">
                                   <p className={tokens.label.tiny}>Solid Colors</p>
                                   <div className="grid grid-cols-6 gap-1.5">
@@ -313,9 +369,11 @@ export function ServicesSettingsContent() {
 
                           {/* Name & service count */}
                           <div className="flex-1 min-w-0">
-                            <p className={cn(tokens.body.emphasis, 'truncate')}>{cat.category_name}</p>
+                            <p className={cn(tokens.body.emphasis, 'truncate', isEmpty && 'text-muted-foreground')}>{cat.category_name}</p>
                             <div className="flex items-center gap-2 flex-wrap">
-                              <p className={tokens.body.muted}>{serviceCount} service{serviceCount !== 1 ? 's' : ''}</p>
+                              <p className={cn(tokens.body.muted, isEmpty && 'italic')}>
+                                {isEmpty ? 'Empty' : `${serviceCount} service${serviceCount !== 1 ? 's' : ''}`}
+                              </p>
                             </div>
                           </div>
                           <div className="flex items-center gap-1">
@@ -363,18 +421,27 @@ export function ServicesSettingsContent() {
                 <Scissors className="w-5 h-5 text-primary" />
                 <CardTitle className={tokens.heading.section}>SERVICES</CardTitle>
               </div>
-              <Button size={tokens.button.card} onClick={() => {
-                setServiceDialogMode('create');
-                setEditingService(null);
-                setPresetCategory(serviceCategories[0]?.category_name || '');
-                setServiceDialogOpen(true);
-              }}>
+              <Button size={tokens.button.card} onClick={() => openCreateService()}>
                 <Plus className="w-4 h-4 mr-1" /> Add Service
               </Button>
             </div>
             <CardDescription>Manage individual services within each category.</CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Search */}
+            {(allServices?.length || 0) > 5 && (
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search services..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="pl-9 h-9"
+                  autoCapitalize="off"
+                />
+              </div>
+            )}
+
             {localOrder.length === 0 ? (
               <div className={tokens.empty.container}>
                 <Scissors className={tokens.empty.icon} />
@@ -382,12 +449,20 @@ export function ServicesSettingsContent() {
                 <p className={tokens.empty.description}>Create categories first, then add services.</p>
               </div>
             ) : (
-              <Accordion type="multiple" className="w-full">
+              <Accordion
+                type="multiple"
+                className="w-full"
+                {...(searchExpandedValues ? { value: searchExpandedValues } : {})}
+              >
                 {localOrder.map((cat) => {
-                  const services = servicesByCategory[cat.category_name] || [];
+                  const services = filteredServicesByCategory[cat.category_name] || [];
+                  const totalServices = servicesByCategory[cat.category_name]?.length || 0;
                   const abbr = getCategoryAbbreviation(cat.category_name);
                   const hasGradient = isGradientMarker(cat.color_hex);
                   const gradient = hasGradient ? getGradientFromMarker(cat.color_hex) : null;
+
+                  // Hide categories with no matching services when searching
+                  if (searchQuery.trim() && services.length === 0) return null;
 
                   return (
                     <AccordionItem key={cat.id} value={cat.id} className="border rounded-lg mb-2 px-4">
@@ -400,7 +475,9 @@ export function ServicesSettingsContent() {
                             {abbr}
                           </div>
                           <span className={cn(tokens.body.emphasis, 'tracking-normal')}>{cat.category_name}</span>
-                          <span className={cn(tokens.body.muted, 'tracking-normal')}>({services.length})</span>
+                          <span className={cn(tokens.body.muted, 'tracking-normal')}>
+                            ({searchQuery.trim() ? `${services.length}/${totalServices}` : totalServices})
+                          </span>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent>
@@ -408,33 +485,52 @@ export function ServicesSettingsContent() {
                           {services.length === 0 ? (
                             <p className={cn(tokens.empty.description, 'text-center py-4')}>No services in this category</p>
                           ) : (
-                            services.map(svc => (
-                              <div key={svc.id} className="flex items-center gap-3 p-2.5 rounded-md hover:bg-muted/40 transition-colors group cursor-pointer" onClick={() => { setEditorService(svc); setEditorDialogOpen(true); }}>
-                                <div className="flex-1 min-w-0">
-                                  <p className={cn(tokens.body.emphasis, 'truncate')}>{svc.name}</p>
-                                  <div className={cn('flex items-center gap-3', tokens.body.muted)}>
-                                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{svc.duration_minutes}min</span>
-                                    {svc.price != null && <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />{svc.price.toFixed(2)}</span>}
+                            services.map(svc => {
+                              const margin = computeMargin(svc.price || 0, svc.cost);
+                              return (
+                                <div key={svc.id} className="flex items-center gap-3 p-2.5 rounded-md hover:bg-muted/40 transition-colors group cursor-pointer" onClick={() => openEditService(svc)}>
+                                  <div className="flex-1 min-w-0">
+                                    <p className={cn(tokens.body.emphasis, 'truncate')}>{svc.name}</p>
+                                    <div className={cn('flex items-center gap-3', tokens.body.muted)}>
+                                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{svc.duration_minutes}min</span>
+                                      {svc.price != null && (
+                                        <span className="flex items-center gap-1">
+                                          <DollarSign className="w-3 h-3" />{formatCurrency(svc.price)}
+                                        </span>
+                                      )}
+                                      <MarginBadge margin={margin} />
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div onClick={e => e.stopPropagation()}>
+                                          <Switch
+                                            checked={svc.is_active !== false}
+                                            onCheckedChange={() => handleToggleActive(svc)}
+                                            className="scale-75"
+                                          />
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent><p className="text-xs">{svc.is_active !== false ? 'Active' : 'Inactive'}</p></TooltipContent>
+                                    </Tooltip>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={(e) => {
+                                      e.stopPropagation();
+                                      setDeleteServiceId(svc.id);
+                                      setDeleteServiceName(svc.name);
+                                    }}>
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={(e) => { e.stopPropagation(); deleteService.mutate(svc.id); }}>
-                                    <Trash2 className="w-3 h-3" />
-                                  </Button>
-                                </div>
-                              </div>
-                            ))
+                              );
+                            })
                           )}
                           <Button
                             variant="ghost"
                             size={tokens.button.inline}
                             className="w-full mt-1 text-xs text-muted-foreground"
-                            onClick={() => {
-                              setServiceDialogMode('create');
-                              setEditingService(null);
-                              setPresetCategory(cat.category_name);
-                              setServiceDialogOpen(true);
-                            }}
+                            onClick={() => openCreateService(cat.category_name)}
                           >
                             <Plus className="w-3 h-3 mr-1" /> Add service to {cat.category_name}
                           </Button>
@@ -448,7 +544,19 @@ export function ServicesSettingsContent() {
           </CardContent>
         </Card>
 
-        {/* Dialogs */}
+        {/* Unified Service Editor Dialog (create + edit) */}
+        <ServiceEditorDialog
+          open={editorDialogOpen}
+          onOpenChange={setEditorDialogOpen}
+          onSubmit={handleEditorSubmit}
+          isPending={createService.isPending || updateService.isPending}
+          categories={serviceCategories}
+          initialData={editorService}
+          mode={editorMode}
+          presetCategory={editorPresetCategory}
+        />
+
+        {/* Category Form Dialog */}
         <CategoryFormDialog
           open={categoryDialogOpen}
           onOpenChange={setCategoryDialogOpen}
@@ -456,33 +564,7 @@ export function ServicesSettingsContent() {
           isPending={createCategory.isPending || renameCategory.isPending}
           initialName={editingCategory?.category_name}
           mode={categoryDialogMode}
-        />
-
-        <ServiceFormDialog
-          open={serviceDialogOpen}
-          onOpenChange={setServiceDialogOpen}
-          onSubmit={handleServiceSubmit}
-          isPending={createService.isPending || updateService.isPending}
-          categories={serviceCategories}
-          initialData={editingService}
-          mode={serviceDialogMode}
-        />
-
-        <ServiceEditorDialog
-          open={editorDialogOpen}
-          onOpenChange={setEditorDialogOpen}
-          onSubmit={(service) => {
-            if (editorService?.id) {
-              const { id, ...updates } = { id: editorService.id, ...service };
-              updateService.mutate({ id, ...updates } as any, {
-                onSuccess: () => { setEditorDialogOpen(false); setEditorService(null); },
-              });
-            }
-          }}
-          isPending={updateService.isPending}
-          categories={serviceCategories}
-          initialData={editorService}
-          mode="edit"
+          existingCategories={serviceCategories.map(c => c.category_name)}
         />
 
         {/* Delete category confirmation */}
@@ -499,6 +581,24 @@ export function ServicesSettingsContent() {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeleteCategory} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Delete service confirmation */}
+        <AlertDialog open={!!deleteServiceId} onOpenChange={(open) => { if (!open) { setDeleteServiceId(null); setDeleteServiceName(''); } }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete "{deleteServiceName}"?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will deactivate the service and remove it from your menu. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteService} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                 Delete
               </AlertDialogAction>
             </AlertDialogFooter>
