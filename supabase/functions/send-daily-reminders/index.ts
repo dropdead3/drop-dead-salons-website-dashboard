@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { sendOrgEmail } from "../_shared/email-sender.ts";
+import { PLATFORM_URL } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -88,7 +89,7 @@ serve(async (req: Request): Promise<Response> => {
     console.log(`Sending reminders to ${stylistsToRemind.length} stylists`);
 
     const emailResults = [];
-    const siteUrl = Deno.env.get("SITE_URL") || "https://getzura.com";
+    const siteUrl = Deno.env.get("SITE_URL") || PLATFORM_URL;
 
     for (const stylist of stylistsToRemind) {
       try {

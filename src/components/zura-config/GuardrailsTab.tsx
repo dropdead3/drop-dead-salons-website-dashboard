@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AI_ASSISTANT_NAME_DEFAULT } from '@/lib/brand';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -144,7 +145,7 @@ export function GuardrailsTab({ organizationId }: GuardrailsTabProps) {
             <div className="text-center py-12 text-muted-foreground">
               <ShieldCheck className="h-10 w-10 mx-auto mb-3 opacity-50" />
               <p>No guardrails configured</p>
-              <p className="text-xs mt-1">Add safety rules to control what Zura can and can't discuss</p>
+              <p className="text-xs mt-1">Add safety rules to control what {AI_ASSISTANT_NAME_DEFAULT} can and can't discuss</p>
             </div>
           ) : (
             <div className="space-y-2">

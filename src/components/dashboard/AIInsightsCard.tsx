@@ -9,6 +9,7 @@ import { Loader2 as Loader2Icon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useZuraNavigationSafe } from '@/contexts/ZuraNavigationContext';
+import { PLATFORM_NAME } from '@/lib/brand';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { VisibilityGate } from '@/components/visibility';
@@ -307,7 +308,7 @@ export function AIInsightsCard() {
                   <div className={tokens.card.iconBox}>
                     <Brain className={tokens.card.icon} />
                   </div>
-                  <CardTitle className="text-base font-display tracking-wide">ZURA BUSINESS INSIGHTS</CardTitle>
+                  <CardTitle className="text-base font-display tracking-wide">{PLATFORM_NAME.toUpperCase()} BUSINESS INSIGHTS</CardTitle>
                 </div>
                 <Button variant="ghost" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="gap-1.5 text-xs h-8">
                   <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
@@ -476,7 +477,7 @@ export function AIInsightsCard() {
                         })()}
                         <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/50">
                           <ZuraAvatar size="sm" className="w-3 h-3 opacity-40" />
-                          <span className="text-[10px] text-muted-foreground/50">Powered by Zura AI · Based on your data</span>
+                          <span className="text-[10px] text-muted-foreground/50">Powered by {PLATFORM_NAME} AI · Based on your data</span>
                         </div>
                       </div>
                     )}

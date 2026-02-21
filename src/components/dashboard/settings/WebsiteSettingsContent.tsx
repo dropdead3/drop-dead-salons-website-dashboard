@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { tokens } from '@/lib/design-tokens';
+import { PLATFORM_NAME } from '@/lib/brand';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -846,7 +847,7 @@ function RetailTab() {
               </Button>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              This link works independently — clients can browse your products even if you don't use the full Zura website.
+              This link works independently — clients can browse your products even if you don't use the full {PLATFORM_NAME} website.
             </p>
 
             {/* QR Code */}

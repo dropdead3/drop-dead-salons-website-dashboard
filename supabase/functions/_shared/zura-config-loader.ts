@@ -104,7 +104,7 @@ export async function loadZuraConfig(
     if (guardrailsRes.data) result.guardrails = guardrailsRes.data;
     if (roleRulesRes.data) result.roleRules = roleRulesRes.data;
   } catch (e) {
-    console.error("Error loading Zura config:", e);
+    console.error("Error loading AI config:", e);
     // Return defaults on error - functions continue working
   }
 

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
+import { AI_ASSISTANT_NAME_DEFAULT as AI_ASSISTANT_NAME } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -454,7 +455,7 @@ async function generateAISummary(
   why_now: string[];
 } | null> {
   try {
-    const prompt = `You are Zura, an operations intelligence engine for salon and medspa businesses. Generate a concise executive lever recommendation.
+    const prompt = `You are ${AI_ASSISTANT_NAME}, an operations intelligence engine for salon and medspa businesses. Generate a concise executive lever recommendation.
 
 Lever type: ${candidate.lever_type}
 Deviation score: ${(candidate.score * 100).toFixed(0)}%
@@ -482,7 +483,7 @@ Be specific to salon/medspa operations. Use advisory tone, no shame language.`;
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
           messages: [
-            { role: "system", content: "You are Zura, a calm and confident operations advisor. Return valid JSON only." },
+            { role: "system", content: `You are ${AI_ASSISTANT_NAME}, a calm and confident operations advisor. Return valid JSON only.` },
             { role: "user", content: prompt },
           ],
           tools: [

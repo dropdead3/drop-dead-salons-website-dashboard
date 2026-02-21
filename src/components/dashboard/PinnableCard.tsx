@@ -11,7 +11,7 @@ interface PinnableCardProps {
   category?: string;
   children: ReactNode;
   className?: string;
-  /** Optional metric data to enable Zura AI analysis */
+  /** Optional metric data to enable AI analysis */
   metricData?: Record<string, string | number>;
   /** Date range context for AI analysis */
   dateRange?: string;

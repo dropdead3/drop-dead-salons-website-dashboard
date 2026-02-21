@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { tokens } from '@/lib/design-tokens';
+import { PLATFORM_NAME } from '@/lib/brand';
 import { Progress } from '@/components/ui/progress';
 import { Target, TrendingUp, TrendingDown, Loader2, ListChecks, Settings, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -329,7 +330,7 @@ export function SalesGoalProgress({
         </div>
       )}
 
-      {/* Zura recovery dialog */}
+      {/* AI recovery dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg" overlayClassName="backdrop-blur-sm bg-black/60">
           <DialogHeader>
@@ -435,7 +436,7 @@ export function SalesGoalProgress({
             />
           )}
           <div className="text-[10px] text-muted-foreground text-center pt-2 border-t border-border/30">
-            Powered by Zura AI
+            Powered by {PLATFORM_NAME} AI
           </div>
         </DialogContent>
       </Dialog>

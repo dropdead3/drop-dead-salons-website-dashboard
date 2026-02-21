@@ -1,13 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
 import { loadZuraConfig, buildZuraPromptPrefix } from "../_shared/zura-config-loader.ts";
+import { AI_ASSISTANT_NAME_DEFAULT as AI_ASSISTANT_NAME } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are Zura, the AI assistant for a salon management system. Users may address you as "Zura" or "Hey Zura". You help staff members manage appointments, look up client information, and check availability. You are friendly, efficient, and professional.
+const SYSTEM_PROMPT = `You are ${AI_ASSISTANT_NAME}, the AI assistant for a salon management system. Users may address you as "${AI_ASSISTANT_NAME}" or "Hey ${AI_ASSISTANT_NAME}". You help staff members manage appointments, look up client information, and check availability. You are friendly, efficient, and professional.
 
 When users ask you to perform actions, use the available tools to help them. Always confirm destructive actions before executing them.
 
@@ -459,12 +460,12 @@ serve(async (req) => {
         if (prefix) {
           dynamicSystemPrompt = prefix + SYSTEM_PROMPT;
         }
-        if (config.personality?.display_name && config.personality.display_name !== 'Zura') {
-          dynamicSystemPrompt = dynamicSystemPrompt.replace(/You are Zura/g, `You are ${config.personality.display_name}`);
-          dynamicSystemPrompt = dynamicSystemPrompt.replace(/"Zura"/g, `"${config.personality.display_name}"`);
+        if (config.personality?.display_name && config.personality.display_name !== AI_ASSISTANT_NAME) {
+          dynamicSystemPrompt = dynamicSystemPrompt.replace(new RegExp(`You are ${AI_ASSISTANT_NAME}`, 'g'), `You are ${config.personality.display_name}`);
+          dynamicSystemPrompt = dynamicSystemPrompt.replace(new RegExp(`"${AI_ASSISTANT_NAME}"`, 'g'), `"${config.personality.display_name}"`);
         }
       } catch (e) {
-        console.error("Failed to load Zura config:", e);
+        console.error("Failed to load AI config:", e);
       }
     }
 

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
+import { PLATFORM_NAME } from '@/lib/brand';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -55,7 +56,7 @@ export function ActiveCampaignsCard() {
         <Card className="p-6 rounded-2xl shadow-md text-center">
           <Target className="w-6 h-6 mx-auto text-muted-foreground/20 mb-2" />
           <p className="text-xs text-muted-foreground">No active campaigns</p>
-          <p className="text-[11px] text-muted-foreground/60 mt-1">Launch one from Zura AI insights</p>
+          <p className="text-[11px] text-muted-foreground/60 mt-1">Launch one from {PLATFORM_NAME} AI insights</p>
         </Card>
       ) : (
         <div className="space-y-3">

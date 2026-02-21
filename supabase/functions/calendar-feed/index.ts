@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { PLATFORM_NAME } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -67,7 +68,7 @@ Deno.serve(async (req) => {
 
     // Build iCalendar content
     const now = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-    let ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Zura//Calendar Feed//EN\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nX-WR-CALNAME:Zura Appointments\r\nX-WR-TIMEZONE:UTC\r\nREFRESH-INTERVAL;VALUE=DURATION:PT30M\r\n`;
+    let ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//${PLATFORM_NAME}//Calendar Feed//EN\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nX-WR-CALNAME:${PLATFORM_NAME} Appointments\r\nX-WR-TIMEZONE:UTC\r\nREFRESH-INTERVAL;VALUE=DURATION:PT30M\r\n`;
 
     for (const appt of appointments || []) {
       const dtStart = formatICSDate(appt.appointment_date, appt.start_time);
@@ -83,7 +84,7 @@ Deno.serve(async (req) => {
       );
 
       ics += `BEGIN:VEVENT\r\n`;
-      ics += `UID:${appt.id}@zura.app\r\n`;
+      ics += `UID:${appt.id}@${PLATFORM_NAME.toLowerCase()}.app\r\n`;
       ics += `DTSTAMP:${now}\r\n`;
       ics += `DTSTART:${dtStart}\r\n`;
       ics += `DTEND:${dtEnd}\r\n`;
@@ -102,7 +103,7 @@ Deno.serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "text/calendar; charset=utf-8",
-        "Content-Disposition": 'inline; filename="zura-appointments.ics"',
+        "Content-Disposition": `inline; filename="${PLATFORM_NAME.toLowerCase()}-appointments.ics"`,
         "Cache-Control": "no-cache, no-store, must-revalidate",
       },
     });

@@ -1,8 +1,10 @@
+import { PLATFORM_NAME, PLATFORM_URL } from "./brand.ts";
+
 /**
  * Multi-Tenant Email Infrastructure
  * 
  * Two entry points:
- *  - sendEmail()    → Platform-level emails (Zura branding)
+ *  - sendEmail()    → Platform-level emails (platform branding)
  *  - sendOrgEmail() → Org-branded emails (dynamic branding from organizations table)
  * 
  * All emails route through a single Resend account.
@@ -60,7 +62,7 @@ interface OrgBranding {
 }
 
 const PLATFORM_DOMAIN = "mail.getzura.com";
-const PLATFORM_FROM = `Zura <notifications@${PLATFORM_DOMAIN}>`;
+const PLATFORM_FROM = `${PLATFORM_NAME} <notifications@${PLATFORM_DOMAIN}>`;
 
 const BUTTON_RADIUS_MAP: Record<string, string> = {
   sharp: '0',
@@ -334,7 +336,7 @@ function buildBrandedTemplate(branding: OrgBranding | null, innerHtml: string, u
     ? `<p style="margin: 0 0 8px; font-size: 11px; color: #a1a1aa; line-height: 1.5;">${physicalAddress}</p>`
     : '';
   const attributionHtml = showAttribution
-    ? `<p style="margin: 0; font-size: 12px; color: #a1a1aa;">Sent via <a href="https://getzura.com" style="color: #a1a1aa; text-decoration: underline;">Zura</a></p>`
+    ? `<p style="margin: 0; font-size: 12px; color: #a1a1aa;">Sent via <a href="${PLATFORM_URL}" style="color: #a1a1aa; text-decoration: underline;">${PLATFORM_NAME}</a></p>`
     : '';
   const unsubscribeHtml = unsubscribeUrl
     ? `<p style="margin: 8px 0 0; font-size: 11px; color: #a1a1aa;"><a href="${unsubscribeUrl}" style="color: #a1a1aa; text-decoration: underline;">Unsubscribe from marketing emails</a></p>`

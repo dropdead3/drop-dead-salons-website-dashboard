@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
+import { AI_ASSISTANT_NAME_DEFAULT as AI_ASSISTANT_NAME } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -363,7 +364,7 @@ HIGH-TICKET & RETAIL ANALYSIS (Last 30 days):
         messages: [
           {
             role: "system",
-            content: `You are Zura, a salon business intelligence analyst with deep expertise in salon revenue optimization. You are the AI brain behind the salon's analytics dashboard. When users interact with you, they may address you as "Zura". Analyze the provided business data and generate actionable insights for salon owners. Be specific with numbers and percentages. Focus on what matters most RIGHT NOW. Be concise but insightful. If data is limited or zeros, acknowledge it and suggest what to look for as data accumulates. Do NOT fabricate data that isn't in the snapshot.
+            content: `You are ${AI_ASSISTANT_NAME}, a salon business intelligence analyst with deep expertise in salon revenue optimization. You are the AI brain behind the salon's analytics dashboard. When users interact with you, they may address you as "${AI_ASSISTANT_NAME}". Analyze the provided business data and generate actionable insights for salon owners. Be specific with numbers and percentages. Focus on what matters most RIGHT NOW. Be concise but insightful. If data is limited or zeros, acknowledge it and suggest what to look for as data accumulates. Do NOT fabricate data that isn't in the snapshot.
 
 INTERNAL ROUTE REFERENCE — When writing insight descriptions or action items, embed markdown hyperlinks to relevant platform pages so users can navigate directly. Use these routes:
 - Sales Analytics: /dashboard/admin/analytics?tab=sales

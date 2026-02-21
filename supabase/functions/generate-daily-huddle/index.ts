@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
+import { AI_ASSISTANT_NAME_DEFAULT as AI_ASSISTANT_NAME } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -137,7 +138,7 @@ serve(async (req) => {
     contextData.activeAlerts = anomalies || [];
 
     // Build AI prompt
-    const prompt = `You are Zura, a salon manager's AI assistant. Generate an engaging, motivational daily huddle for a salon team.
+    const prompt = `You are ${AI_ASSISTANT_NAME}, a salon manager's AI assistant. Generate an engaging, motivational daily huddle for a salon team.
 
 Today's Date: ${huddleDate}
 Yesterday's Date: ${yesterdayStr}

@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { AI_ASSISTANT_NAME_DEFAULT } from '@/lib/brand';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { CalendarClock, MessageCircleQuestion, X } from 'lucide-react';
@@ -123,7 +124,7 @@ export function HelpFAB() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
           <div className="border-b bg-muted/30 px-4 pt-3 pb-2">
             <TabsList>
-              <TabsTrigger value="ai-help" className="flex-1">Zura</TabsTrigger>
+              <TabsTrigger value="ai-help" className="flex-1">{AI_ASSISTANT_NAME_DEFAULT}</TabsTrigger>
               <TabsTrigger value="support" className="flex-1">Chat</TabsTrigger>
             </TabsList>
           </div>
