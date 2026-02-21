@@ -35,6 +35,12 @@ import {
   useStylistLevels, 
   useSaveStylistLevels,
 } from '@/hooks/useStylistLevels';
+import {
+  useStylistCommissionOverrides,
+  useDeleteCommissionOverride,
+} from '@/hooks/useStylistCommissionOverrides';
+import { CommissionOverrideDialog } from './CommissionOverrideDialog';
+import type { StylistCommissionOverride } from '@/hooks/useStylistCommissionOverrides';
 
 type LocalStylistLevel = {
   id: string;
@@ -43,6 +49,8 @@ type LocalStylistLevel = {
   label: string;
   clientLabel: string;
   description: string;
+  serviceCommissionRate: string;
+  retailCommissionRate: string;
 };
 
 const getLevelColor = (index: number, totalLevels: number) => {
@@ -63,6 +71,11 @@ const getLevelColor = (index: number, totalLevels: number) => {
   return colorStops[Math.min(colorIndex, colorStops.length - 1)];
 };
 
+const formatRate = (rate: number | null | undefined): string => {
+  if (rate == null) return '';
+  return String(Math.round(rate * 100));
+};
+
 export function StylistLevelsContent() {
   const { data: dbLevels, isLoading, error, refetch } = useStylistLevels();
   const saveLevels = useSaveStylistLevels();
@@ -73,6 +86,43 @@ export function StylistLevelsContent() {
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
+  // Commission overrides
+  const { data: orgData } = useQuery({
+    queryKey: ['user-org-id'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data } = await supabase
+        .from('organization_admins')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+  const orgId = orgData?.organization_id;
+
+  const { data: overrides } = useStylistCommissionOverrides(orgId);
+  const deleteOverride = useDeleteCommissionOverride();
+  const [overrideDialogOpen, setOverrideDialogOpen] = useState(false);
+  const [editingOverride, setEditingOverride] = useState<StylistCommissionOverride | null>(null);
+
+  // Fetch stylist names for overrides display
+  const { data: stylistNames } = useQuery({
+    queryKey: ['stylist-names-for-overrides', orgId],
+    enabled: !!orgId && !!overrides?.length,
+    queryFn: async () => {
+      const userIds = overrides!.map(o => o.user_id);
+      const { data } = await supabase
+        .from('employee_profiles')
+        .select('user_id, display_name, full_name')
+        .in('user_id', userIds);
+      const map: Record<string, string> = {};
+      data?.forEach(s => { map[s.user_id] = s.display_name || s.full_name || 'Unknown'; });
+      return map;
+    },
+  });
+
   useEffect(() => {
     if (dbLevels && !hasChanges) {
       const localLevels: LocalStylistLevel[] = dbLevels.map((l) => ({
@@ -82,6 +132,8 @@ export function StylistLevelsContent() {
         label: l.label,
         clientLabel: l.client_label,
         description: l.description || '',
+        serviceCommissionRate: formatRate(l.service_commission_rate),
+        retailCommissionRate: formatRate(l.retail_commission_rate),
       }));
       setLevels(localLevels);
     }
@@ -149,6 +201,13 @@ export function StylistLevelsContent() {
     setHasChanges(true);
   };
 
+  const handleCommissionChange = (index: number, field: 'serviceCommissionRate' | 'retailCommissionRate', value: string) => {
+    const newLevels = [...levels];
+    newLevels[index] = { ...newLevels[index], [field]: value };
+    setLevels(newLevels);
+    setHasChanges(true);
+  };
+
   const handleDelete = (index: number) => {
     const newLevels = levels.filter((_, idx) => idx !== index);
     const updatedLevels = newLevels.map((level, idx) => ({
@@ -169,6 +228,8 @@ export function StylistLevelsContent() {
       label: newLevelName.trim(),
       clientLabel: `Level ${levels.length + 1}`,
       description: '',
+      serviceCommissionRate: '',
+      retailCommissionRate: '',
     };
     
     setLevels([...levels, newLevel]);
@@ -185,6 +246,8 @@ export function StylistLevelsContent() {
       client_label: `Level ${idx + 1}`,
       description: level.description || undefined,
       display_order: idx,
+      service_commission_rate: level.serviceCommissionRate ? parseFloat(level.serviceCommissionRate) / 100 : null,
+      retail_commission_rate: level.retailCommissionRate ? parseFloat(level.retailCommissionRate) / 100 : null,
     }));
 
     saveLevels.mutate(levelsToSave, {
@@ -197,6 +260,10 @@ export function StylistLevelsContent() {
 
   const handleDiscard = () => {
     setHasChanges(false);
+  };
+
+  const isOverrideExpired = (o: StylistCommissionOverride) => {
+    return o.expires_at && new Date(o.expires_at) < new Date();
   };
 
   if (isLoading) {
@@ -236,7 +303,7 @@ export function StylistLevelsContent() {
       <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50 border border-border/50">
         <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
         <p className="text-sm text-muted-foreground">
-          Level-based service pricing is displayed on the client-facing website. To adjust level pricing, use the{' '}
+          Commission rates set here apply to all stylists at each level unless individually overridden below. Level-based service pricing is displayed on the client-facing website — adjust level pricing in the{' '}
           <a href="/dashboard/admin/services" className="text-primary hover:underline">Services editor</a>.
         </p>
       </div>
@@ -245,7 +312,7 @@ export function StylistLevelsContent() {
       <Card>
         <CardHeader>
           <CardTitle className="font-display text-lg">EXPERIENCE LEVELS</CardTitle>
-          <CardDescription>Define and order stylist experience tiers.</CardDescription>
+          <CardDescription>Define experience tiers with default commission rates.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           {levels.map((level, index) => {
@@ -309,6 +376,15 @@ export function StylistLevelsContent() {
                           </span>
                         )}
                       </div>
+                      {/* Commission rates display */}
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
+                        {level.serviceCommissionRate && (
+                          <span>Svc: {level.serviceCommissionRate}%</span>
+                        )}
+                        {level.retailCommissionRate && (
+                          <span>Retail: {level.retailCommissionRate}%</span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button className="p-2 rounded-md hover:bg-muted" onClick={() => setEditingIndex(index)}>
                           <Pencil className="w-4 h-4 text-muted-foreground" />
@@ -347,13 +423,41 @@ export function StylistLevelsContent() {
                 </div>
                 
                 {editingIndex === index && (
-                  <div className="px-4 pb-3">
+                  <div className="px-4 pb-3 space-y-3">
                     <Textarea
                       placeholder="Optional description..."
                       value={level.description}
                       onChange={(e) => handleDescriptionChange(index, e.target.value)}
                       className="text-sm min-h-[60px]"
                     />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">Service Commission %</label>
+                        <Input
+                          type="number"
+                          placeholder="e.g. 40"
+                          value={level.serviceCommissionRate}
+                          onChange={(e) => handleCommissionChange(index, 'serviceCommissionRate', e.target.value)}
+                          className="h-8 text-sm"
+                          min={0}
+                          max={100}
+                          autoCapitalize="off"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">Retail Commission %</label>
+                        <Input
+                          type="number"
+                          placeholder="e.g. 10"
+                          value={level.retailCommissionRate}
+                          onChange={(e) => handleCommissionChange(index, 'retailCommissionRate', e.target.value)}
+                          className="h-8 text-sm"
+                          min={0}
+                          max={100}
+                          autoCapitalize="off"
+                        />
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -385,6 +489,95 @@ export function StylistLevelsContent() {
           )}
         </CardContent>
       </Card>
+
+      {/* Commission Overrides Section */}
+      {orgId && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="font-display text-lg">COMMISSION OVERRIDES</CardTitle>
+                <CardDescription>Individual stylist exceptions that override their level's default rates.</CardDescription>
+              </div>
+              <Button
+                size={tokens.button.inline}
+                onClick={() => { setEditingOverride(null); setOverrideDialogOpen(true); }}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add Override
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {!overrides?.length ? (
+              <p className="text-sm text-muted-foreground text-center py-6">
+                No commission overrides set. All stylists use their level's default rates.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {overrides.map((o) => {
+                  const expired = isOverrideExpired(o);
+                  return (
+                    <div
+                      key={o.id}
+                      className={cn(
+                        "group flex items-center justify-between gap-4 px-4 py-3 rounded-xl border bg-muted/50",
+                        expired && "opacity-50"
+                      )}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium truncate">
+                            {stylistNames?.[o.user_id] || 'Loading...'}
+                          </span>
+                          {expired && (
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-destructive/10 text-destructive">Expired</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                          {o.service_commission_rate != null && (
+                            <span>Svc: {Math.round(o.service_commission_rate * 100)}%</span>
+                          )}
+                          {o.retail_commission_rate != null && (
+                            <span>Retail: {Math.round(o.retail_commission_rate * 100)}%</span>
+                          )}
+                          <span className="truncate">— {o.reason}</span>
+                          {o.expires_at && (
+                            <span>Expires: {new Date(o.expires_at).toLocaleDateString()}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          className="p-2 rounded-md hover:bg-muted"
+                          onClick={() => { setEditingOverride(o); setOverrideDialogOpen(true); }}
+                        >
+                          <Pencil className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                        <button
+                          className="p-2 rounded-md hover:bg-destructive/10"
+                          onClick={() => deleteOverride.mutate(o.id)}
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {orgId && (
+        <CommissionOverrideDialog
+          open={overrideDialogOpen}
+          onOpenChange={setOverrideDialogOpen}
+          organizationId={orgId}
+          override={editingOverride}
+        />
+      )}
     </div>
   );
 }
