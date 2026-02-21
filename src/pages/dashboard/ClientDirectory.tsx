@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Users, 
   Search, 
@@ -26,7 +28,8 @@ import {
   Lock,
   User,
   Ban,
-  Archive
+  Archive,
+  GitMerge
 } from 'lucide-react';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
 import { useQuery } from '@tanstack/react-query';
@@ -60,6 +63,7 @@ type SortDirection = 'asc' | 'desc';
 type PrimaryTab = 'all' | 'my';
 
 export default function ClientDirectory() {
+  const navigate = useNavigate();
   const { formatDate } = useFormatDate();
   const { user, roles } = useAuth();
   const { formatCurrencyWhole } = useFormatCurrency();
@@ -74,6 +78,25 @@ export default function ClientDirectory() {
   const [selectedSource, setSelectedSource] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedLetter, setSelectedLetter] = useState<string>('all');
+  const [selectedForMerge, setSelectedForMerge] = useState<Set<string>>(new Set());
+  const [showMerged, setShowMerged] = useState(false);
+
+  const canMerge = roles.some(role => ['admin', 'manager', 'super_admin'].includes(role));
+
+  const toggleMergeSelection = (clientId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedForMerge(prev => {
+      const next = new Set(prev);
+      if (next.has(clientId)) next.delete(clientId);
+      else next.add(clientId);
+      return next;
+    });
+  };
+
+  const handleBulkMerge = () => {
+    const ids = Array.from(selectedForMerge).join(',');
+    navigate(`/dashboard/admin/merge-clients?clientIds=${ids}`);
+  };
 
   // Reset page when filters change
   useEffect(() => {
@@ -201,9 +224,16 @@ export default function ClientDirectory() {
       filtered = filtered.filter(c => c.lead_source === selectedSource);
     }
 
-    // Tab filter (VIP, At Risk, New, Banned, Archived)
+    // Filter out merged clients unless toggled on
+    if (!showMerged) {
+      filtered = filtered.filter(c => !(c as any).status || (c as any).status !== 'merged');
+    }
+
+    // Tab filter (VIP, At Risk, New, Banned, Archived, Merged)
     if (activeTab === 'archived') {
       filtered = filtered.filter(c => c.is_archived);
+    } else if (activeTab === 'merged') {
+      filtered = filtered.filter(c => (c as any).status === 'merged');
     } else {
       // All other tabs: exclude archived clients
       filtered = filtered.filter(c => !c.is_archived);
@@ -379,7 +409,15 @@ export default function ClientDirectory() {
                 : 'Track your client relationships and identify opportunities.'}
             </p>
           </div>
-          <PhorestSyncButton syncType="clients" />
+          <div className="flex items-center gap-2">
+            {canMerge && selectedForMerge.size >= 2 && (
+              <Button onClick={handleBulkMerge} className="gap-2">
+                <GitMerge className="w-4 h-4" />
+                Merge Selected ({selectedForMerge.size})
+              </Button>
+            )}
+            <PhorestSyncButton syncType="clients" />
+          </div>
         </div>
 
         {/* Primary Tabs */}
@@ -528,8 +566,25 @@ export default function ClientDirectory() {
                   <Archive className="w-3 h-3 mr-1" /> Archived ({stats.archived})
                 </TabsTrigger>
               )}
+              {showMerged && (
+                <TabsTrigger value="merged" className="text-xs text-muted-foreground">
+                  <GitMerge className="w-3 h-3 mr-1" /> Merged
+                </TabsTrigger>
+              )}
             </TabsList>
           </Tabs>
+
+          {/* Show Merged Toggle */}
+          {canMerge && (
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer ml-2">
+              <Checkbox
+                checked={showMerged}
+                onCheckedChange={(v) => setShowMerged(!!v)}
+                className="h-3.5 w-3.5"
+              />
+              Show merged
+            </label>
+          )}
         </div>
 
         {/* Alphabetical Filter */}
@@ -646,10 +701,20 @@ export default function ClientDirectory() {
                         key={client.id} 
                         className={cn(
                           "py-4 flex items-center gap-4 cursor-pointer hover:bg-muted/50 -mx-6 px-6 transition-colors",
-                          client.is_archived && "opacity-60"
+                          client.is_archived && "opacity-60",
+                          (client as any).status === 'merged' && "opacity-50"
                         )}
                         onClick={handleClientClick}
                       >
+                        {/* Merge checkbox */}
+                        {canMerge && (client as any).status !== 'merged' && (
+                          <Checkbox
+                            checked={selectedForMerge.has(client.id)}
+                            onCheckedChange={() => {}}
+                            onClick={(e) => toggleMergeSelection(client.id, e)}
+                            className="shrink-0"
+                          />
+                        )}
                         <Avatar className={cn("w-12 h-12", client.is_archived && "opacity-50")}>
                           <AvatarFallback className="font-display text-sm bg-primary/10">
                             {client.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
@@ -745,6 +810,26 @@ export default function ClientDirectory() {
                             <p className="font-display text-lg">{formatCurrencyWhole(Number(client.total_spend || 0))}</p>
                             <p className="text-xs text-muted-foreground">lifetime</p>
                           </div>
+                          {/* Single merge action */}
+                          {canMerge && (client as any).status !== 'merged' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 shrink-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/dashboard/admin/merge-clients?clientIds=${client.id}`);
+                              }}
+                              title="Merge this client"
+                            >
+                              <GitMerge className="w-4 h-4 text-muted-foreground" />
+                            </Button>
+                          )}
+                          {(client as any).status === 'merged' && (
+                            <Badge variant="outline" className="text-xs shrink-0">
+                              <GitMerge className="w-3 h-3 mr-1" /> Merged
+                            </Badge>
+                          )}
                           <ChevronRight className="w-5 h-5 text-muted-foreground" />
                         </div>
                       </div>

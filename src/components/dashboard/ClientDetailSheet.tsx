@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { differenceInDays } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -37,11 +38,13 @@ import {
   Bell,
   Home,
   StickyNote,
-  Megaphone
+  Megaphone,
+  GitMerge
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { LEAD_SOURCES, getLeadSourceLabel, getLeadSourceColor, isStandardSource } from '@/lib/leadSources';
+import { MergedProfileBanner } from './clients/merge/MergedProfileBanner';
 import { VisitHistoryTimeline } from './VisitHistoryTimeline';
 import { ClientNotesSection } from './ClientNotesSection';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
@@ -103,12 +106,15 @@ interface ClientDetailSheetProps {
 }
 
 export function ClientDetailSheet({ client, open, onOpenChange, locationName }: ClientDetailSheetProps) {
+  const navigate = useNavigate();
   const { data: visitHistory, isLoading: historyLoading } = useClientVisitHistory(client?.phorest_client_id);
   const { formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();
   const { roles } = useAuth();
   const { selectedOrganization } = useOrganizationContext();
   const queryClient = useQueryClient();
+
+  const canMerge = roles.some(role => ['admin', 'manager', 'super_admin'].includes(role));
 
   // Contact edit mode state
   const [isEditing, setIsEditing] = useState(false);
@@ -415,6 +421,15 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
             </button>
             <ScrollArea className="flex-1">
     <div className="p-6 space-y-4">
+          {/* Merged Profile Banner */}
+          {(client as any).status === 'merged' && (client as any).merged_into_client_id && (
+            <MergedProfileBanner
+              mergedIntoName="Primary Client"
+              mergedAt={(client as any).merged_at || new Date().toISOString()}
+              primaryClientId={(client as any).merged_into_client_id}
+            />
+          )}
+
           {/* Banned Client Alert */}
           {client.is_banned && (
             <div className="mb-0">
@@ -960,9 +975,23 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
             </TabsContent>
           </Tabs>
 
-          {/* Archive & Ban Actions */}
+          {/* Merge + Archive & Ban Actions */}
           {roles.some(role => ['admin', 'manager', 'super_admin'].includes(role)) && (
             <div className="flex items-center gap-2 pt-4 mt-2 border-t border-border/40">
+              {canMerge && (client as any).status !== 'merged' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs"
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigate(`/dashboard/admin/merge-clients?clientIds=${client.id}`);
+                  }}
+                >
+                  <GitMerge className="w-3.5 h-3.5" />
+                  Merge
+                </Button>
+              )}
               <ArchiveClientToggle
                 clientId={client.id}
                 clientName={client.name}
