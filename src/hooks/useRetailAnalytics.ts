@@ -243,7 +243,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
         return q;
       });
 
-      // ── Fetch native Zura retail_sale_items for the period ──
+      // ── Fetch native retail_sale_items for the period ──
       let nativeSaleItems: any[] = [];
       try {
         const nativeItems = await fetchAllRows<any>(() => {
@@ -398,7 +398,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
 
       // Process phorest items
       currentItems.forEach((item: any) => processItem(item, 'phorest'));
-      // Process native Zura items
+      // Process native items
       nativeSaleItems.forEach((item: any) => processItem({
         item_name: item.product_name,
         item_type: 'Product',

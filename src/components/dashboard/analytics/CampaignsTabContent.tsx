@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { PLATFORM_NAME } from '@/lib/brand';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -95,7 +96,7 @@ export function CampaignsTabContent() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="font-display text-base">All Campaigns</CardTitle>
-            <CardDescription>Created from Zura AI insights</CardDescription>
+            <CardDescription>Created from {PLATFORM_NAME} AI insights</CardDescription>
           </div>
           <Button variant="outline" size={tokens.button.card} asChild>
             <Link to="/dashboard/campaigns">View All</Link>

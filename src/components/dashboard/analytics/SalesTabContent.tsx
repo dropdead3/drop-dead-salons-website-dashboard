@@ -98,7 +98,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
     dateRange: filters.dateRange,
   };
 
-  // Resolve location name for Zura AI context
+  // Resolve location name for AI context
   const selectedLocationName = locationFilter
     ? locations?.find(l => l.id === locationFilter)?.name || 'Unknown'
     : 'All Locations';

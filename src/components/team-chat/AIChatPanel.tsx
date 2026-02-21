@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Trash2 } from 'lucide-react';
+import { AI_ASSISTANT_NAME_DEFAULT } from '@/lib/brand';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -74,7 +75,7 @@ export function AIChatPanel({ open, onOpenChange }: AIChatPanelProps) {
             <div className="flex items-center gap-2">
               <ZuraAvatar size="sm" />
               <div>
-                <SheetTitle className="text-base">Zura</SheetTitle>
+                <SheetTitle className="text-base">{AI_ASSISTANT_NAME_DEFAULT}</SheetTitle>
                 <p className="text-xs text-muted-foreground">
                   Your AI-powered salon assistant
                 </p>
@@ -102,7 +103,7 @@ export function AIChatPanel({ open, onOpenChange }: AIChatPanelProps) {
             <div className="py-8 space-y-6">
               <div className="text-center space-y-2">
                 <ZuraAvatar size="lg" className="mx-auto" />
-                <h3 className="font-medium">Hi, I'm Zura!</h3>
+                <h3 className="font-medium">Hi, I'm {AI_ASSISTANT_NAME_DEFAULT}!</h3>
                 <p className="text-sm text-muted-foreground max-w-[280px] mx-auto">
                   I can search clients, check schedules, and manage appointments for you.
                 </p>

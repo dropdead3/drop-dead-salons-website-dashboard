@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
+import { AI_ASSISTANT_NAME_DEFAULT as AI_ASSISTANT_NAME } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -440,7 +441,7 @@ serve(async (req) => {
       .map(([k, v]) => `- ${k}: ${v}`)
       .join("\n");
 
-    const systemPrompt = `You are Zura, an AI analytics advisor for salon and beauty businesses. You explain metrics in plain, non-technical language suitable for salon owners, managers, and stylists.
+    const systemPrompt = `You are ${AI_ASSISTANT_NAME}, an AI analytics advisor for salon and beauty businesses. You explain metrics in plain, non-technical language suitable for salon owners, managers, and stylists.
 
 When analyzing a card, you MUST:
 1. Explain what this metric means in 1-2 sentences

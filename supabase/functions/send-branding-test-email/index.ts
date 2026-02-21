@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { sendOrgEmail } from "../_shared/email-sender.ts";
+import { PLATFORM_NAME, PLATFORM_URL } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -81,10 +82,10 @@ Deno.serve(async (req) => {
         are all working as expected.
       </p>
       <p style="font-size: 14px; color: #3f3f46; line-height: 1.6; margin: 0 0 24px;">
-        This is exactly how your team and clients will see emails sent through Zura.
+        This is exactly how your team and clients will see emails sent through ${PLATFORM_NAME}.
       </p>
       <div style="text-align: center;">
-        <a href="https://getzura.com" style="display: inline-block; background-color: #6366F1; color: #ffffff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
+        <a href="${PLATFORM_URL}" style="display: inline-block; background-color: #6366F1; color: #ffffff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
           Visit Dashboard
         </a>
       </div>

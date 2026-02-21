@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { sendEmail } from "../_shared/email-sender.ts";
+import { PLATFORM_NAME_FULL } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,7 +43,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     await sendEmail({
       to: [email],
-      subject: `You're invited to join the Zura Platform Team as ${roleInfo.title}`,
+      subject: `You're invited to join the ${PLATFORM_NAME_FULL} Team as ${roleInfo.title}`,
       html: `
         <div style="text-align: center; margin-bottom: 24px;">
           <div style="display: inline-block; padding: 16px; background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%); border-radius: 12px;">
@@ -52,7 +53,7 @@ const handler = async (req: Request): Promise<Response> => {
         </div>
         
         <p>Hi there,</p>
-        <p><strong>${inviter_name}</strong> has invited you to join the Zura Platform Administration team.</p>
+        <p><strong>${inviter_name}</strong> has invited you to join the ${PLATFORM_NAME_FULL} Administration team.</p>
         
         <div style="background: #f8fafc; border-radius: 12px; padding: 16px; margin: 24px 0; border: 1px solid #e2e8f0;">
           <p style="margin: 0 0 8px; color: #7c3aed; font-size: 12px; text-transform: uppercase; font-weight: 500;">Your Role</p>

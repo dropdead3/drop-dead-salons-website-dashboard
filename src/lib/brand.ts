@@ -1,14 +1,39 @@
 /**
  * Global platform identity tokens.
  *
- * PLATFORM_NAME        — The software system itself (global infrastructure layer).
- * PLATFORM_NAME_FULL   — Full branded name for copyright lines and footers.
- * AI_ASSISTANT_NAME_DEFAULT — Fallback AI assistant identity when no org-level config exists.
- *
  * These tokens represent the PLATFORM only.
  * Never use them for Organization, Location, User, or tenant-level entities.
+ *
+ * To rebrand, change the values here — every UI string, AI prompt, and email
+ * that imports these tokens will update automatically.
  */
 
+// ── Core Identity ──────────────────────────────────────────────────────────────
+/** The software system name (global infrastructure layer). */
 export const PLATFORM_NAME = 'Zura';
+
+/** Full branded name for copyright lines and footers. */
 export const PLATFORM_NAME_FULL = 'Zura Platform';
+
+/** Short tagline / descriptor shown alongside the name. */
+export const PLATFORM_DESCRIPTOR = 'Guided Intelligence for Scaling Operators';
+
+/** Product category for SEO and meta descriptions. */
+export const PLATFORM_CATEGORY = 'Salon Intelligence Platform';
+
+// ── AI Assistant ───────────────────────────────────────────────────────────────
+/** Fallback AI assistant identity when no org-level config exists. */
 export const AI_ASSISTANT_NAME_DEFAULT = 'Zura';
+
+// ── Product Surface Names ──────────────────────────────────────────────────────
+/** Weekly executive intelligence brief. */
+export const EXECUTIVE_BRIEF_NAME = 'Zura Weekly Intelligence Brief';
+
+/** Marketing operating system surface. */
+export const MARKETING_OS_NAME = 'Zura Marketing OS';
+
+/** Simulation / what-if engine. */
+export const SIMULATION_ENGINE_NAME = 'Zura Simulation Engine';
+
+/** Guardrailed automation layer. */
+export const AUTOMATION_LAYER_NAME = 'Zura Automation';

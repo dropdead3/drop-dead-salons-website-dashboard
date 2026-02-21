@@ -325,7 +325,7 @@ export default function NotificationPreferences() {
           </CardContent>
         </Card>
 
-        {/* Zura Insights Email */}
+        {/* AI Insights Email */}
         <Card className="border-primary/20">
           <CardHeader>
             <div className="flex items-center gap-3">

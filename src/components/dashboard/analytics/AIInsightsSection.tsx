@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { tokens } from '@/lib/design-tokens';
+import { PLATFORM_NAME } from '@/lib/brand';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -247,7 +248,7 @@ export function AIInsightsSection() {
                 <Brain className="w-5 h-5 text-violet-600 dark:text-violet-400" />
               </div>
               <CardTitle className="font-display text-base tracking-wide">
-                ZURA INSIGHTS
+                {PLATFORM_NAME.toUpperCase()} INSIGHTS
               </CardTitle>
             </div>
             <Button variant="ghost" size={tokens.button.inline} onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="gap-1.5 text-xs h-8">
@@ -383,7 +384,7 @@ export function AIInsightsSection() {
 
                   <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/50">
                     <ZuraAvatar size="sm" className="w-3 h-3 opacity-40" />
-                    <span className="text-[10px] text-muted-foreground/50">Powered by Zura AI · Based on your data</span>
+                    <span className="text-[10px] text-muted-foreground/50">Powered by {PLATFORM_NAME} AI · Based on your data</span>
                   </div>
                 </div>
               )}

@@ -1,13 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
 import { loadZuraConfig, buildZuraPromptPrefix } from "../_shared/zura-config-loader.ts";
+import { AI_ASSISTANT_NAME_DEFAULT as AI_ASSISTANT_NAME, PLATFORM_NAME } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const BASE_SYSTEM_PROMPT = `You are Zura, the AI assistant for a salon management platform called Zura. Users may call you "Zura" or "Hey Zura". You help users navigate the dashboard, understand features, and answer questions about salon operations.
+const BASE_SYSTEM_PROMPT = `You are ${AI_ASSISTANT_NAME}, the AI assistant for a salon management platform called ${PLATFORM_NAME}. Users may call you "${AI_ASSISTANT_NAME}" or "Hey ${AI_ASSISTANT_NAME}". You help users navigate the dashboard, understand features, and answer questions about salon operations.
 
 Key features you can help with:
 - **Command Center**: The main dashboard hub with quick stats and actions
@@ -59,12 +60,12 @@ serve(async (req) => {
           systemPrompt = prefix + systemPrompt;
         }
         // Override display name if configured
-        if (config.personality?.display_name && config.personality.display_name !== 'Zura') {
-          systemPrompt = systemPrompt.replace(/You are Zura/g, `You are ${config.personality.display_name}`);
-          systemPrompt = systemPrompt.replace(/"Zura"/g, `"${config.personality.display_name}"`);
+        if (config.personality?.display_name && config.personality.display_name !== AI_ASSISTANT_NAME) {
+          systemPrompt = systemPrompt.replace(new RegExp(`You are ${AI_ASSISTANT_NAME}`, 'g'), `You are ${config.personality.display_name}`);
+          systemPrompt = systemPrompt.replace(new RegExp(`"${AI_ASSISTANT_NAME}"`, 'g'), `"${config.personality.display_name}"`);
         }
       } catch (configError) {
-        console.error("Failed to load Zura config, using defaults:", configError);
+        console.error("Failed to load AI config, using defaults:", configError);
       }
     }
 

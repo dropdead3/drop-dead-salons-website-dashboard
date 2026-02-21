@@ -272,7 +272,7 @@ export default function DashboardHome() {
         {/* Today's Birthday Banner - visible to all */}
         <TodaysBirthdayBanner />
 
-        {/* Zura Insights Nudge Banner */}
+        {/* Insights Nudge Banner */}
         <InsightsNudgeBanner userId={user?.id} isLeadership={isLeadership} />
 
         {/* Header with Customize Button */}

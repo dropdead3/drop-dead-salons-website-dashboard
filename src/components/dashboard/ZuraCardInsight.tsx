@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
+import { PLATFORM_NAME } from '@/lib/brand';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -46,8 +47,8 @@ export function ZuraCardInsight({ cardName, metricData, dateRange, locationName 
       <DialogTrigger asChild>
         <button
           className="p-0.5 rounded-full hover:bg-primary/10 transition-colors cursor-pointer h-7 w-7 flex items-center justify-center"
-          title="Zura AI Analysis"
-          aria-label={`Get Zura AI analysis for ${cardName}`}
+          title={`${PLATFORM_NAME} AI Analysis`}
+          aria-label={`Get ${PLATFORM_NAME} AI analysis for ${cardName}`}
         >
           <ZuraAvatar size="sm" />
         </button>
@@ -61,7 +62,7 @@ export function ZuraCardInsight({ cardName, metricData, dateRange, locationName 
           <div className="flex items-center gap-3">
             <ZuraAvatar size="md" />
             <div>
-              <p className="font-display text-base font-medium tracking-wide">Zura AI</p>
+              <p className="font-display text-base font-medium tracking-wide">{PLATFORM_NAME} AI</p>
               <p className="text-xs text-muted-foreground mt-0.5">{cardName}</p>
             </div>
           </div>
@@ -136,7 +137,7 @@ export function ZuraCardInsight({ cardName, metricData, dateRange, locationName 
               planType="card_insight"
             />
           )}
-          <p className="text-[10px] text-muted-foreground text-center tracking-wide">Powered by Zura AI</p>
+          <p className="text-[10px] text-muted-foreground text-center tracking-wide">Powered by {PLATFORM_NAME} AI</p>
         </div>
       </DialogContent>
     </Dialog>

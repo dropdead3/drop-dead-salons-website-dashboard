@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { PLATFORM_NAME } from '@/lib/brand';
 import { useZuraNavigationSafe } from '@/contexts/ZuraNavigationContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -312,7 +313,7 @@ export function AIInsightsDrawer() {
               <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
                 <Brain className="w-3 h-3 text-primary" />
               </div>
-              <span>Zura Insights</span>
+              <span>{PLATFORM_NAME} Insights</span>
               <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
             </motion.button>
           ) : (
@@ -329,7 +330,7 @@ export function AIInsightsDrawer() {
               {!activeGuidance && (
                 <div className="p-4 pb-3">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="font-display text-sm tracking-[0.15em]">ZURA BUSINESS INSIGHTS</span>
+                    <span className="font-display text-sm tracking-[0.15em]">{PLATFORM_NAME.toUpperCase()} BUSINESS INSIGHTS</span>
                     <div className="flex items-center gap-1">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0}>
                         <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
@@ -536,7 +537,7 @@ export function AIInsightsDrawer() {
                       <div className="px-4 pb-4 pt-4 mt-2 border-t border-border/50 bg-muted/20 rounded-b-2xl">
                         <div className="flex items-center justify-center gap-1.5">
                           <ZuraAvatar size="sm" className="w-3 h-3 opacity-40" />
-                          <span className="text-[10px] text-muted-foreground/50">Powered by Zura AI · Based on your data</span>
+                          <span className="text-[10px] text-muted-foreground/50">Powered by {PLATFORM_NAME} AI · Based on your data</span>
                         </div>
                       </div>
                     </motion.div>
