@@ -24,11 +24,13 @@ import { useActiveLocations, isClosedOnDate, getLocationHoursForDate } from '@/h
 import { ClosedDayWarningDialog } from '@/components/dashboard/schedule/ClosedDayWarningDialog';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, Coffee } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { CalendarFilterState } from '@/components/dashboard/schedule/CalendarFiltersPopover';
+import { AddBreakForm } from '@/components/dashboard/schedule/AddBreakForm';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 interface QuickLoginState {
   quickLoginUserId?: string;
@@ -94,7 +96,39 @@ export default function Schedule() {
     confirmationStatus: [],
     leadSources: [],
   });
-  
+
+  // Right-click "Add Break" context menu state
+  const [breakContextMenu, setBreakContextMenu] = useState<{
+    open: boolean;
+    x: number;
+    y: number;
+    time: string;
+    stylistId: string;
+  } | null>(null);
+  const [breakDialogOpen, setBreakDialogOpen] = useState(false);
+  const [breakDefaults, setBreakDefaults] = useState<{ time: string; stylistId: string }>({ time: '09:00', stylistId: '' });
+
+  const handleSlotContextMenu = (stylistId: string, time: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    const slotDateTime = new Date(currentDate);
+    const [slotH, slotM] = time.split(':').map(Number);
+    slotDateTime.setHours(slotH, slotM, 0, 0);
+    if (slotDateTime < new Date()) return;
+    setBreakContextMenu({ open: true, x: e.clientX, y: e.clientY, time, stylistId });
+  };
+
+  // Close context menu on any click
+  useEffect(() => {
+    if (!breakContextMenu?.open) return;
+    const close = () => setBreakContextMenu(null);
+    window.addEventListener('click', close);
+    window.addEventListener('contextmenu', close);
+    return () => {
+      window.removeEventListener('click', close);
+      window.removeEventListener('contextmenu', close);
+    };
+  }, [breakContextMenu?.open]);
+
 
   // Set default location when locations load
   useEffect(() => {
@@ -378,6 +412,7 @@ export default function Schedule() {
                 hoursEnd={preferences.hours_end}
                 onAppointmentClick={handleAppointmentClick}
                 onSlotClick={handleSlotClick}
+                onSlotContextMenu={handleSlotContextMenu}
                 selectedAppointmentId={selectedAppointment?.id}
                 locationHours={hoursInfo.openTime && hoursInfo.closeTime ? { open: hoursInfo.openTime, close: hoursInfo.closeTime } : null}
                 isLocationClosed={hoursInfo.isClosed}
@@ -396,6 +431,7 @@ export default function Schedule() {
               hoursEnd={preferences.hours_end}
               onAppointmentClick={handleAppointmentClick}
               onSlotClick={handleSlotClick}
+              onSlotContextMenu={handleSlotContextMenu}
               selectedAppointmentId={selectedAppointment?.id}
               assistedAppointmentIds={assistedAppointmentIds}
               appointmentsWithAssistants={appointmentsWithAssistants}
@@ -554,6 +590,41 @@ export default function Schedule() {
         reason={closedDayWarning.reason}
         isOutsideHours={closedDayWarning.isOutsideHours}
       />
+
+      {/* Right-click context menu */}
+      {breakContextMenu?.open && (
+        <div
+          className="fixed z-50 min-w-[160px] rounded-lg border bg-popover p-1 shadow-md animate-in fade-in-0 zoom-in-95"
+          style={{ top: breakContextMenu.y, left: breakContextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+            onClick={() => {
+              setBreakDefaults({ time: breakContextMenu.time, stylistId: breakContextMenu.stylistId });
+              setBreakContextMenu(null);
+              setBreakDialogOpen(true);
+            }}
+          >
+            <Coffee className="h-4 w-4" />
+            Add Break
+          </button>
+        </div>
+      )}
+
+      {/* Break dialog from context menu */}
+      <Dialog open={breakDialogOpen} onOpenChange={setBreakDialogOpen}>
+        <DialogContent className="sm:max-w-md p-0">
+          <DialogTitle className="sr-only">Add Break</DialogTitle>
+          <AddBreakForm
+            date={currentDate}
+            time={breakDefaults.time}
+            defaultStylistId={breakDefaults.stylistId}
+            onBack={() => setBreakDialogOpen(false)}
+            onComplete={() => setBreakDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
