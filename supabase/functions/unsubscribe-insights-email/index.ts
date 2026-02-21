@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { PLATFORM_NAME } from "../_shared/brand.ts";
 
 serve(async (req: Request): Promise<Response> => {
   try {
@@ -59,7 +60,7 @@ serve(async (req: Request): Promise<Response> => {
     return new Response(
       renderPage(
         "Unsubscribed ✓",
-        "You've been unsubscribed from Zura Insights emails. You can re-enable them anytime from your Notification Preferences in the dashboard."
+        `You've been unsubscribed from ${PLATFORM_NAME} Insights emails. You can re-enable them anytime from your Notification Preferences in the dashboard.`
       ),
       { status: 200, headers: { "Content-Type": "text/html" } }
     );

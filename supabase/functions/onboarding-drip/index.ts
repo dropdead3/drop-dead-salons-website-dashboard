@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendEmail } from "../_shared/email-sender.ts";
+import { PLATFORM_NAME } from "../_shared/brand.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,7 +15,7 @@ interface DripStep {
 }
 
 const DRIP_SEQUENCE: DripStep[] = [
-  { day: 0, template_key: 'welcome', subject: 'Welcome to Zura!' },
+  { day: 0, template_key: 'welcome', subject: `Welcome to ${PLATFORM_NAME}!` },
   { day: 1, template_key: 'getting_started', subject: 'Getting Started: Your First Steps' },
   { day: 3, template_key: 'add_team', subject: 'Tip: Add Your Team Members' },
   { day: 5, template_key: 'setup_locations', subject: 'Set Up Your Locations' },
@@ -121,7 +122,7 @@ Deno.serve(async (req) => {
 
 function generateDefaultEmail(step: DripStep, org: any): string {
   const templates: Record<string, string> = {
-    welcome: `<h1>Welcome to Zura, ${org.name}!</h1><p>We're thrilled to have you on board.</p><ul><li>Add your team members</li><li>Set up your locations</li><li>Explore our features</li></ul>`,
+    welcome: `<h1>Welcome to ${PLATFORM_NAME}, ${org.name}!</h1><p>We're thrilled to have you on board.</p><ul><li>Add your team members</li><li>Set up your locations</li><li>Explore our features</li></ul>`,
     getting_started: `<h1>Getting Started with Your Account</h1><p>Hi ${org.name},</p><p>Let's walk through the essential first steps.</p>`,
     add_team: `<h1>Build Your Team</h1><p>Hi ${org.name},</p><p>Invite your colleagues to join and collaborate!</p>`,
     setup_locations: `<h1>Configure Your Locations</h1><p>Hi ${org.name},</p><p>Now is a great time to add your locations.</p>`,
