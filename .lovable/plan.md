@@ -1,149 +1,98 @@
 
 
-## Combined Stylist Roster and Commission Configurator
+## Clean Up Commissions Tab: Unified Commission Intelligence
 
-### Problem
+### The Redundancy Problem
 
-The Level Assignments card and Commission Overrides card are separate, disconnected sections. A user managing stylist compensation has to scroll between them, and there's no unified view showing a stylist's full commission picture (their level, the default rate from that level, and any active override). The override dialog uses a raw HTML `<select>` instead of the design system components, and neither card has drill-down detail views.
+Right now there are two disconnected views of commission data:
 
-### Solution
+| Location | What it shows | Problem |
+|----------|--------------|---------|
+| Payroll Hub > Commissions tab | Summary cards ($0), empty Tier Distribution, Commission Tiers CRUD table | The "Tier Distribution" card is nearly always empty because the resolution engine prioritizes levels and overrides over revenue-band tiers. The Tiers editor is a configuration tool living on an operational/analytics page. |
+| Settings > Stylist Levels | Experience level definitions, Team Commission Roster with drilldown | This is the actual source of truth for most stylist rates, but it's buried in settings. |
 
-Combine both cards into a single **"TEAM COMMISSION ROSTER"** card that shows every stylist in one unified list. Each row displays the stylist's name, assigned level, effective commission rates, and the rate source (level default or override). Clicking a stylist row opens a drill-down dialog with full detail and editing capabilities.
+The commission resolution hierarchy is **Override > Level > Tier fallback**, so the Tiers editor is only relevant for stylists with no level assigned and no override. Yet it dominates the Commissions tab.
 
----
+### Proposed Architecture
 
-### What Gets Built
+**Principle**: The Commissions tab should be an **operational intelligence view** (how is commission playing out this period?). Configuration belongs in Settings.
 
-**1. Combined "TEAM COMMISSION ROSTER" Card**
+**1. Move the Commission Tiers Editor to Settings**
 
-Replaces both the Level Assignments card and Commission Overrides card with one unified card.
+Relocate `CommissionTiersEditor` from the Commissions tab into the Stylist Levels settings page, positioned below the Team Commission Roster. This groups all three commission configuration layers (levels, overrides, and tier fallbacks) in one place.
 
-Each stylist row shows:
-- Name
-- Current level badge (color-coded, or "Unassigned" in amber)
-- Effective service/retail commission rates
-- Source indicator: small pill showing "Level Default" or "Override" (with override reason on hover)
-- Override expiry date if applicable
+The Tiers card gets a subtitle update: "Fallback revenue brackets -- applied when a stylist has no level or override assigned."
 
-Header controls:
-- Location filter dropdown (existing)
-- "Add Override" button (existing, moved to header)
-- Bulk level assignment (existing, shown when checkboxes are selected)
+**2. Replace the Commissions Tab with a Unified Commission Intelligence View**
 
-**2. Stylist Commission Drill-Down Dialog**
+Rebuild the Commissions tab content to show the full resolved picture:
 
-Clicking any stylist row opens a drill-down dialog (using existing `DRILLDOWN_DIALOG_CONTENT_CLASS` for consistent animation) with:
+```text
+COMMISSION INTELLIGENCE
+How your team's commissions are resolving this period.
 
-- **Header**: Stylist name + current level badge
-- **Section 1 - Level Assignment**: Level picker to change their level, showing what the level's default rates are
-- **Section 2 - Commission Override**: Inline form to add/edit/remove an override (service %, retail %, reason, expiry) -- no separate dialog needed
-- **Section 3 - Effective Rates Summary**: Shows the final resolved rates with source explanation ("Using override rates because: Negotiated contract" or "Using Level 3 default rates")
-- **Footer action**: "Review Services & Pricing" link to `/dashboard/admin/settings?category=services`
+[Current Period Commissions: $X]  [Avg Effective Rate: X%]  [Overrides Active: X]
 
-**3. UI Improvements**
+TEAM COMMISSION BREAKDOWN
+Stylist        Level              Svc %   Retail %   Source          Est. Commission
+Kristi D.      Level 3 - Core     45%     12%        Override        $2,340
+Jordan T.      Level 2 - Rising   40%     10%        Level Default   $1,800
+New Stylist    Unassigned          35%      0%        Tier Fallback   $420
+                                                                     --------
+                                                     Total:          $4,560
 
-- Replace raw `<select>` in CommissionOverrideDialog with design system `Select` component
-- Use the drilldown dialog pattern (blur overlay, slide animation) consistently
-- Add hover tooltips on override reason text
-- Show "Expires in X days" instead of raw date for upcoming expirations
-- Empty state for unassigned stylists gets a CTA button
+[Click any row -> navigates to Settings > Stylist Levels drilldown]
+```
 
----
+This replaces the three summary cards (Current Period, Potential Additional, Near Next Tier) with updated ones that reflect the full resolution engine, not just the tier system. It replaces the empty Tier Distribution card with an actual team breakdown table showing resolved rates and sources.
+
+**3. Cross-link between Commissions Tab and Settings**
+
+- Commissions tab header gets a "Configure Rates" button that links to Settings > Stylist Levels
+- Each row in the Commissions breakdown is clickable and navigates to the Settings page with the stylist drilldown open
+- The Settings page Team Commission Roster gets a "View Commission Analytics" link back to the Commissions tab
 
 ### Technical Plan
 
-**Modified: `src/components/dashboard/settings/StylistLevelsContent.tsx`**
-- Remove the separate Commission Overrides card (lines 508-585)
-- Remove the separate `StylistLevelAssignments` render (lines 503-506)
-- Replace both with the new `TeamCommissionRoster` component
-- Keep the CommissionOverrideDialog import removed (functionality moves inline into drill-down)
+**File: `src/components/dashboard/payroll/CommissionIntelligence.tsx` (new)**
+- Replaces both `CommissionInsights` and `CommissionTiersEditor` on the Commissions tab
+- Fetches team directory, resolved commissions (via `useResolveCommission`), stylist levels, and overrides
+- Three summary cards at top:
+  - Current Period Commissions (sum of all resolved commissions)
+  - Average Effective Service Rate (weighted average across team)
+  - Active Overrides count (with expiry warnings)
+- Team breakdown table with columns: Stylist, Level, Svc %, Retail %, Source, Est. Commission
+- Each row clickable, navigates to `/dashboard/admin/settings?category=levels` (could deep-link to drilldown in future)
+- Header "Configure Rates" button links to Settings > Stylist Levels
 
-**New: `src/components/dashboard/settings/TeamCommissionRoster.tsx`**
-- Combines all logic from `StylistLevelAssignments` and the overrides card
-- Fetches team directory, stylist levels, and commission overrides
-- Renders unified stylist list with level badges, rates, and source indicators
-- Each row is clickable to open the drill-down
-- Bulk level assignment bar at bottom when checkboxes are active
-- Location filter in header
+**File: `src/pages/dashboard/admin/Payroll.tsx` (modified)**
+- Replace `CommissionInsights` and `CommissionTiersEditor` imports with single `CommissionIntelligence`
+- Commissions TabsContent renders just `<CommissionIntelligence />`
 
-**New: `src/components/dashboard/settings/StylistCommissionDrilldown.tsx`**
-- Drill-down dialog using `DRILLDOWN_DIALOG_CONTENT_CLASS`
-- Three sections: Level Assignment, Override Editor, Effective Rates
-- Level picker uses `Select` component with level color badges
-- Override section has inline form (no separate dialog needed)
-- Shows resolved commission source with explanation
-- Footer with "Review Services & Pricing" navigation link
-- Uses existing mutations: `useAssignStylistLevel`, `useUpsertCommissionOverride`, `useDeleteCommissionOverride`
+**File: `src/components/dashboard/settings/StylistLevelsContent.tsx` (modified)**
+- Import and render `CommissionTiersEditor` below the `TeamCommissionRoster` card
+- Add a small "View Commission Analytics" link/button in the TeamCommissionRoster header that navigates to `/dashboard/admin/payroll?tab=commissions`
 
-**Deleted (functionality absorbed): `src/components/dashboard/settings/StylistLevelAssignments.tsx`**
-- All logic moves into `TeamCommissionRoster`
+**Files removed: None** (CommissionTiersEditor stays as a component, just moves location. CommissionInsights gets replaced by CommissionIntelligence.)
 
-**Deleted (functionality absorbed): `src/components/dashboard/settings/CommissionOverrideDialog.tsx`**
-- Override editing moves inline into `StylistCommissionDrilldown`
-
----
-
-### Layout
-
-```text
-TEAM COMMISSION ROSTER
-Manage level assignments and commission rates for your team.
-
-[Location: All v]                              [+ Add Override]
-
-[ ] Kristi D.    [Level 3 - Core Artist]   Svc: 45%  Retail: 12%  [Level Default]
-[ ] Jordan T.    [Level 2 - Rising Star]   Svc: 50%  Retail: 15%  [Override] Expires in 12d
-[ ] New Stylist  [Unassigned]              Svc: --   Retail: --   [No rates]
-
-{2 selected}  [Set Level for Selected v]  [Clear]
-```
-
-Clicking "Kristi D." opens:
-
-```text
-+------------------------------------------+
-| Kristi D.                    [Level 3]   |
-|------------------------------------------|
-| LEVEL                                    |
-| [Level 3 - Core Artist  v]              |
-| Default rates: Svc 40% / Retail 10%     |
-|                                          |
-| COMMISSION OVERRIDE                      |
-| Service %  [45]    Retail %  [12]        |
-| Reason     [Negotiated contract     ]    |
-| Expires    [2026-05-01]                  |
-| [Remove Override]           [Save]       |
-|                                          |
-| EFFECTIVE RATES                          |
-| Service: 45%  Retail: 12%               |
-| Source: Override (Negotiated contract)   |
-|                                          |
-| [Review Services & Pricing ->]           |
-+------------------------------------------+
-```
-
----
+**File: `src/components/dashboard/payroll/CommissionInsights.tsx` (deleted)**
+- Functionality absorbed into CommissionIntelligence
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/settings/TeamCommissionRoster.tsx` | New combined card component |
-| `src/components/dashboard/settings/StylistCommissionDrilldown.tsx` | New drill-down dialog for per-stylist editing |
-| `src/components/dashboard/settings/StylistLevelsContent.tsx` | Replace two separate cards with single `TeamCommissionRoster` |
-| `src/components/dashboard/settings/StylistLevelAssignments.tsx` | Removed (absorbed into roster) |
-| `src/components/dashboard/settings/CommissionOverrideDialog.tsx` | Removed (absorbed into drill-down) |
-
----
+| `src/components/dashboard/payroll/CommissionIntelligence.tsx` | New unified operational view for Commissions tab |
+| `src/pages/dashboard/admin/Payroll.tsx` | Swap old components for `CommissionIntelligence` |
+| `src/components/dashboard/settings/StylistLevelsContent.tsx` | Add `CommissionTiersEditor` below roster + cross-link |
+| `src/components/dashboard/payroll/CommissionInsights.tsx` | Deleted (replaced) |
 
 ### Further Improvement Suggestions
 
 | Enhancement | Description |
 |-------------|-------------|
-| **Commission History Timeline** | Add a tab in the drill-down showing the audit trail from `commission_rate_history` -- when rates changed, who changed them, previous values |
-| **"Unassign" option** | Currently no way to remove a stylist from a level (set back to unassigned). Add a "Remove Level" option in the level picker |
-| **Level change impact preview** | Before confirming a level change, show what the rate difference will be ("Service rate will change from 40% to 45%") |
-| **Override templates** | Pre-built override reasons like "90-day probation", "Negotiated contract", "Performance bonus" with suggested rates |
-| **Bulk override removal** | Select multiple stylists and remove all their overrides at once |
-| **Services qualification check** | When assigning a level, automatically check if the stylist has the right services enabled for that level and show warnings if not |
-
+| **Period selector** | Let the Commissions tab filter by pay period (current, previous, custom range) to see historical commission breakdowns |
+| **Commission forecast** | "If current pace continues, projected total commission this period is $X" using the existing payroll forecasting hook |
+| **Source distribution chart** | Small donut showing what % of team uses Override vs Level Default vs Tier Fallback |
+| **Deep-link drilldown** | Clicking a stylist row on the Commissions tab opens the Settings drilldown directly via URL param |
+| **Export** | "Download CSV" for the commission breakdown table for payroll processing |
