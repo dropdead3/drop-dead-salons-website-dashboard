@@ -53,7 +53,15 @@ export const TYPOGRAPHY_RULES = {
     'Use borders or backgrounds to create visual separation',
     'Import tokens from @/lib/design-tokens for consistent class strings',
     'KPI tile labels MUST use tokens.kpi.label (Termina) — never font-sans for uppercase metric labels',
+    'Table column headers MUST use tokens.table.columnHeader (Aeonik Pro, Title Case) — NEVER uppercase',
   ],
+
+  TABLE_COLUMN_HEADER_RULES: {
+    font: 'Aeonik Pro (font-sans)',
+    capitalization: 'Title Case — NEVER uppercase',
+    token: 'tokens.table.columnHeader',
+    prohibited: ['uppercase', 'font-display on column headers'],
+  },
 } as const;
 
 export function isProhibitedFontWeight(className: string): boolean {

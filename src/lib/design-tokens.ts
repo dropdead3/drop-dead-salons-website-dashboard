@@ -135,6 +135,14 @@ export const tokens = {
   },
 
   // ========================================
+  // TABLE TOKENS
+  // ========================================
+  table: {
+    /** Column header: Aeonik Pro, small, medium weight, muted, tracked — NEVER uppercase */
+    columnHeader: 'font-sans text-[11px] font-medium text-muted-foreground tracking-wider',
+  },
+
+  // ========================================
   // LOADING STATE TOKENS
   // ========================================
   loading: {
@@ -209,6 +217,7 @@ export function getTokenFor(context:
   | 'stat-xl'
   | 'kpi-label'
   | 'kpi-value'
+  | 'table-column-header'
   | 'empty-heading'
   | 'empty-description'
 ): string {
@@ -226,6 +235,7 @@ export function getTokenFor(context:
     'stat-xl': tokens.stat.xlarge,
     'kpi-label': tokens.kpi.label,
     'kpi-value': tokens.kpi.value,
+    'table-column-header': tokens.table.columnHeader,
     'empty-heading': tokens.empty.heading,
     'empty-description': tokens.empty.description,
   };

@@ -129,6 +129,26 @@ Card footer "View All" links:
 
 Font: Always `font-sans` (Aeonik Pro). Max weight: `font-medium`.
 
+## Table Column Headers (HARD RULE)
+
+Column headers MUST use `tokens.table.columnHeader` — Aeonik Pro, Title Case, NEVER uppercase.
+
+```tsx
+import { tokens } from '@/lib/design-tokens';
+
+// Custom grid headers
+<div className={cn("grid grid-cols-[...] gap-2 px-3 py-1.5", tokens.table.columnHeader)}>
+  <div>Stylist</div>
+  <div>Level</div>
+</div>
+
+// Standard TableHead — no uppercase class, Title Case text
+<TableHead>Stylist</TableHead>
+<TableHead>Level</TableHead>
+```
+
+Prohibited: `uppercase` class on column headers, ALL CAPS text content with font-sans.
+
 ## Loading States
 
 Spinner (full page):
