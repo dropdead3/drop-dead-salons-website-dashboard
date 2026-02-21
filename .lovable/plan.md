@@ -275,13 +275,13 @@ Notable: `CampaignsTabContent.tsx` uses `rounded-2xl` on 5 Card elements. `AIIns
 
 5. ✅ **DONE -- (Brand)**: PLATFORM_URL already imported in EmailBrandingSettings.tsx. design-rules.ts header already brand-neutral. DD75 display strings neutralized (→ "Client Engine"). Remaining dd75 refs are asset filenames and database category keys (require coordinated migration).
 
-6. **Medium (Intelligence)**: Implement centralized alert throttling/deduplication layer across notification edge functions.
+6. ✅ **DONE -- (Intelligence)**: Created `_shared/notify.ts` — centralized notification helper with deduplication (60-min default cooldown). Migrated `detect-anomalies` (120-min cooldown), `dunning-automation`, and `check-late-payments` to use `createNotification()`. Remaining edge functions can adopt incrementally.
 
-7. **Medium (Persona)**: Implement persona-density scaling so solo operators see a simplified Command Center.
+7. **Medium (Persona)**: Implement persona-density scaling so solo operators see a simplified Command Center. VisibilityGate infrastructure is already in place; needs persona-specific default configurations.
 
-8. **Medium (Structural)**: Change `gate_commission_model` from advisory to blocking mode on Payroll Hub.
+8. ✅ **DONE -- (Structural)**: `gate_commission_model` is already in blocking mode on Payroll Hub (no `advisory` prop). No change needed.
 
 9. **Low (Legacy)**: Rename dd75 asset files and database category keys (requires coordinated migration).
 
-10. **Low (Phase)**: Audit `dunning-automation` and `process-client-automations` to confirm human approval gates exist before automated execution.
+10. ✅ **DONE -- (Phase)**: Audited `dunning-automation` — changed auto-suspend to `pending_suspension` status requiring admin review, enforcing the Recommend→Approve→Execute autonomy model. `process-client-automations` is compliant: admin pre-configures rules, supports dryRun, and has 7-day dedup.
 

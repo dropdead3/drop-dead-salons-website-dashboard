@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
+import { createNotification } from "../_shared/notify.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -341,13 +342,13 @@ async function sendAnomalyAlerts(
     const title = getAnomalyTitle(anomaly);
     const message = getAnomalyMessage(anomaly);
 
-    await supabase.from("platform_notifications").insert({
+    await createNotification(supabase, {
       type: 'anomaly_detected',
       title,
       message,
       severity: anomaly.severity,
-      metadata: { anomaly }
-    });
+      metadata: { anomaly },
+    }, { cooldownMinutes: 120 });
   }
 }
 
