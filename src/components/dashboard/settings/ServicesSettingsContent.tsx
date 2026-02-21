@@ -32,6 +32,7 @@ import { ServiceAddonsLibrary } from './ServiceAddonsLibrary';
 import { RedoPolicySettings } from './RedoPolicySettings';
 import { ServiceAddonAssignmentsCard } from './ServiceAddonAssignmentsCard';
 import { toast } from 'sonner';
+import { useUndoToast } from '@/hooks/useUndoToast';
 import {
   getCategoryAbbreviation as getAbbr,
   SPECIAL_GRADIENTS,
@@ -133,6 +134,7 @@ export function ServicesSettingsContent() {
   const { data: archivedServices } = useArchivedServices(resolvedOrgId);
   const { data: isPrimaryOwner } = useIsPrimaryOwner();
   const { formatCurrency } = useFormatCurrency();
+  const showUndoToast = useUndoToast();
 
   const serviceCategories = useMemo(() => 
     categories?.filter(c => !['Block', 'Break'].includes(c.category_name)) || [],
@@ -212,12 +214,18 @@ export function ServicesSettingsContent() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
+    const previousOrder = [...localOrder];
     const oldIdx = localOrder.findIndex(c => c.id === active.id);
     const newIdx = localOrder.findIndex(c => c.id === over.id);
     const newOrder = arrayMove(localOrder, oldIdx, newIdx);
     setLocalOrder(newOrder);
     reorderCategories.mutate(newOrder.map(c => c.id), {
-      onSuccess: () => toast.success('Order saved'),
+      onSuccess: () => {
+        showUndoToast('Category order updated', () => {
+          setLocalOrder(previousOrder);
+          reorderCategories.mutate(previousOrder.map(c => c.id));
+        });
+      },
       onError: () => toast.error('Failed to save order'),
     });
   };
@@ -289,20 +297,40 @@ export function ServicesSettingsContent() {
   };
 
   const handleToggleActive = (service: Service) => {
-    updateService.mutate({ id: service.id, is_active: !service.is_active });
+    const newState = !service.is_active;
+    updateService.mutate({ id: service.id, is_active: newState }, {
+      onSuccess: () => {
+        showUndoToast(
+          `'${service.name}' ${newState ? 'activated' : 'deactivated'}`,
+          () => updateService.mutate({ id: service.id, is_active: !newState }),
+        );
+      },
+    });
   };
 
   const handleArchiveCategory = () => {
     if (!archiveCategoryId) return;
-    archiveCategory.mutate({ categoryId: archiveCategoryId, categoryName: archiveCategoryName }, {
-      onSuccess: () => { setArchiveCategoryId(null); setArchiveCategoryName(''); },
+    const catId = archiveCategoryId;
+    const catName = archiveCategoryName;
+    archiveCategory.mutate({ categoryId: catId, categoryName: catName }, {
+      onSuccess: () => {
+        setArchiveCategoryId(null);
+        setArchiveCategoryName('');
+        showUndoToast(`Archived '${catName}'`, () => restoreCategory.mutate({ categoryId: catId, categoryName: catName }));
+      },
     });
   };
 
   const handleArchiveService = () => {
     if (!archiveServiceId) return;
-    archiveService.mutate(archiveServiceId, {
-      onSuccess: () => { setArchiveServiceId(null); setArchiveServiceName(''); },
+    const svcId = archiveServiceId;
+    const svcName = archiveServiceName;
+    archiveService.mutate(svcId, {
+      onSuccess: () => {
+        setArchiveServiceId(null);
+        setArchiveServiceName('');
+        showUndoToast(`Archived '${svcName}'`, () => restoreService.mutate(svcId));
+      },
     });
   };
 
