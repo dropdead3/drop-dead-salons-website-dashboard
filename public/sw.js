@@ -1,6 +1,6 @@
 // Service Worker for Push Notifications and Offline Caching
 
-const CACHE_NAME = 'dd75-cache-v1';
+const CACHE_NAME = 'zura-cache-v1';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to cache immediately on install

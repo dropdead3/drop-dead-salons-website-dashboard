@@ -86,13 +86,13 @@ import { SignaturePresetActions } from './SignaturePresetActions';
 // Import brand logos - black versions
 import brandLogoPrimary from '@/assets/drop-dead-logo.svg';
 import brandLogoSecondary from '@/assets/dd-secondary-logo.svg';
-import brandIcon from '@/assets/dd75-icon.svg';
-import brandWordmark from '@/assets/dd75-logo.svg';
+import brandIcon from '@/assets/brand-icon.svg';
+import brandWordmark from '@/assets/brand-wordmark.svg';
 // Import brand logos - white versions
 import brandLogoPrimaryWhite from '@/assets/drop-dead-logo-white.svg';
 import brandLogoSecondaryWhite from '@/assets/dd-secondary-logo-white.svg';
-import brandIconWhite from '@/assets/dd75-icon-white.svg';
-import brandWordmarkWhite from '@/assets/dd75-logo-white.svg';
+import brandIconWhite from '@/assets/brand-icon-white.svg';
+import brandWordmarkWhite from '@/assets/brand-wordmark-white.svg';
 
 // Brand logo presets
 type LogoVariant = 'black' | 'white';
@@ -143,16 +143,16 @@ const brandLogos: BrandLogo[] = [
   },
   // Icon variants
   {
-    id: 'dd75-icon-black',
-    baseId: 'dd75-icon',
+    id: 'brand-icon-black',
+    baseId: 'brand-icon',
     name: 'Brand Icon',
     src: brandIcon,
     description: 'Circular icon mark',
     variant: 'black',
   },
   {
-    id: 'dd75-icon-white',
-    baseId: 'dd75-icon',
+    id: 'brand-icon-white',
+    baseId: 'brand-icon',
     name: 'Brand Icon',
     src: brandIconWhite,
     description: 'Circular icon mark',
@@ -160,16 +160,16 @@ const brandLogos: BrandLogo[] = [
   },
   // Wordmark variants
   {
-    id: 'dd75-logo-black',
-    baseId: 'dd75-logo',
+    id: 'brand-wordmark-black',
+    baseId: 'brand-wordmark',
     name: 'Brand Wordmark',
     src: brandWordmark,
     description: 'Brand wordmark',
     variant: 'black',
   },
   {
-    id: 'dd75-logo-white',
-    baseId: 'dd75-logo',
+    id: 'brand-wordmark-white',
+    baseId: 'brand-wordmark',
     name: 'Brand Wordmark',
     src: brandWordmarkWhite,
     description: 'Brand wordmark',
