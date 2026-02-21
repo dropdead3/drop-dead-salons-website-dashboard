@@ -783,12 +783,17 @@ export type Database = {
           import_job_id: string | null
           import_source: string | null
           imported_at: string | null
+          is_redo: boolean
           location_id: string | null
           notes: string | null
           organization_id: string | null
+          original_appointment_id: string | null
           original_price: number | null
           payment_method: string | null
           rebooked_at_checkout: boolean | null
+          redo_approved_by: string | null
+          redo_pricing_override: number | null
+          redo_reason: string | null
           reminder_24h_sent: boolean | null
           reminder_2h_sent: boolean | null
           service_category: string | null
@@ -817,12 +822,17 @@ export type Database = {
           import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
+          is_redo?: boolean
           location_id?: string | null
           notes?: string | null
           organization_id?: string | null
+          original_appointment_id?: string | null
           original_price?: number | null
           payment_method?: string | null
           rebooked_at_checkout?: boolean | null
+          redo_approved_by?: string | null
+          redo_pricing_override?: number | null
+          redo_reason?: string | null
           reminder_24h_sent?: boolean | null
           reminder_2h_sent?: boolean | null
           service_category?: string | null
@@ -851,12 +861,17 @@ export type Database = {
           import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
+          is_redo?: boolean
           location_id?: string | null
           notes?: string | null
           organization_id?: string | null
+          original_appointment_id?: string | null
           original_price?: number | null
           payment_method?: string | null
           rebooked_at_checkout?: boolean | null
+          redo_approved_by?: string | null
+          redo_pricing_override?: number | null
+          redo_reason?: string | null
           reminder_24h_sent?: boolean | null
           reminder_2h_sent?: boolean | null
           service_category?: string | null
@@ -897,6 +912,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_original_appointment_id_fkey"
+            columns: ["original_appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
             referencedColumns: ["id"]
           },
           {

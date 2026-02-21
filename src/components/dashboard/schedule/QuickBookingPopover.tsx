@@ -56,6 +56,11 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useServiceCategoryColors } from '@/hooks/useServiceCategoryColors';
 import { useServiceAddons } from '@/hooks/useServiceAddons';
 import type { ServiceAddon } from '@/hooks/useServiceAddons';
+import { useRedoPolicySettings, REDO_REASONS } from '@/hooks/useRedoPolicySettings';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RotateCcw, AlertCircle } from 'lucide-react';
 
 type QuickBookingMode = 'popover' | 'panel';
 
@@ -117,6 +122,8 @@ export function QuickBookingPopover({
 }: QuickBookingPopoverProps) {
   const queryClient = useQueryClient();
   const { user, roles } = useAuth();
+  const { data: redoPolicy } = useRedoPolicySettings();
+  const isManagerOrAdmin = roles.some(r => ['admin', 'super_admin', 'manager'].includes(r));
 
   // Notify FAB about booking popover state
   useEffect(() => {
@@ -145,6 +152,13 @@ export function QuickBookingPopover({
   const [bookingNotes, setBookingNotes] = useState('');
   const [showNotes, setShowNotes] = useState(false);
   const [showBreakForm, setShowBreakForm] = useState(false);
+
+  // Redo / Adjustment state
+  const [isRedo, setIsRedo] = useState(false);
+  const [redoReason, setRedoReason] = useState('');
+  const [redoCustomReason, setRedoCustomReason] = useState('');
+  const [redoPriceOverride, setRedoPriceOverride] = useState<number | null>(null);
+  const [originalAppointmentId, setOriginalAppointmentId] = useState<string | null>(null);
 
   // Add-on toast state
   const [showAddonToast, setShowAddonToast] = useState(false);
@@ -496,6 +510,11 @@ export function QuickBookingPopover({
           addon_ids: selectedAddonDetails.map(a => ({ id: a.id, name: a.name, price: a.price, duration: a.duration_minutes })),
           start_time: startDateTime,
           notes: bookingNotes || undefined,
+          // Redo / adjustment metadata
+          is_redo: isRedo,
+          redo_reason: isRedo ? (redoReason === 'Other' ? redoCustomReason : redoReason) || undefined : undefined,
+          original_appointment_id: isRedo ? originalAppointmentId || undefined : undefined,
+          redo_pricing_override: isRedo ? redoPriceOverride : undefined,
         },
       });
 
@@ -529,6 +548,12 @@ export function QuickBookingPopover({
     setBookingNotes('');
     setShowNotes(false);
     setShowBreakForm(false);
+    // Reset redo state
+    setIsRedo(false);
+    setRedoReason('');
+    setRedoCustomReason('');
+    setRedoPriceOverride(null);
+    setOriginalAppointmentId(null);
     // Reset add-on toast state
     setShowAddonToast(false);
     setDismissedAddonCategories(new Set());
@@ -1742,6 +1767,87 @@ export function QuickBookingPopover({
                   </div>
                 </div>
               </div>
+              {/* Redo / Adjustment Section */}
+              <div className="bg-card border border-border rounded-lg p-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <RotateCcw className="h-3.5 w-3.5 text-muted-foreground" />
+                    <Label className="text-xs font-medium cursor-pointer" htmlFor="redo-toggle">
+                      Redo / Adjustment
+                    </Label>
+                  </div>
+                  <Switch
+                    id="redo-toggle"
+                    checked={isRedo}
+                    onCheckedChange={setIsRedo}
+                    className="scale-90"
+                  />
+                </div>
+                {isRedo && (
+                  <div className="space-y-2.5 pt-1">
+                    {/* Reason */}
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                        Reason {redoPolicy?.redo_reason_required && <span className="text-destructive">*</span>}
+                      </Label>
+                      <Select value={redoReason} onValueChange={setRedoReason}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Select reason..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {REDO_REASONS.map(r => (
+                            <SelectItem key={r} value={r} className="text-xs">{r}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {redoReason === 'Other' && (
+                        <Input
+                          placeholder="Describe the reason..."
+                          value={redoCustomReason}
+                          onChange={(e) => setRedoCustomReason(e.target.value)}
+                          className="h-8 text-xs"
+                        />
+                      )}
+                    </div>
+
+                    {/* Pricing indicator */}
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Redo pricing</span>
+                      <Badge variant="secondary" className="text-[10px]">
+                        {redoPolicy?.redo_pricing_policy === 'free' && 'Complimentary'}
+                        {redoPolicy?.redo_pricing_policy === 'percentage' && `${redoPolicy.redo_pricing_percentage}% of original`}
+                        {redoPolicy?.redo_pricing_policy === 'full_price' && 'Full price'}
+                      </Badge>
+                    </div>
+
+                    {/* Manager override */}
+                    {isManagerOrAdmin && (
+                      <div className="space-y-1">
+                        <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                          Price Override (optional)
+                        </Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          placeholder="Leave empty to use policy"
+                          value={redoPriceOverride ?? ''}
+                          onChange={(e) => setRedoPriceOverride(e.target.value ? parseFloat(e.target.value) : null)}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                    )}
+
+                    {/* Approval warning */}
+                    {redoPolicy?.redo_requires_approval && !isManagerOrAdmin && (
+                      <div className="flex items-center gap-1.5 text-[10px] text-amber-600 dark:text-amber-400">
+                        <AlertCircle className="h-3 w-3 shrink-0" />
+                        <span>This redo will require manager approval before confirming.</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div>
                 {!showNotes ? (
                   <button

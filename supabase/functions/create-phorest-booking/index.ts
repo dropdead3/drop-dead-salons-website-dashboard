@@ -13,8 +13,13 @@ interface BookingRequest {
   client_id: string;
   staff_id: string;
   service_ids: string[];
-  start_time: string; // ISO 8601 format: 2024-01-15T09:00:00Z
+  start_time: string;
   notes?: string;
+  // Redo / adjustment fields
+  is_redo?: boolean;
+  redo_reason?: string;
+  original_appointment_id?: string;
+  redo_pricing_override?: number;
 }
 
 async function phorestRequest(
@@ -96,7 +101,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const bookingData: BookingRequest = await req.json();
-    const { branch_id, client_id, staff_id, service_ids, start_time, notes } = bookingData;
+    const { branch_id, client_id, staff_id, service_ids, start_time, notes, is_redo, redo_reason, original_appointment_id, redo_pricing_override } = bookingData;
 
     if (!branch_id || !client_id || !staff_id || !service_ids?.length || !start_time) {
       throw new Error("Missing required fields: branch_id, client_id, staff_id, service_ids, start_time");
@@ -171,6 +176,10 @@ serve(async (req) => {
       service_name: serviceName,
       status: 'confirmed',
       notes: notes || null,
+      is_redo: is_redo || false,
+      redo_reason: is_redo ? redo_reason || null : null,
+      original_appointment_id: is_redo ? original_appointment_id || null : null,
+      redo_pricing_override: is_redo ? redo_pricing_override ?? null : null,
     };
 
     const { error: insertError } = await supabase

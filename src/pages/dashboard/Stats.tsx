@@ -18,6 +18,7 @@ import { Link } from 'react-router-dom';
 
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useAddonMarginAnalytics } from '@/hooks/useAddonMarginAnalytics';
+import { useRedoAnalytics } from '@/hooks/useRedoAnalytics';
 import { useStylistAddonAttachment } from '@/hooks/useStylistAddonAttachment';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
@@ -39,6 +40,7 @@ export default function Stats() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const { data: marginData } = useAddonMarginAnalytics(orgId);
+  const { data: redoData } = useRedoAnalytics(30);
   const { data: stylistAddonData } = useStylistAddonAttachment(orgId);
 
   // Check if user is admin/manager
@@ -341,6 +343,78 @@ export default function Stats() {
               </VisibilityGate>
             )}
 
+            {/* Redo & Adjustment Insights */}
+            {isAdmin && redoData && (redoData.totalRedos > 0 || true) && (
+              <VisibilityGate
+                elementKey="redo_adjustment_insights_card"
+                elementName="Redo & Adjustment Insights"
+                elementCategory="Stats"
+              >
+                <Card className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-primary" />
+                      <h2 className="font-display text-sm tracking-wide">REDO & ADJUSTMENT INSIGHTS</h2>
+                    </div>
+                    <Badge variant="outline" className="text-xs">Last 30 days</Badge>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    <div className="text-center">
+                      <p className="text-2xl font-display tabular-nums">{redoData.totalRedos}</p>
+                      <p className="text-xs text-muted-foreground">Redos</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-display tabular-nums">{redoData.redoRate.toFixed(1)}%</p>
+                      <p className="text-xs text-muted-foreground">Redo Rate</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-display tabular-nums">{formatCurrencyWhole(redoData.financialImpact)}</p>
+                      <p className="text-xs text-muted-foreground">Revenue Impact</p>
+                    </div>
+                  </div>
+
+                  {redoData.byStylist.length > 0 && (
+                    <>
+                      <h3 className="text-xs font-display tracking-wide text-muted-foreground mb-2">BY STYLIST</h3>
+                      <div className="space-y-2 mb-4">
+                        {redoData.byStylist.slice(0, 5).map(s => (
+                          <div key={s.staffUserId} className="flex items-center justify-between text-sm">
+                            <span className="font-medium">{s.staffName}</span>
+                            <div className="flex items-center gap-3">
+                              <span className="tabular-nums">{s.redoCount} redos</span>
+                              <Badge variant={s.redoRate > 5 ? "destructive" : "secondary"} className="text-[10px] tabular-nums">
+                                {s.redoRate.toFixed(1)}%
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {redoData.byReason.length > 0 && (
+                    <>
+                      <h3 className="text-xs font-display tracking-wide text-muted-foreground mb-2">BY REASON</h3>
+                      <div className="space-y-1.5">
+                        {redoData.byReason.map(r => (
+                          <div key={r.reason} className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">{r.reason}</span>
+                            <span className="tabular-nums font-medium">{r.count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {redoData.totalRedos === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No redos recorded in the last 30 days.
+                    </p>
+                  )}
+                </Card>
+              </VisibilityGate>
+            )}
             {/* Stylist Add-On Performance Card - admin/manager only */}
             {isAdmin && stylistAddonData && stylistAddonData.length > 0 && (
               <VisibilityGate
