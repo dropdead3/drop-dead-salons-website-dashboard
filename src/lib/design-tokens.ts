@@ -139,7 +139,7 @@ export const tokens = {
   // ========================================
   table: {
     /** Column header: Aeonik Pro, small, medium weight, muted, tracked — NEVER uppercase */
-    columnHeader: 'font-sans text-[11px] font-medium text-muted-foreground tracking-wider',
+    columnHeader: 'font-sans text-xs font-medium text-foreground/60 tracking-wider',
   },
 
   // ========================================
