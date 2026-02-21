@@ -428,7 +428,7 @@ export function ServiceAddonsLibrary({ organizationId, categories = [] }: Servic
             )}
           </div>
           {!showForm && !editingId && (
-            <Button size="sm" variant="outline" onClick={() => setShowForm(true)}>
+            <Button variant="outline" className={tokens.button.cardAction} onClick={() => setShowForm(true)}>
               <Plus className="h-3.5 w-3.5 mr-1" />
               Add Add-On
             </Button>

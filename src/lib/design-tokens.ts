@@ -92,6 +92,8 @@ export const tokens = {
     hero: 'lg' as const,
     /** Card footer "View All" link style */
     cardFooter: 'w-full text-muted-foreground hover:text-foreground text-sm h-9',
+    /** Card header action pill (outline variant) */
+    cardAction: 'h-9 px-4 rounded-full text-sm font-sans font-medium',
   },
 
   // ========================================
