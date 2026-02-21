@@ -4,7 +4,8 @@ import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Popover, PopoverTrigger } from '@/components/ui/popover';
+import { SidebarPopoverContent } from './SidebarPopoverContent';
 import {
   Collapsible,
   CollapsibleContent,
@@ -183,7 +184,7 @@ export function CollapsibleNavGroup({
                 </TooltipTrigger>
                 <TooltipContent side="right">{group.label}</TooltipContent>
               </Tooltip>
-              <PopoverContent side="right" align="start" sideOffset={8} className="w-56 p-1">
+              <SidebarPopoverContent>
                 <p className="px-3 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider font-display">
                   {group.label}
                 </p>
@@ -213,7 +214,7 @@ export function CollapsibleNavGroup({
                     </a>
                   );
                 })}
-              </PopoverContent>
+              </SidebarPopoverContent>
             </Popover>
           );
         })}

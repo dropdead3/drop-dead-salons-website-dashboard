@@ -2,7 +2,8 @@ import { forwardRef, useEffect, useRef, useImperativeHandle, useMemo } from 'rea
 import { useTranslation } from 'react-i18next';
 import { useRubberBandScroll } from '@/hooks/useRubberBandScroll';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Popover, PopoverTrigger } from '@/components/ui/popover';
+import { SidebarPopoverContent } from './SidebarPopoverContent';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -673,7 +674,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                         </TooltipTrigger>
                         <TooltipContent side="right">{sectionLabel}</TooltipContent>
                       </Tooltip>
-                      <PopoverContent side="right" align="start" sideOffset={8} className="w-56 p-1">
+                      <SidebarPopoverContent>
                         <p className="px-3 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider font-display">
                           {sectionLabel}
                         </p>
@@ -703,7 +704,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                             </a>
                           );
                         })}
-                      </PopoverContent>
+                      </SidebarPopoverContent>
                     </Popover>
                   );
                 })()
