@@ -126,6 +126,7 @@ function DroppableSlot({
 }) {
   const { setNodeRef, isOver: dndIsOver } = useDroppable({ id });
   const highlight = isOver || dndIsOver;
+  const [mouseX, setMouseX] = useState<number | null>(null);
 
   const borderClass = minute === 0
     ? 'border-t border-border dark:border-border/80'
@@ -154,14 +155,15 @@ function DroppableSlot({
       onClick={() => {
         if (isPastSlot || isAvailable || isOutsideHours) onClick();
       }}
+      onMouseMove={(e) => setMouseX(e.nativeEvent.offsetX)}
     >
       {isPastSlot && (
-        <div className="absolute left-1/2 -translate-x-1/2 -top-7 bg-muted-foreground text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap">
+        <div className="absolute -translate-x-1/2 -top-7 bg-muted-foreground text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap" style={{ left: mouseX ?? '50%' }}>
           This time slot is no longer available
         </div>
       )}
       {(isAvailable || isOutsideHours) && !isPastSlot && (
-        <div className="absolute left-1/2 -translate-x-1/2 -top-7 bg-foreground text-background text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap">
+        <div className="absolute -translate-x-1/2 -top-7 bg-foreground text-background text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap" style={{ left: mouseX ?? '50%' }}>
           {formatSlotTime(hour, minute)}
         </div>
       )}

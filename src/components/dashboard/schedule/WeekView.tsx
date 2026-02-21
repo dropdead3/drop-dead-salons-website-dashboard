@@ -539,8 +539,15 @@ export function WeekView({
                                 ? 'border-t border-dotted border-border/60 dark:border-border/50'
                                 : 'border-t border-dotted border-border/40 dark:border-border/35'
                           )}
+                          onMouseMove={(e) => {
+                            const target = e.currentTarget;
+                            const rect = target.getBoundingClientRect();
+                            target.dataset.mouseX = String(e.clientX - rect.left);
+                            const badge = target.querySelector('[data-slot-badge]') as HTMLElement;
+                            if (badge) badge.style.left = `${e.clientX - rect.left}px`;
+                          }}
                         >
-                          <div className="absolute left-1/2 -translate-x-1/2 -top-7 bg-foreground text-background text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap">
+                          <div data-slot-badge className="absolute -translate-x-1/2 -top-7 bg-foreground text-background text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap" style={{ left: '50%' }}>
                             {(() => {
                               const ampm = slot.hour >= 12 ? 'PM' : 'AM';
                               const hour12 = slot.hour % 12 || 12;
