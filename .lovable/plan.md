@@ -1,18 +1,28 @@
 
-## Match Time Axis Background to Sidebar Color
+## Show Full Address in Scheduling Wizard Location Step
 
-### Problem
-The time labels column (showing "9 AM", "10 AM", etc.) on the left side of the schedule uses a generic muted gray that doesn't match the sidebar. The user wants visual consistency between the sidebar and this time gutter.
+### What Changes
+In the QuickBookingPopover's "Select Location" step, the subtitle under each location name currently only shows the city (e.g., "Mesa, AZ 85203"). We will update it to show the full street address followed by the city.
 
-### Changes
+**Example:**
+- Before: "Mesa, AZ 85203"
+- After: "1234 E Main St, Mesa, AZ 85203"
 
-**File: `src/components/dashboard/schedule/DayView.tsx`**
+### Technical Detail
 
-1. **Time labels column** (line 633): Change `bg-muted/30` to `bg-sidebar`
-2. **Week indicator header** (line 606): Change `bg-muted/70` to `bg-sidebar`
+**File: `src/components/dashboard/schedule/QuickBookingPopover.tsx`** (line 1263)
 
-**File: `src/components/dashboard/schedule/WeekView.tsx`**
+Change:
+```tsx
+<div className="text-xs text-muted-foreground mt-0.5">{loc.city}</div>
+```
+To:
+```tsx
+<div className="text-xs text-muted-foreground mt-0.5">
+  {[loc.address, loc.city].filter(Boolean).join(', ')}
+</div>
+```
 
-1. **Time labels column** (line 433): Change `bg-muted/10` to `bg-sidebar`
+This concatenates the `address` and `city` fields with a comma separator, gracefully handling cases where either might be empty.
 
-This uses the existing `sidebar` color token (`hsl(var(--sidebar-background))`), which is already defined in `tailwind.config.ts` and adapts per-theme (cream, rose, sage, ocean, platform) and per-mode (light/dark). No new CSS variables needed.
+One file, one line changed.
