@@ -37,7 +37,7 @@ interface StaffCommissionTableProps {
 const SOURCE_BADGE_STYLES: Record<CommissionSource, string> = {
   override: 'bg-chart-4/10 text-chart-4 border-chart-4/30',
   level: 'bg-chart-2/10 text-chart-2 border-chart-2/30',
-  tier: '',
+  unassigned: 'bg-destructive/10 text-destructive border-destructive/30',
 };
 
 export function StaffCommissionTable({ stylistData, isLoading }: StaffCommissionTableProps) {

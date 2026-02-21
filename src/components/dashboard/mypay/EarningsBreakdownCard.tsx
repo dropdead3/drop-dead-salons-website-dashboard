@@ -2,8 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { EmployeeCompensation } from '@/hooks/usePayrollCalculations';
 import { EmployeePayrollSettings } from '@/hooks/useEmployeePayrollSettings';
-import { Progress } from '@/components/ui/progress';
-import { useCommissionTiers } from '@/hooks/useCommissionTiers';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
 import { TrendingUp, Award } from 'lucide-react';
 
 interface EarningsBreakdownCardProps {
@@ -22,36 +21,21 @@ function formatCurrency(amount: number): string {
 }
 
 export function EarningsBreakdownCard({ estimatedCompensation, salesData, settings }: EarningsBreakdownCardProps) {
-  const { tiers, calculateCommission } = useCommissionTiers();
+  const { data: levels } = useStylistLevels();
   const comp = estimatedCompensation;
   
   const totalRevenue = salesData.serviceRevenue + salesData.productRevenue;
-  
-  // Calculate commission to get the tier name
-  const commissionResult = calculateCommission(salesData.serviceRevenue, salesData.productRevenue);
-  const currentTierName = commissionResult.tierName;
-  
-  // Find current tier and next tier from the tiers array
-  const sortedTiers = [...tiers].filter(t => t.applies_to === 'services' || t.applies_to === 'all')
-    .sort((a, b) => a.min_revenue - b.min_revenue);
-  
-  const currentTier = sortedTiers.find(t => {
-    const max = t.max_revenue ?? Infinity;
-    return totalRevenue >= t.min_revenue && totalRevenue <= max;
+
+  // Find the stylist's level based on their settings (if available)
+  // For the My Pay view, show current level info
+  const currentLevel = levels?.find(l => {
+    // Match based on commission rate if available
+    if (comp?.serviceCommission && salesData.serviceRevenue > 0) {
+      const effectiveRate = comp.serviceCommission / salesData.serviceRevenue;
+      return Math.abs((l.service_commission_rate ?? 0) - effectiveRate) < 0.01;
+    }
+    return false;
   });
-  
-  const currentTierIndex = currentTier ? sortedTiers.indexOf(currentTier) : -1;
-  const nextTier = currentTierIndex >= 0 && currentTierIndex < sortedTiers.length - 1 
-    ? sortedTiers[currentTierIndex + 1] 
-    : null;
-  
-  const progressToNextTier = nextTier 
-    ? Math.min(100, (totalRevenue / nextTier.min_revenue) * 100)
-    : 100;
-  
-  const amountToNextTier = nextTier 
-    ? Math.max(0, nextTier.min_revenue - totalRevenue)
-    : 0;
 
   return (
     <Card>
@@ -85,38 +69,20 @@ export function EarningsBreakdownCard({ estimatedCompensation, salesData, settin
           </div>
         </div>
 
-        {/* Commission Tier Progress */}
-        {settings.commission_enabled && currentTier && (
+        {/* Commission Level Info */}
+        {settings.commission_enabled && currentLevel && (
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Award className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium">
-                  {currentTier.tier_name} Tier
+                  {currentLevel.label}
                 </span>
               </div>
               <span className="text-sm text-muted-foreground">
-                {Math.round(currentTier.commission_rate * 100)}% commission
+                {Math.round((currentLevel.service_commission_rate ?? 0) * 100)}% commission
               </span>
             </div>
-
-            {nextTier && (
-              <>
-                <Progress value={progressToNextTier} className="h-2" />
-                <p className="text-xs text-muted-foreground text-center">
-                  <BlurredAmount as="span">
-                    {formatCurrency(amountToNextTier)}
-                  </BlurredAmount>
-                  {' '}to {nextTier.tier_name} ({Math.round(nextTier.commission_rate * 100)}%)
-                </p>
-              </>
-            )}
-
-            {!nextTier && (
-              <p className="text-xs text-muted-foreground text-center">
-                You've reached the highest tier!
-              </p>
-            )}
           </div>
         )}
 

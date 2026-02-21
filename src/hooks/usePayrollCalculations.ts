@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useCommissionTiers } from './useCommissionTiers';
+import { useStylistLevels } from './useStylistLevels';
 import { EmployeePayrollSettings, PayType } from './useEmployeePayrollSettings';
 
+// EmployeeHours, EmployeeAdjustments, EmployeeSalesData, EmployeeCompensation, PayrollTotals interfaces and TAX_RATES
 export interface EmployeeHours {
   employeeId: string;
   regularHours: number;
@@ -64,12 +65,12 @@ export interface PayrollTotals {
 
 // Tax rate constants (approximate withholding rates)
 const TAX_RATES = {
-  FEDERAL: 0.22, // 22% federal income tax withholding
-  STATE: 0.05, // 5% state tax (varies by state)
-  FICA_EMPLOYEE: 0.0765, // Social Security (6.2%) + Medicare (1.45%)
-  FICA_EMPLOYER: 0.0765, // Employer's matching FICA
-  FUTA: 0.006, // Federal Unemployment (0.6% after credit)
-  SUTA: 0.027, // State Unemployment (varies, ~2.7% average)
+  FEDERAL: 0.22,
+  STATE: 0.05,
+  FICA_EMPLOYEE: 0.0765,
+  FICA_EMPLOYER: 0.0765,
+  FUTA: 0.006,
+  SUTA: 0.027,
 };
 
 export function usePayrollSalesData(
@@ -93,7 +94,6 @@ export function usePayrollSalesData(
 
       if (error) throw error;
 
-      // Aggregate by employee
       const aggregated = (data || []).reduce((acc, row) => {
         if (!row.user_id) return acc;
         if (!acc[row.user_id]) {
@@ -114,7 +114,24 @@ export function usePayrollSalesData(
 }
 
 export function usePayrollCalculations() {
-  const { calculateCommission, tiers } = useCommissionTiers();
+  const { data: levels } = useStylistLevels();
+
+  // Build a simple calculateCommission from levels (flat lookup, no user context)
+  const calculateCommission = (serviceRevenue: number, productRevenue: number) => {
+    // Without user context, use median level rate as fallback
+    if (!levels || levels.length === 0) {
+      return { serviceCommission: 0, productCommission: 0, totalCommission: 0, tierName: '' };
+    }
+    const midLevel = levels[Math.floor(levels.length / 2)];
+    const svcRate = midLevel.service_commission_rate ?? 0;
+    const retailRate = midLevel.retail_commission_rate ?? 0;
+    return {
+      serviceCommission: serviceRevenue * svcRate,
+      productCommission: productRevenue * retailRate,
+      totalCommission: serviceRevenue * svcRate + productRevenue * retailRate,
+      tierName: midLevel.label,
+    };
+  };
 
   const calculateEmployeeCompensation = (
     settings: EmployeePayrollSettings,
@@ -127,7 +144,6 @@ export function usePayrollCalculations() {
     const annualSalary = settings.salary_amount || 0;
     const payType = settings.pay_type;
 
-    // Calculate hourly pay
     let hourlyPay = 0;
     if (payType === 'hourly' || payType === 'hourly_plus_commission') {
       const regularPay = hours.regularHours * hourlyRate;
@@ -135,13 +151,11 @@ export function usePayrollCalculations() {
       hourlyPay = regularPay + overtimePay;
     }
 
-    // Calculate salary pay (bi-weekly = /26, weekly = /52)
     let salaryPay = 0;
     if (payType === 'salary' || payType === 'salary_plus_commission') {
       salaryPay = (annualSalary / 26) * (weeksInPeriod / 2);
     }
 
-    // Calculate commission
     let commissionPay = 0;
     let serviceCommission = 0;
     let productCommission = 0;
@@ -161,28 +175,20 @@ export function usePayrollCalculations() {
       commissionPay = commission.totalCommission;
     }
 
-    // Get adjustments
     const bonus = adjustments?.bonus || 0;
     const tips = adjustments?.tips || 0;
     const deductions = adjustments?.deductions || 0;
 
-    // Calculate gross pay
     const grossPay = hourlyPay + salaryPay + commissionPay + bonus + tips;
-
-    // Calculate taxes (estimates)
-    const taxableIncome = grossPay; // Simplified - all gross is taxable
+    const taxableIncome = grossPay;
     const estimatedFederalTax = taxableIncome * TAX_RATES.FEDERAL;
     const estimatedStateTax = taxableIncome * TAX_RATES.STATE;
     const estimatedFICA = taxableIncome * TAX_RATES.FICA_EMPLOYEE;
     const estimatedTaxes = estimatedFederalTax + estimatedStateTax + estimatedFICA;
-
-    // Employer taxes
     const employerTaxes =
       taxableIncome * TAX_RATES.FICA_EMPLOYER +
       taxableIncome * TAX_RATES.FUTA +
       taxableIncome * TAX_RATES.SUTA;
-
-    // Net pay
     const netPay = grossPay - estimatedTaxes - deductions;
 
     return {
@@ -256,6 +262,6 @@ export function usePayrollCalculations() {
     calculateEmployeeCompensation,
     calculatePayrollTotals,
     getWeeksInPeriod,
-    commissionTiers: tiers,
+    commissionTiers: levels || [],
   };
 }

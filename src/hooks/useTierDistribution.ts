@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { usePayrollForecasting, EmployeeProjection } from './usePayrollForecasting';
-import { useCommissionTiers } from './useCommissionTiers';
+import { useStylistLevels } from './useStylistLevels';
 
 export interface TierDistributionItem {
   tierName: string;
@@ -43,7 +43,7 @@ export interface TierDistributionData {
 
 export function useTierDistribution(): TierDistributionData {
   const { projection, isLoading } = usePayrollForecasting();
-  const { tiers } = useCommissionTiers();
+  const { data: levels } = useStylistLevels();
 
   const result = useMemo(() => {
     if (!projection || projection.byEmployee.length === 0) {
@@ -59,35 +59,32 @@ export function useTierDistribution(): TierDistributionData {
       };
     }
 
-    // Build tier distribution
-    const tierMap = new Map<string, TierDistributionItem>();
-    
-    // Initialize with all service tiers
-    const serviceTiers = tiers.filter(t => t.applies_to === 'services' || t.applies_to === 'all');
-    serviceTiers.forEach(tier => {
-      tierMap.set(tier.tier_name, {
-        tierName: tier.tier_name,
-        tierRate: tier.commission_rate,
+    // Build distribution from stylist levels
+    const levelMap = new Map<string, TierDistributionItem>();
+
+    // Initialize with all active levels
+    (levels || []).forEach(level => {
+      levelMap.set(level.label, {
+        tierName: level.label,
+        tierRate: level.service_commission_rate ?? 0,
         stylistCount: 0,
         totalRevenue: 0,
         employees: [],
       });
     });
 
-    // Add employees to their tiers
-    const progressionOpportunities: TierProgressionOpportunity[] = [];
     let currentPeriodCommissions = 0;
-    let potentialAdditional = 0;
-    let revenueNeeded = 0;
 
     projection.byEmployee.forEach(emp => {
-      if (!emp.currentTier) return;
+      const sourceName = emp.commissionSource || '';
+      // Extract level name from "Level: X" format
+      const levelName = sourceName.startsWith('Level: ') ? sourceName.replace('Level: ', '') : sourceName;
 
-      const tierItem = tierMap.get(emp.currentTier.name);
-      if (tierItem) {
-        tierItem.stylistCount++;
-        tierItem.totalRevenue += emp.projectedSales.services;
-        tierItem.employees.push({
+      const item = levelMap.get(levelName);
+      if (item) {
+        item.stylistCount++;
+        item.totalRevenue += emp.projectedSales.services;
+        item.employees.push({
           id: emp.employeeId,
           name: emp.employeeName,
           photoUrl: emp.photoUrl,
@@ -96,50 +93,24 @@ export function useTierDistribution(): TierDistributionData {
         });
       }
 
-      // Track commissions
       currentPeriodCommissions += emp.projectedCompensation.serviceCommission + emp.projectedCompensation.productCommission;
-
-      // Check for progression opportunities (within 25% of next tier)
-      if (emp.nextTier && emp.tierProgress >= 75) {
-        const rateIncrease = emp.nextTier.rate - emp.currentTier.rate;
-        
-        progressionOpportunities.push({
-          employeeId: emp.employeeId,
-          employeeName: emp.employeeName,
-          photoUrl: emp.photoUrl,
-          currentTier: emp.currentTier.name,
-          nextTier: emp.nextTier.name,
-          amountNeeded: emp.amountToNextTier,
-          progressPercent: emp.tierProgress,
-          rateIncrease,
-        });
-
-        // Calculate potential additional if they hit next tier
-        potentialAdditional += emp.projectedSales.services * rateIncrease;
-        revenueNeeded += emp.amountToNextTier;
-      }
     });
 
-    // Sort opportunities by progress (closest first)
-    progressionOpportunities.sort((a, b) => b.progressPercent - a.progressPercent);
-
-    const distribution = Array.from(tierMap.values())
+    const distribution = Array.from(levelMap.values())
       .filter(item => item.stylistCount > 0)
       .sort((a, b) => a.tierRate - b.tierRate);
 
     return {
       distribution,
-      progressionOpportunities,
+      progressionOpportunities: [],
       impactAnalysis: {
         currentPeriodCommissions,
-        potentialAdditional,
-        potentialIncreasePercent: currentPeriodCommissions > 0 
-          ? (potentialAdditional / currentPeriodCommissions) * 100 
-          : 0,
-        revenueNeeded,
+        potentialAdditional: 0,
+        potentialIncreasePercent: 0,
+        revenueNeeded: 0,
       },
     };
-  }, [projection, tiers]);
+  }, [projection, levels]);
 
   return {
     ...result,

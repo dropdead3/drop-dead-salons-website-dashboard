@@ -20,7 +20,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
-import { useCommissionTiers } from '@/hooks/useCommissionTiers';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
 import { useSalesByStylist } from '@/hooks/useSalesData';
 import { useExpectedRentRevenue } from '@/hooks/useExpectedRentRevenue';
 import { useHasRenters } from '@/hooks/useHasRenters';
@@ -41,7 +41,7 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
   const { user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
 
-  const { calculateCommission, isLoading: tiersLoading } = useCommissionTiers();
+  const { data: levels, isLoading: levelsLoading } = useStylistLevels();
   const { currentPeriod } = usePaySchedule();
   const payFrom = currentPeriod?.periodStart ? format(currentPeriod.periodStart, 'yyyy-MM-dd') : dateFrom;
   const payTo = currentPeriod?.periodEnd ? format(currentPeriod.periodEnd, 'yyyy-MM-dd') : dateTo;
@@ -50,9 +50,22 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
   const { data: rentData, isLoading: rentLoading } = useExpectedRentRevenue(payFrom, payTo);
   const { data: hasRenters } = useHasRenters();
 
-  const isLoading = tiersLoading || stylistLoading || rentLoading;
+  const isLoading = levelsLoading || stylistLoading || rentLoading;
 
-  // Commission rows
+  // Simple commission calculation using median level rate (no user context available here)
+  const calculateCommission = (serviceRevenue: number, productRevenue: number) => {
+    if (!levels || levels.length === 0) {
+      return { totalCommission: 0, tierName: '' };
+    }
+    const midLevel = levels[Math.floor(levels.length / 2)];
+    const svcRate = midLevel.service_commission_rate ?? 0;
+    const retailRate = midLevel.retail_commission_rate ?? 0;
+    return {
+      totalCommission: serviceRevenue * svcRate + productRevenue * retailRate,
+      tierName: midLevel.label,
+    };
+  };
+
   const commissionRows = (stylistData || []).map(s => {
     const c = calculateCommission(s.serviceRevenue, s.productRevenue);
     return { name: s.name, serviceRevenue: s.serviceRevenue, productRevenue: s.productRevenue, tier: c.tierName, commission: c.totalCommission };
@@ -86,7 +99,7 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
       doc.text('Staff Commission', 14, y); y += 4;
       autoTable(doc, {
         ...branding, startY: y,
-        head: [['Staff', 'Service Revenue', 'Product Revenue', 'Tier', 'Commission']],
+        head: [['Staff', 'Service Revenue', 'Product Revenue', 'Level', 'Commission']],
         body: commissionRows.map(r => [r.name, formatCurrencyWhole(r.serviceRevenue), formatCurrencyWhole(r.productRevenue), r.tier || '--', formatCurrencyWhole(Math.round(r.commission))]),
         foot: [['Total', formatCurrencyWhole(totalServiceRev), formatCurrencyWhole(totalProductRev), '', formatCurrencyWhole(Math.round(totalCommission))]],
         theme: 'striped', headStyles: { fillColor: [51, 51, 51] }, margin: { ...branding.margin, left: 14, right: 14 },
@@ -129,7 +142,7 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
   };
 
   const exportCSV = () => {
-    let csv = 'Staff,Service Revenue,Product Revenue,Tier,Commission\n';
+    let csv = 'Staff,Service Revenue,Product Revenue,Level,Commission\n';
     commissionRows.forEach(r => { csv += `"${r.name}",${r.serviceRevenue},${r.productRevenue},"${r.tier}",${Math.round(r.commission)}\n`; });
     csv += `\nTotal,${totalServiceRev},${totalProductRev},,${Math.round(totalCommission)}\n`;
     if (hasRenters && rentData && rentData.activeRenterCount > 0) {
@@ -189,7 +202,7 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
         <CardHeader className="pb-2">
           <div className="flex items-center gap-2">
             <CardTitle className="font-display text-base tracking-wide">STAFF COMMISSION</CardTitle>
-            <MetricInfoTooltip description="Estimated commission for each stylist based on their revenue and configured commission tiers." />
+            <MetricInfoTooltip description="Estimated commission for each stylist based on their assigned level rates." />
           </div>
           <CardDescription className="text-xs">Pay period: {payFrom} to {payTo}</CardDescription>
         </CardHeader>
@@ -200,7 +213,7 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
                 <TableHead>Staff</TableHead>
                 <TableHead className="text-right">Service Revenue</TableHead>
                 <TableHead className="text-right">Product Revenue</TableHead>
-                <TableHead>Tier</TableHead>
+                <TableHead>Level</TableHead>
                 <TableHead className="text-right">Commission</TableHead>
               </TableRow>
             </TableHeader>

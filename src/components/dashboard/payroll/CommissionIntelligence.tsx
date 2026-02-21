@@ -257,8 +257,8 @@ function SourceBadge({ source, sourceName }: { source: string; sourceName: strin
     );
   }
   return (
-    <Badge variant="outline" className="text-[10px] text-muted-foreground">
-      Tier Fallback
+    <Badge variant="outline" className="text-[10px] text-destructive">
+      Unassigned
     </Badge>
   );
 }
