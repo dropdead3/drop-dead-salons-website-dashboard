@@ -1,37 +1,33 @@
 
 
-## Fix: "Haircuts" Category Showing "No Services"
+## Bento-ize Services Settings Page
 
-### Root Cause
+### Layout Change
 
-There are two different tables with mismatched category names:
-- The **services** table (your actual service records) stores the category as **"Haircut"** (singular)
-- The **service_category_colors** settings table stores it as **"Haircuts"** (plural)
+Reorganize from a single-column stack into a responsive two-column bento grid:
 
-The settings page counts services by looking up `servicesByCategory["Haircuts"]`, but all 8 haircut services are grouped under `"Haircut"` -- so it finds zero.
+```text
+Desktop (lg+):
++---------------------------+---------------------------+
+|   SERVICE CATEGORIES      |       SERVICES            |
+|   (color/order editor)    |   (accordion list)        |
++---------------------------+---------------------------+
+|   SERVICE ADD-ONS         |  BOOKING ADD-ON           |
+|   (library)               |  RECOMMENDATIONS          |
++---------------------------+---------------------------+
 
-### Fix
-
-One-line database update to rename the category in the `services` table to match your settings:
-
-```sql
-UPDATE services SET category = 'Haircuts' WHERE category = 'Haircut' AND is_active = true;
+Mobile (< lg):
+Single column, all four cards stacked vertically
 ```
 
-This aligns the 8 existing haircut services with the "Haircuts" entry in your settings. No code changes needed -- the existing matching logic works correctly once the names are consistent.
+### Technical Details
 
-### Also fix `phorest_services` table
+**File:** `src/components/dashboard/settings/ServicesSettingsContent.tsx`
 
-The same mismatch exists in `phorest_services`. We should align that too so the booking wizard also picks up these services:
+1. Replace the outer `<div className="space-y-6">` with a responsive bento grid: `grid grid-cols-1 lg:grid-cols-2 gap-4`
+2. Row 1: Service Categories card + Services card side-by-side on desktop, stacked on mobile
+3. Row 2: Service Add-Ons card + Booking Add-On Recommendations card side-by-side on desktop, stacked on mobile
+4. Dialog elements (ServiceEditorDialog, CategoryFormDialog, AlertDialogs) remain outside the grid -- they are portaled overlays and unaffected by layout
 
-```sql
-UPDATE phorest_services SET category = 'Haircuts' WHERE category = 'Haircut' AND is_active = true;
-```
+This follows the established settings interface standard (`grid-cols-1 lg:grid-cols-2`) documented in `settings-interface-standards` memory.
 
-### Files
-
-| File | Action |
-|------|--------|
-| Database | Update category from "Haircut" to "Haircuts" in both `services` and `phorest_services` tables |
-
-No code changes required.
