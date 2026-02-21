@@ -1,26 +1,25 @@
 
-# Replace Gender Dropdown with Bubble Selection
+# Rename Location to "Preferred Location" and Show Full Address
 
 ## What Changes
 
-The Gender field in the New Client Dialog will switch from a `Select` dropdown to a row of tappable pill/bubble buttons. The selected option gets a highlighted style (primary background); unselected options remain outlined. Tapping a selected bubble again deselects it (since gender is optional).
+1. **Rename label** from "Location *" to "Preferred Location" in both the collapsed and expanded views of the location field in the New Client Dialog.
 
-## Options Displayed
+2. **Default to scheduler's active location** -- already happening via `defaultLocationId` prop. No change needed here.
 
-- Male
-- Female
-- Non-Binary
-- Prefer not to say
+3. **Show full address** in the dropdown options and the collapsed display. Instead of just "North Mesa", show something like:
+   - "North Mesa -- 2036 N Gilbert Rd Ste 1, Mesa, AZ 85203"
 
 ## Technical Details
 
 **File Modified:** `src/components/dashboard/schedule/NewClientDialog.tsx`
 
-- Remove the `Select`/`SelectTrigger`/`SelectContent`/`SelectItem` markup for gender (lines 221-231)
-- Replace with a `flex flex-wrap gap-2` container holding four bubble buttons
-- Each bubble: `rounded-full px-4 py-2 text-sm border transition-colors cursor-pointer`
-  - **Selected state**: `bg-primary text-primary-foreground border-primary`
-  - **Unselected state**: `bg-background text-foreground border-input hover:bg-accent/50`
-- `onClick` toggles: if already selected, clears to `''`; otherwise sets the value
-- No new components or files needed -- inline toggle buttons using standard Tailwind classes
-- Font uses `font-sans` per design system rules; no bold weights
+### Changes
+
+- **Line 243**: Change `"Location: "` to `"Preferred Location: "`
+- **Line 245**: Change display from `loc.name` to `loc.name + " -- " + loc.address + ", " + loc.city` (full address)
+- **Line 260**: Change label from `"Location *"` to `"Preferred Location"`
+- **Lines 267-268**: Change dropdown option text from `loc.name` to include address, e.g. `{loc.name} -- {loc.address}, {loc.city}`
+- **Line 263**: Update placeholder from `"Select a location"` to `"Select preferred location"`
+
+The `locations` data already includes `address` and `city` fields, so no new queries are needed. Address formatting will gracefully handle missing fields by only showing what is available.
