@@ -86,6 +86,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { BookingVisibilityCard } from './BookingVisibilityCard';
 
 const DEFAULT_SOCIAL_LINKS: WebsiteSocialLinksSettings = {
   instagram: '',
@@ -711,23 +712,7 @@ function BookingTab() {
         </CardContent>
       </Card>
 
-      {/* Stylist & Service visibility stubs */}
-      <Card className="lg:col-span-2">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="font-display text-lg">STYLIST & SERVICE VISIBILITY</CardTitle>
-              <CardDescription>Control which stylists and services appear on your booking widget.</CardDescription>
-            </div>
-            <Badge variant="secondary" className="text-[10px]">Coming Soon</Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Fine-grained controls for showing or hiding specific stylists and services on your public booking page will be available soon.
-          </p>
-        </CardContent>
-      </Card>
+      <BookingVisibilityCard />
     </div>
   );
 }
