@@ -13381,34 +13381,40 @@ export type Database = {
       }
       service_category_colors: {
         Row: {
+          archived_at: string | null
           category_name: string
           color_hex: string
           created_at: string
           description: string | null
           display_order: number
           id: string
+          is_archived: boolean
           organization_id: string | null
           text_color_hex: string
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
           category_name: string
           color_hex?: string
           created_at?: string
           description?: string | null
           display_order?: number
           id?: string
+          is_archived?: boolean
           organization_id?: string | null
           text_color_hex?: string
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
           category_name?: string
           color_hex?: string
           created_at?: string
           description?: string | null
           display_order?: number
           id?: string
+          is_archived?: boolean
           organization_id?: string | null
           text_color_hex?: string
           updated_at?: string
@@ -14013,6 +14019,7 @@ export type Database = {
       services: {
         Row: {
           allow_same_day_booking: boolean | null
+          archived_at: string | null
           bookable_online: boolean
           category: string | null
           content_creation_time_minutes: number
@@ -14028,6 +14035,7 @@ export type Database = {
           import_source: string | null
           imported_at: string | null
           is_active: boolean | null
+          is_archived: boolean
           is_popular: boolean
           lead_time_days: number | null
           location_id: string | null
@@ -14043,6 +14051,7 @@ export type Database = {
         }
         Insert: {
           allow_same_day_booking?: boolean | null
+          archived_at?: string | null
           bookable_online?: boolean
           category?: string | null
           content_creation_time_minutes?: number
@@ -14058,6 +14067,7 @@ export type Database = {
           import_source?: string | null
           imported_at?: string | null
           is_active?: boolean | null
+          is_archived?: boolean
           is_popular?: boolean
           lead_time_days?: number | null
           location_id?: string | null
@@ -14073,6 +14083,7 @@ export type Database = {
         }
         Update: {
           allow_same_day_booking?: boolean | null
+          archived_at?: string | null
           bookable_online?: boolean
           category?: string | null
           content_creation_time_minutes?: number
@@ -14088,6 +14099,7 @@ export type Database = {
           import_source?: string | null
           imported_at?: string | null
           is_active?: boolean | null
+          is_archived?: boolean
           is_popular?: boolean
           lead_time_days?: number | null
           location_id?: string | null
