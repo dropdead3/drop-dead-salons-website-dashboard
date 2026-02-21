@@ -33,6 +33,7 @@ import {
   SPECIAL_GRADIENTS,
   isGradientMarker,
   getGradientFromMarker,
+  getContrastingTextColor,
 } from '@/utils/categoryColors';
 import {
   DndContext,
@@ -206,9 +207,24 @@ export function ServicesSettingsContent() {
   };
 
   const handleColorChange = (categoryId: string, colorHex: string) => {
+    // Optimistically update localOrder so the avatar reflects the change immediately
+    setLocalOrder(prev => prev.map(cat => {
+      if (cat.id !== categoryId) return cat;
+      const isGrad = colorHex.startsWith('gradient:');
+      const gradientObj = isGrad ? getGradientFromMarker(colorHex) : null;
+      return {
+        ...cat,
+        color_hex: colorHex,
+        text_color_hex: isGrad ? (gradientObj?.textColor ?? '#1f2937') : getContrastingTextColor(colorHex),
+      };
+    }));
     updateColor.mutate({ categoryId, colorHex }, {
       onSuccess: () => toast.success('Color updated'),
-      onError: () => toast.error('Failed to update color'),
+      onError: (err) => {
+        toast.error('Failed to update color');
+        // Revert optimistic update on failure
+        if (serviceCategories.length) setLocalOrder(serviceCategories);
+      },
     });
   };
 
