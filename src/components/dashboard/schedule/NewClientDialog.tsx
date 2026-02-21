@@ -33,6 +33,7 @@ import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useLocations } from '@/hooks/useLocations';
+import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useDuplicateDetection } from '@/hooks/useDuplicateDetection';
 import { useDebounce } from '@/hooks/use-debounce';
 import { DuplicateDetectionModal } from '@/components/dashboard/clients/DuplicateDetectionModal';
@@ -67,6 +68,7 @@ export function NewClientDialog({
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { data: locations = [] } = useLocations();
+  const { data: teamMembers } = useTeamDirectory();
   const bypassDuplicateCheck = useRef(false);
 
   const [firstName, setFirstName] = useState('');
@@ -80,6 +82,7 @@ export function NewClientDialog({
   const [clientSince, setClientSince] = useState<Date | undefined>(new Date());
   const [locationId, setLocationId] = useState(defaultLocationId || '');
   const [showLocationSelector, setShowLocationSelector] = useState(!defaultLocationId);
+  const [preferredStylistId, setPreferredStylistId] = useState('');
 
   const debouncedEmail = useDebounce(email.trim(), 500);
   const debouncedPhone = useDebounce(phone.replace(/\D/g, ''), 500);
@@ -98,6 +101,7 @@ export function NewClientDialog({
     setBirthday(undefined);
     setClientSince(new Date());
     setLocationId(defaultLocationId || '');
+    setPreferredStylistId('');
   };
 
   const createClient = useMutation({
@@ -118,6 +122,7 @@ export function NewClientDialog({
           notes: notes.trim() || undefined,
           birthday: birthday ? format(birthday, 'yyyy-MM-dd') : undefined,
           client_since: clientSince ? format(clientSince, 'yyyy-MM-dd') : undefined,
+          preferred_stylist_id: preferredStylistId && preferredStylistId !== 'none' ? preferredStylistId : undefined,
         },
       });
 
@@ -341,6 +346,23 @@ export function NewClientDialog({
                 </PopoverContent>
               </Popover>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Preferred Stylist</Label>
+            <Select value={preferredStylistId} onValueChange={setPreferredStylistId}>
+              <SelectTrigger>
+                <SelectValue placeholder="None (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {teamMembers?.map(member => (
+                  <SelectItem key={member.user_id} value={member.user_id}>
+                    {member.display_name || member.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
