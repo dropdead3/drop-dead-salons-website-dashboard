@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { managerNavItems } from '@/config/dashboardNav';
 import type { ManagerGroupId } from '@/config/dashboardNav';
 import { platformNavGroups } from '@/config/platformNav';
-import { LayoutDashboard, Rocket, BarChart3, Shield, Terminal } from 'lucide-react';
+import { LayoutDashboard, Rocket, BarChart3, Settings, Terminal } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 // Section icon mapping for collapsed sidebar popovers
@@ -12,7 +12,7 @@ export const SECTION_ICONS: Record<string, LucideIcon> = {
   main: LayoutDashboard,
   growth: Rocket,
   stats: BarChart3,
-  adminOnly: Shield,
+  adminOnly: Settings,
   platform: Terminal,
 };
 
