@@ -77,14 +77,17 @@ export function useServicesByCategory(branchId?: string) {
     return acc;
   }, {} as Record<string, PhorestService[]>);
 
-  // Sort grouped keys by display_order
+  // Sort grouped keys by display_order, filtering to only configured categories
   if (grouped && categoryColors) {
+    const configuredCategories = new Set(categoryColors.map(c => c.category_name));
     const orderMap = new Map(categoryColors.map(c => [c.category_name, c.display_order]));
-    const sortedEntries = Object.entries(grouped).sort(([a], [b]) => {
-      const oa = orderMap.get(a) ?? 9999;
-      const ob = orderMap.get(b) ?? 9999;
-      return oa - ob || a.localeCompare(b);
-    });
+    const sortedEntries = Object.entries(grouped)
+      .filter(([cat]) => configuredCategories.has(cat) && !['Block', 'Break'].includes(cat))
+      .sort(([a], [b]) => {
+        const oa = orderMap.get(a) ?? 9999;
+        const ob = orderMap.get(b) ?? 9999;
+        return oa - ob || a.localeCompare(b);
+      });
     const sorted = Object.fromEntries(sortedEntries);
     return { data: sorted, services, ...rest };
   }
@@ -140,14 +143,17 @@ export function useAllServicesByCategory() {
     return acc;
   }, {} as Record<string, PhorestService[]>);
 
-  // Sort grouped keys by display_order
+  // Sort grouped keys by display_order, filtering to only configured categories
   if (grouped && categoryColors) {
+    const configuredCategories = new Set(categoryColors.map(c => c.category_name));
     const orderMap = new Map(categoryColors.map(c => [c.category_name, c.display_order]));
-    const sortedEntries = Object.entries(grouped).sort(([a], [b]) => {
-      const oa = orderMap.get(a) ?? 9999;
-      const ob = orderMap.get(b) ?? 9999;
-      return oa - ob || a.localeCompare(b);
-    });
+    const sortedEntries = Object.entries(grouped)
+      .filter(([cat]) => configuredCategories.has(cat) && !['Block', 'Break'].includes(cat))
+      .sort(([a], [b]) => {
+        const oa = orderMap.get(a) ?? 9999;
+        const ob = orderMap.get(b) ?? 9999;
+        return oa - ob || a.localeCompare(b);
+      });
     const sorted = Object.fromEntries(sortedEntries);
     return { data: sorted, services, ...rest };
   }
