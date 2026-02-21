@@ -50,7 +50,7 @@ export function useBusinessSettings() {
 
 export function useBusinessName() {
   const { data } = useBusinessSettings();
-  return data?.business_name || 'Drop Dead';
+  return data?.business_name || 'Salon';
 }
 
 export function useUpdateBusinessSettings() {

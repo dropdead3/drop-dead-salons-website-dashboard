@@ -719,8 +719,8 @@ export function EmailTemplatesManager() {
                 <Mail className="w-5 h-5" style={{ color: '#8e8e93' }} />
               </div>
               <div>
-                <div className="font-medium text-[15px] tracking-[-0.01em]" style={{ color: '#000000' }}>Drop Dead Salons</div>
-                <div className="text-[13px]" style={{ color: '#8e8e93' }}>noreply@dropdeadsalon.com</div>
+                <div className="font-medium text-[15px] tracking-[-0.01em]" style={{ color: '#000000' }}>Your Salon</div>
+                <div className="text-[13px]" style={{ color: '#8e8e93' }}>noreply@salon.com</div>
               </div>
             </div>
             
@@ -755,12 +755,12 @@ export function EmailTemplatesManager() {
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-[15px]">
                 <span className="font-medium w-12" style={{ color: '#8e8e93' }}>From:</span>
-                <span style={{ color: '#000000' }}>Drop Dead Salons</span>
-                <span style={{ color: '#8e8e93' }}>&lt;noreply@dropdeadsalon.com&gt;</span>
+                <span style={{ color: '#000000' }}>Your Salon</span>
+                <span style={{ color: '#8e8e93' }}>&lt;noreply@salon.com&gt;</span>
               </div>
               <div className="flex items-center gap-2 text-[15px]">
                 <span className="font-medium w-12" style={{ color: '#8e8e93' }}>To:</span>
-                <span style={{ color: '#007aff' }}>team@dropdeadsalon.com</span>
+                <span style={{ color: '#007aff' }}>team@salon.com</span>
               </div>
             </div>
           </div>
@@ -903,7 +903,7 @@ export function EmailTemplatesManager() {
               <Input
                 value={createForm.subject}
                 onChange={(e) => setCreateForm({ ...createForm, subject: e.target.value })}
-                placeholder="e.g., Welcome to Drop Dead Gorgeous!"
+                placeholder="e.g., Welcome to Our Salon!"
                 className="font-mono"
               />
             </div>

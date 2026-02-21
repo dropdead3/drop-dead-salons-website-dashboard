@@ -75,7 +75,7 @@ export function ExtensionsSection() {
               transition={{ duration: 0.8, delay: 0.1 }}
               className="font-display text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight leading-[1.1]"
             >
-              <span className="whitespace-nowrap">Drop Dead</span>
+              <span className="whitespace-nowrap">Our Signature</span>
               <br />
               <span className="font-light text-oat">Method</span>
             </motion.h2>

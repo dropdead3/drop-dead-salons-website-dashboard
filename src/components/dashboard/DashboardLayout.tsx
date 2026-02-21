@@ -12,6 +12,7 @@ import { NavigationHistoryProvider, useNavigationHistory } from '@/contexts/Navi
 import { ZuraStickyGuidance } from '@/components/dashboard/ZuraStickyGuidance';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { PLATFORM_NAME } from '@/lib/brand';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
@@ -137,8 +138,8 @@ import {
   footerNavItems as footerNavFromConfig,
   websiteNavItems as websiteNavFromConfig,
 } from '@/config/dashboardNav';
-import Logo from '@/assets/drop-dead-logo.svg';
-import LogoWhite from '@/assets/drop-dead-logo-white.svg';
+import Logo from '@/assets/dd-secondary-logo.svg';
+import LogoWhite from '@/assets/dd-secondary-logo-white.svg';
 import LogoIcon from '@/assets/dd-secondary-logo.svg';
 import LogoIconWhite from '@/assets/dd-secondary-logo-white.svg';
 // Dark mode is now scoped via DashboardThemeContext
@@ -957,20 +958,20 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
                 {hasCustomLogo() ? (
                   <ImageWithSkeleton
                     src={getLogo()}
-                    alt={businessSettings?.business_name || 'Drop Dead'}
+                    alt={businessSettings?.business_name || 'Salon'}
                     className="h-4 w-auto max-w-full object-contain"
                     wrapperClassName="inline-flex"
                   />
                 ) : (
                   <span className="font-display text-sm uppercase tracking-wider text-foreground truncate">
-                    {businessSettings?.business_name || 'Drop Dead'}
+                    {businessSettings?.business_name || 'Salon'}
                   </span>
                 )}
               </span>
               {/* Secondary (icon) logo – visible when scrolled and scrolling down */}
               <ImageWithSkeleton
                 src={getSecondaryLogo()}
-                alt={businessSettings?.business_name || 'Drop Dead'}
+                alt={businessSettings?.business_name || 'Salon'}
                 className="h-4 w-auto pointer-events-none object-contain"
                 wrapperClassName="absolute left-0 top-1/2 -translate-y-1/2 pointer-events-none"
                 style={{
@@ -1291,7 +1292,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
             <footer className="py-8 text-center mt-auto">
               <div className="mx-auto w-48 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent mb-6" />
               <p className="font-display text-[10px] tracking-[0.2em] uppercase text-muted-foreground">
-                © {new Date().getFullYear()} Drop Dead · Powered by Drop Dead Salon Software
+                © {new Date().getFullYear()} {businessSettings?.business_name || 'Salon'} · Powered by {PLATFORM_NAME}
               </p>
             </footer>
           )}

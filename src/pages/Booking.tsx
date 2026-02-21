@@ -118,7 +118,7 @@ export default function Booking() {
     <Layout>
       <SEO 
         title="Schedule Your Initial Consultation"
-        description="Schedule your initial consultation at Drop Dead Salon. New clients begin with a $15 consultation to discuss your hair goals."
+        description="Schedule your initial consultation. New clients begin with a consultation to discuss your hair goals."
       />
       {/* Hero */}
       <section className="pt-32 lg:pt-40 pb-16 lg:pb-20">

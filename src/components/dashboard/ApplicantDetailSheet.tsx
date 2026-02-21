@@ -206,11 +206,11 @@ export function ApplicantDetailSheet({
 
             <Separator />
 
-            {/* Why Drop Dead */}
+            {/* Why Us */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />
-                Why Drop Dead?
+                Why Us?
               </h3>
               <p className="text-sm">{applicant.why_drop_dead}</p>
             </div>

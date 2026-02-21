@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Instagram, ArrowUpRight, MapPin, Phone, AlertCircle } from "lucide-react";
-import Logo from "@/assets/drop-dead-logo.svg";
+import Logo from "@/assets/dd-secondary-logo.svg";
 import { useActiveLocations, formatHoursForDisplay, isClosedForHoliday, isClosedToday } from "@/hooks/useLocations";
 import { useOrgPath } from "@/hooks/useOrgPath";
 
@@ -31,7 +31,7 @@ export function Footer() {
             >
               <img 
                 src={Logo} 
-                alt="Drop Dead" 
+                alt="Salon" 
                 className="h-5 w-auto"
               />
             </Link>
@@ -121,10 +121,10 @@ export function Footer() {
             </h4>
             <div className="space-y-4 flex flex-col items-center md:items-start">
               <a
-                href="mailto:contact@dropdeadsalon.com"
+                href="mailto:info@salon.com"
                 className="block text-sm font-sans font-light text-foreground/70 hover:text-foreground transition-colors"
               >
-                contact@dropdeadsalon.com
+                Contact us
               </a>
               <a
                 href="https://instagram.com"
@@ -134,7 +134,7 @@ export function Footer() {
                 aria-label="Instagram"
               >
                 <Instagram size={18} />
-                <span>@dropdeadsalon</span>
+                <span>Follow us</span>
               </a>
             </div>
           </div>
@@ -143,7 +143,7 @@ export function Footer() {
         {/* Bottom */}
         <div className="mt-12 md:mt-16 pt-6 md:pt-8 border-t border-foreground/10 flex flex-col gap-6 md:gap-4">
           <p className="text-xs text-muted-foreground font-sans text-center md:text-left order-1 md:order-none">
-            © {new Date().getFullYear()} Drop Dead Salon. All rights reserved.
+            © {new Date().getFullYear()} All rights reserved.
           </p>
           
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-6 gap-y-3 md:gap-x-10">
@@ -151,7 +151,7 @@ export function Footer() {
               to="/stylists#careers"
               className="inline-flex items-center gap-1.5 text-xs font-sans text-foreground/70 hover:text-foreground transition-colors"
             >
-              Work at Drop Dead
+              Careers
               <ArrowUpRight size={12} />
             </Link>
             <Link
@@ -171,7 +171,7 @@ export function Footer() {
           
           {/* Powered By */}
           <p className="text-xs text-muted-foreground/60 font-sans text-center md:text-left mt-2 md:mt-0">
-            Powered by Drop Dead Salon Software
+            Powered by Zura
           </p>
         </div>
       </div>

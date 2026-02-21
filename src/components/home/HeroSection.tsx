@@ -162,7 +162,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 transition={{ ...springTransition, delay: 2.5 }}
                 style={{ x: topLineX, opacity: headlineScrollOpacity }}
               >
-                Drop Dead
+                Your Salon
               </motion.span>
               <motion.span 
                 className="block overflow-hidden h-[1.15em]"

@@ -4,7 +4,7 @@ import type { Organization } from '@/hooks/useOrganizations';
 interface PublicOrgContextValue {
   organization: Organization;
   orgSlug: string;
-  /** Build a path relative to the org, e.g. orgPath('/services') → '/org/drop-dead/services' */
+  /** Build a path relative to the org, e.g. orgPath('/services') → '/org/my-salon/services' */
   orgPath: (path?: string) => string;
 }
 

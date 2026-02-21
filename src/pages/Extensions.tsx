@@ -62,7 +62,7 @@ const extensionBenefits = [
   },
   {
     title: "Damage-Free",
-    description: "Enjoy damage-free extensions with our signature Drop Dead Method, designed to protect your natural hair while enhancing your look.",
+    description: "Enjoy damage-free extensions with our signature method, designed to protect your natural hair while enhancing your look.",
     image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=500&fit=crop"
   }
 ];
@@ -75,7 +75,7 @@ const extensionFaqs = [
   },
   {
     question: "Will extensions damage my natural hair?",
-    answer: "When installed and maintained properly by our certified stylists, the Drop Dead Method is designed to be completely damage-free. Our hidden beaded row technique distributes weight evenly and doesn't use heat, glue, or harsh chemicals."
+    answer: "When installed and maintained properly by our certified stylists, our method is designed to be completely damage-free. Our hidden beaded row technique distributes weight evenly and doesn't use heat, glue, or harsh chemicals."
   },
   {
     question: "How long does the installation process take?",
@@ -94,8 +94,8 @@ const extensionFaqs = [
     answer: "Yes, a consultation is required for all new extension clients. This allows us to assess your hair health, discuss your goals, color match, and create a customized plan for your perfect look."
   },
   {
-    question: "What is the Drop Dead Method?",
-    answer: "The Drop Dead Method is our proprietary hidden beaded row technique. It's the most versatile and comfortable extension method available, featuring invisible rows that lay completely flat against your scalp with zero tension or damage."
+    question: "What is our signature method?",
+    answer: "Our signature method is a proprietary hidden beaded row technique. It's the most versatile and comfortable extension method available, featuring invisible rows that lay completely flat against your scalp with zero tension or damage."
   },
   {
     question: "How much do extensions cost?",
@@ -178,7 +178,7 @@ function SocialProofSection() {
             className="flex items-center gap-2 text-muted-foreground"
           >
             <span className="font-medium text-foreground">Certified</span>
-            <span>Drop Dead Method</span>
+            <span>Certified Method</span>
           </motion.div>
         </motion.div>
       </div>
@@ -228,7 +228,7 @@ function ExtensionSpecialistsCarousel() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="mt-4 text-muted-foreground max-w-xl mx-auto"
         >
-          Our certified stylists have mastered the Drop Dead Method with years of specialized training.
+          Our certified stylists have mastered the extension method with years of specialized training.
         </motion.p>
       </div>
 
@@ -428,7 +428,7 @@ export default function Extensions() {
     <Layout>
       <SEO 
         title="Hair Extensions - Luxury Extension Services"
-        description="Experience luxury hair extensions with the Drop Dead Method. Instant volume, instant length, damage-free extensions. Book your consultation today."
+        description="Experience luxury hair extensions with our signature method. Instant volume, instant length, damage-free extensions. Book your consultation today."
       />
 
       {/* Hero Section - Full Width Parallax */}
@@ -467,7 +467,7 @@ export default function Extensions() {
               transition={{ duration: 0.8, delay: 0.15 }}
               className="mt-6 text-base md:text-lg text-white/80 font-sans font-light max-w-xl mx-auto leading-relaxed"
             >
-              Drop Dead Salon built it's foundations upon our hair extension knowledge and sister brand, Drop Dead Extensions. We use all our own proprietary extension products in our salons to deliver incredible results with a quality guarantee.
+              Our salon built its foundations upon our hair extension knowledge and proprietary extension products, delivering incredible results with a quality guarantee.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -557,7 +557,7 @@ export default function Extensions() {
             We specialize in dream hair...
           </h2>
           <p className="text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-            Looking for the best hair extensions in Mesa or Gilbert, AZ? Our certified stylists use the Drop Dead Method to deliver seamless results that look and feel 100% natural.
+            Looking for the best hair extensions? Our certified stylists use our signature method to deliver seamless results that look and feel 100% natural.
           </p>
         </motion.div>
 
@@ -1120,7 +1120,7 @@ export default function Extensions() {
         </motion.div>
       </Section>
 
-      {/* Drop Dead Method Benefits Section */}
+      {/* Signature Method Benefits Section */}
       <Section className="bg-background">
         <div className="text-center mb-12">
           <motion.span
@@ -1139,7 +1139,7 @@ export default function Extensions() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="font-display text-2xl md:text-3xl lg:text-4xl font-normal tracking-tight text-foreground"
           >
-            The Drop Dead Difference
+            The Difference
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -1265,7 +1265,7 @@ export default function Extensions() {
                 <div>
                   <h3 className="font-medium text-lg mb-2">Color Matching</h3>
                   <p className="text-sm text-background/70 leading-relaxed">
-                    Our stylists custom match your hair color using our premium Drop Dead Hair swatches, ensuring a seamless, natural blend.
+                    Our stylists custom match your hair color using our premium swatches, ensuring a seamless, natural blend.
                   </p>
                 </div>
               </div>
@@ -1571,7 +1571,7 @@ export default function Extensions() {
             {
               step: "03",
               title: "Installation",
-              description: "Precise placement of each row using our signature Drop Dead Method.",
+              description: "Precise placement of each row using our signature method.",
               duration: "2-3 hrs"
             },
             {
@@ -1636,7 +1636,7 @@ export default function Extensions() {
             
             <div className="space-y-4 text-foreground/80 mb-8">
               <p>
-                Everything you need to know about hair extensions and the Drop Dead Method. 
+                Everything you need to know about hair extensions and our signature method. 
                 Have more questions? Book a consultation and we'll answer them all.
               </p>
             </div>

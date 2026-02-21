@@ -39,7 +39,7 @@ export function generateProgressReport(data: ReportData): void {
   // Header
   doc.setFontSize(24);
   doc.setFont('helvetica', 'bold');
-  doc.text('DROP DEAD 75', pageWidth / 2, 25, { align: 'center' });
+  doc.text('CLIENT ENGINE', pageWidth / 2, 25, { align: 'center' });
   
   doc.setFontSize(14);
   doc.setFont('helvetica', 'normal');
@@ -144,7 +144,7 @@ export function generateProgressReport(data: ReportData): void {
     doc.setFontSize(8);
     doc.setTextColor(156, 163, 175);
     doc.text(
-      'Drop Dead Gorgeous • Client Engine Program',
+      'Client Engine Program',
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 10,
       { align: 'center' }
@@ -176,7 +176,7 @@ export function generateCompletionCertificate(userName: string, completedAt: Dat
   // Subheader
   doc.setFontSize(18);
   doc.setFont('helvetica', 'normal');
-  doc.text('DROP DEAD 75 • CLIENT ENGINE PROGRAM', pageWidth / 2, 65, { align: 'center' });
+  doc.text('CLIENT ENGINE PROGRAM', pageWidth / 2, 65, { align: 'center' });
   
   // Decorative line
   doc.setLineWidth(1);

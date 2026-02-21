@@ -73,7 +73,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
-import DropDeadLogo from '@/assets/drop-dead-logo.svg';
+import DropDeadLogo from '@/assets/dd-secondary-logo.svg';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { QRCodeFullScreen } from '@/components/dashboard/QRCodeFullScreen';
 

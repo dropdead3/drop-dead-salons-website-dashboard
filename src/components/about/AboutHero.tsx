@@ -62,7 +62,7 @@ export function AboutHero() {
             </span>
           </div>
           <p className="text-lg md:text-xl text-foreground/60 max-w-2xl mx-auto leading-relaxed">
-            Drop Dead was born from a belief that great hair should come with an 
+            We were born from a belief that great hair should come with an 
             unforgettable experience. We're redefining what it means to feel beautiful.
           </p>
         </motion.div>
