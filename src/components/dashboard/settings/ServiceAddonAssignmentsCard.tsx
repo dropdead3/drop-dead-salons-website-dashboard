@@ -195,7 +195,7 @@ export function ServiceAddonAssignmentsCard({ organizationId, categories, servic
                 >
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-sans font-medium shrink-0"
-                    style={gradient ? { background: gradient.background, color: gradient.textColor } : { backgroundColor: cat.color_hex, color: cat.text_color_hex }}
+                    style={gradient ? { background: gradient.background, color: gradient.textColor, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)' } : { backgroundColor: cat.color_hex, color: cat.text_color_hex }}
                   >
                     {abbr}
                   </div>
