@@ -155,6 +155,11 @@ function DroppableSlot({
         if (isPastSlot || isAvailable || isOutsideHours) onClick();
       }}
     >
+      {isPastSlot && (
+        <div className="absolute left-1/2 -translate-x-1/2 -top-7 bg-muted-foreground text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap">
+          This time slot is no longer available
+        </div>
+      )}
       {(isAvailable || isOutsideHours) && !isPastSlot && (
         <div className="absolute left-1/2 -translate-x-1/2 -top-7 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap">
           {formatSlotTime(hour, minute)}

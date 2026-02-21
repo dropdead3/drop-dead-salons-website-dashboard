@@ -505,7 +505,13 @@ export function WeekView({
                             background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
                           } : undefined}
                           onClick={() => onSlotClick?.(day, slotTime)}
-                        />
+                        >
+                          {isPastSlot && (
+                            <div className="absolute left-1/2 -translate-x-1/2 -top-7 bg-muted-foreground text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap">
+                              This time slot is no longer available
+                            </div>
+                          )}
+                        </div>
                       );
                     }
                     
