@@ -16913,25 +16913,46 @@ export type Database = {
           success: boolean
         }[]
       }
-      create_break_request: {
-        Args: {
-          p_blocks_online_booking?: boolean
-          p_end_date: string
-          p_end_time?: string
-          p_is_full_day?: boolean
-          p_notes?: string
-          p_organization_id: string
-          p_reason?: string
-          p_start_date: string
-          p_start_time?: string
-          p_user_id: string
-        }
-        Returns: {
-          appointment_id: string
-          request_id: string
-          status: string
-        }[]
-      }
+      create_break_request:
+        | {
+            Args: {
+              p_blocks_online_booking?: boolean
+              p_end_date: string
+              p_end_time?: string
+              p_is_full_day?: boolean
+              p_notes?: string
+              p_organization_id: string
+              p_reason?: string
+              p_start_date: string
+              p_start_time?: string
+              p_user_id: string
+            }
+            Returns: {
+              appointment_id: string
+              request_id: string
+              status: string
+            }[]
+          }
+        | {
+            Args: {
+              p_block_mode?: string
+              p_blocks_online_booking?: boolean
+              p_end_date: string
+              p_end_time?: string
+              p_is_full_day?: boolean
+              p_notes?: string
+              p_organization_id: string
+              p_reason?: string
+              p_start_date: string
+              p_start_time?: string
+              p_user_id: string
+            }
+            Returns: {
+              appointment_id: string
+              request_id: string
+              status: string
+            }[]
+          }
       current_user_is_coach: { Args: never; Returns: boolean }
       generate_secure_token: { Args: never; Returns: string }
       get_booth_renter_profile_id: {
