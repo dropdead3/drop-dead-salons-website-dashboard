@@ -1170,6 +1170,18 @@ export function QuickBookingPopover({
                   if (matchedService) {
                     handleServiceToggle(matchedService.phorest_service_id);
                   }
+                  // Record add-on acceptance event for per-stylist analytics
+                  const effectiveStylistId = preSelectedStylistId || selectedStylist;
+                  if (effectiveOrganization?.id && effectiveStylistId) {
+                    supabase.from('booking_addon_events' as any).insert({
+                      organization_id: effectiveOrganization.id,
+                      staff_user_id: effectiveStylistId,
+                      addon_id: addon.id,
+                      addon_name: addon.name,
+                      addon_price: addon.price,
+                      addon_cost: addon.cost,
+                    });
+                  }
                 }
                 if (addonSuggestions.length <= 1) {
                   setShowAddonToast(false);

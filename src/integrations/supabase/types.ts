@@ -1336,6 +1336,54 @@ export type Database = {
           },
         ]
       }
+      booking_addon_events: {
+        Row: {
+          addon_cost: number | null
+          addon_id: string
+          addon_name: string
+          addon_price: number
+          created_at: string
+          id: string
+          organization_id: string
+          staff_user_id: string
+        }
+        Insert: {
+          addon_cost?: number | null
+          addon_id: string
+          addon_name: string
+          addon_price?: number
+          created_at?: string
+          id?: string
+          organization_id: string
+          staff_user_id: string
+        }
+        Update: {
+          addon_cost?: number | null
+          addon_id?: string
+          addon_name?: string
+          addon_price?: number
+          created_at?: string
+          id?: string
+          organization_id?: string
+          staff_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_addon_events_addon_id_fkey"
+            columns: ["addon_id"]
+            isOneToOne: false
+            referencedRelation: "service_addons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_addon_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_patterns: {
         Row: {
           analyzed_at: string | null

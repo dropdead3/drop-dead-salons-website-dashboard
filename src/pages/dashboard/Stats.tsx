@@ -18,6 +18,7 @@ import { Link } from 'react-router-dom';
 
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useAddonMarginAnalytics } from '@/hooks/useAddonMarginAnalytics';
+import { useStylistAddonAttachment } from '@/hooks/useStylistAddonAttachment';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { PhorestSyncButton } from '@/components/dashboard/PhorestSyncButton';
@@ -38,6 +39,7 @@ export default function Stats() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const { data: marginData } = useAddonMarginAnalytics(orgId);
+  const { data: stylistAddonData } = useStylistAddonAttachment(orgId);
 
   // Check if user is admin/manager
   const isAdmin = roles.some(role => ['admin', 'super_admin', 'manager'].includes(role));
@@ -335,6 +337,62 @@ export default function Stats() {
                       Lowest margin: <strong>{marginData.lowMargin[0].name}</strong> at {marginData.lowMargin[0].marginPct.toFixed(0)}% ({formatCurrency(marginData.lowMargin[0].price)} price, {formatCurrency(marginData.lowMargin[0].cost)} cost)
                     </p>
                   )}
+                </Card>
+              </VisibilityGate>
+            )}
+
+            {/* Stylist Add-On Performance Card - admin/manager only */}
+            {isAdmin && stylistAddonData && stylistAddonData.length > 0 && (
+              <VisibilityGate
+                elementKey="stylist_addon_performance_card"
+                elementName="Stylist Add-On Performance"
+                elementCategory="Stats"
+              >
+                <Card className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-primary" />
+                      <h2 className="font-display text-sm tracking-wide">STYLIST ADD-ON PERFORMANCE</h2>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      Last 30 days
+                    </Badge>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-2 pr-4 text-xs font-display tracking-wide text-muted-foreground">STYLIST</th>
+                          <th className="text-right py-2 px-4 text-xs font-display tracking-wide text-muted-foreground">ADD-ONS</th>
+                          <th className="text-right py-2 px-4 text-xs font-display tracking-wide text-muted-foreground">AVG MARGIN</th>
+                          <th className="text-right py-2 pl-4 text-xs font-display tracking-wide text-muted-foreground">HIGH / LOW</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {stylistAddonData.map((stylist) => (
+                          <tr key={stylist.staffUserId} className="border-b border-border/50 last:border-0">
+                            <td className="py-2.5 pr-4 font-medium">{stylist.displayName}</td>
+                            <td className="py-2.5 px-4 text-right tabular-nums">{stylist.totalAddons}</td>
+                            <td className="py-2.5 px-4 text-right tabular-nums">
+                              <span className={stylist.avgMarginPct >= 50 ? 'text-green-600' : stylist.avgMarginPct < 30 ? 'text-red-500' : ''}>
+                                {stylist.avgMarginPct > 0 ? `${stylist.avgMarginPct.toFixed(0)}%` : '—'}
+                              </span>
+                            </td>
+                            <td className="py-2.5 pl-4 text-right tabular-nums">
+                              <span className="text-green-600">{stylist.highMarginCount}</span>
+                              {' / '}
+                              <span className="text-red-500">{stylist.lowMarginCount}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground mt-4 text-center">
+                    High = margin ≥ 50% · Low = margin &lt; 30%
+                  </p>
                 </Card>
               </VisibilityGate>
             )}
