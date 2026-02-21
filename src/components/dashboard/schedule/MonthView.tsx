@@ -25,6 +25,7 @@ interface MonthViewProps {
 }
 
 const STATUS_DOT_COLORS: Record<AppointmentStatus, string> = {
+  pending: 'bg-amber-500',
   booked: 'bg-slate-400',
   confirmed: 'bg-green-500',
   checked_in: 'bg-blue-500',

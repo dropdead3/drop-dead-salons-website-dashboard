@@ -159,6 +159,34 @@ export function QuickBookingPopover({
   const [redoCustomReason, setRedoCustomReason] = useState('');
   const [redoPriceOverride, setRedoPriceOverride] = useState<number | null>(null);
   const [originalAppointmentId, setOriginalAppointmentId] = useState<string | null>(null);
+  const [originalAppointmentData, setOriginalAppointmentData] = useState<{
+    id: string;
+    service_name: string | null;
+    appointment_date: string;
+    staff_name: string | null;
+    total_price: number | null;
+  } | null>(null);
+
+  // Query client's recent appointments for redo linking
+  const { data: clientRecentAppointments = [] } = useQuery({
+    queryKey: ['client-recent-appointments', selectedClient?.id, redoPolicy?.redo_window_days],
+    queryFn: async () => {
+      if (!selectedClient?.id) return [];
+      const windowDays = redoPolicy?.redo_window_days ?? 14;
+      const dateFrom = format(new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
+      const { data } = await supabase
+        .from('appointments')
+        .select('id, service_name, appointment_date, staff_name, total_price, start_time')
+        .eq('client_id', selectedClient.id)
+        .gte('appointment_date', dateFrom)
+        .not('status', 'in', '("cancelled")')
+        .eq('is_redo', false)
+        .order('appointment_date', { ascending: false })
+        .limit(20);
+      return data || [];
+    },
+    enabled: !!selectedClient?.id && isRedo && open,
+  });
 
   // Add-on toast state
   const [showAddonToast, setShowAddonToast] = useState(false);
@@ -515,6 +543,8 @@ export function QuickBookingPopover({
           redo_reason: isRedo ? (redoReason === 'Other' ? redoCustomReason : redoReason) || undefined : undefined,
           original_appointment_id: isRedo ? originalAppointmentId || undefined : undefined,
           redo_pricing_override: isRedo ? redoPriceOverride : undefined,
+          redo_requires_approval: isRedo ? redoPolicy?.redo_requires_approval : undefined,
+          redo_is_manager: isRedo ? isManagerOrAdmin : undefined,
         },
       });
 
@@ -554,6 +584,7 @@ export function QuickBookingPopover({
     setRedoCustomReason('');
     setRedoPriceOverride(null);
     setOriginalAppointmentId(null);
+    setOriginalAppointmentData(null);
     // Reset add-on toast state
     setShowAddonToast(false);
     setDismissedAddonCategories(new Set());
@@ -1779,7 +1810,14 @@ export function QuickBookingPopover({
                   <Switch
                     id="redo-toggle"
                     checked={isRedo}
-                    onCheckedChange={setIsRedo}
+                    onCheckedChange={(checked) => {
+                      setIsRedo(checked);
+                      if (!checked) {
+                        setOriginalAppointmentId(null);
+                        setOriginalAppointmentData(null);
+                        setRedoPriceOverride(null);
+                      }
+                    }}
                     className="scale-90"
                   />
                 </div>
@@ -1810,15 +1848,77 @@ export function QuickBookingPopover({
                       )}
                     </div>
 
-                    {/* Pricing indicator */}
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Redo pricing</span>
-                      <Badge variant="secondary" className="text-[10px]">
-                        {redoPolicy?.redo_pricing_policy === 'free' && 'Complimentary'}
-                        {redoPolicy?.redo_pricing_policy === 'percentage' && `${redoPolicy.redo_pricing_percentage}% of original`}
-                        {redoPolicy?.redo_pricing_policy === 'full_price' && 'Full price'}
-                      </Badge>
+                    {/* Original Appointment Picker */}
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                        Original Appointment
+                      </Label>
+                      {!selectedClient ? (
+                        <p className="text-[10px] text-muted-foreground italic">Select a client first</p>
+                      ) : clientRecentAppointments.length === 0 ? (
+                        <p className="text-[10px] text-muted-foreground italic">No recent appointments found within redo window</p>
+                      ) : (
+                        <div className="space-y-1 max-h-[120px] overflow-y-auto">
+                          {clientRecentAppointments.map((apt) => {
+                            const isSelected = originalAppointmentId === apt.id;
+                            return (
+                              <button
+                                key={apt.id}
+                                type="button"
+                                className={cn(
+                                  'w-full flex items-center justify-between p-2 rounded-md text-left text-xs transition-all',
+                                  isSelected ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-muted/70 bg-muted/30'
+                                )}
+                                onClick={() => {
+                                  setOriginalAppointmentId(apt.id);
+                                  setOriginalAppointmentData(apt);
+                                }}
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-medium truncate">{apt.service_name || 'Service'}</div>
+                                  <div className="text-[10px] text-muted-foreground">
+                                    {apt.appointment_date} · {apt.staff_name || 'Unknown'}
+                                  </div>
+                                </div>
+                                {apt.total_price != null && (
+                                  <span className="text-[10px] text-muted-foreground shrink-0 ml-2">
+                                    {formatCurrencyWhole(apt.total_price)}
+                                  </span>
+                                )}
+                                {isSelected && <Check className="h-3 w-3 text-primary shrink-0 ml-1" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
+
+                    {/* Computed redo pricing */}
+                    {(() => {
+                      const origPrice = originalAppointmentData?.total_price;
+                      let computedRedoPrice: number | null = null;
+                      if (origPrice != null && redoPolicy) {
+                        if (redoPolicy.redo_pricing_policy === 'free') computedRedoPrice = 0;
+                        else if (redoPolicy.redo_pricing_policy === 'percentage') computedRedoPrice = origPrice * (redoPolicy.redo_pricing_percentage / 100);
+                        else computedRedoPrice = origPrice;
+                      }
+                      const displayPrice = redoPriceOverride ?? computedRedoPrice;
+                      return (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Redo pricing</span>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="text-[10px]">
+                              {redoPolicy?.redo_pricing_policy === 'free' && 'Complimentary'}
+                              {redoPolicy?.redo_pricing_policy === 'percentage' && `${redoPolicy.redo_pricing_percentage}% of original`}
+                              {redoPolicy?.redo_pricing_policy === 'full_price' && 'Full price'}
+                            </Badge>
+                            {displayPrice != null && (
+                              <span className="font-medium tabular-nums">{formatCurrencyWhole(displayPrice)}</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Manager override */}
                     {isManagerOrAdmin && (

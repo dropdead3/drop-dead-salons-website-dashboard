@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { parseISO } from 'date-fns';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import {
   Sheet,
@@ -83,6 +84,7 @@ const STATUS_CONFIG: Record<AppointmentStatus, {
   label: string;
   icon: React.ElementType;
 }> = {
+  pending: { bg: 'bg-amber-100 dark:bg-amber-900/50', text: 'text-amber-800 dark:text-amber-300', label: 'Pending', icon: Clock },
   booked: { bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-700 dark:text-slate-300', label: 'Booked', icon: Calendar },
   confirmed: { bg: 'bg-green-100 dark:bg-green-900/50', text: 'text-green-800 dark:text-green-300', label: 'Confirmed', icon: CheckCircle },
   checked_in: { bg: 'bg-blue-100 dark:bg-blue-900/50', text: 'text-blue-800 dark:text-blue-300', label: 'Checked In', icon: UserCheck },
@@ -92,6 +94,7 @@ const STATUS_CONFIG: Record<AppointmentStatus, {
 };
 
 const STATUS_TRANSITIONS: Record<AppointmentStatus, AppointmentStatus[]> = {
+  pending: ['confirmed', 'cancelled'],
   booked: ['confirmed', 'cancelled'],
   confirmed: ['checked_in', 'cancelled', 'no_show'],
   checked_in: ['completed', 'cancelled'],
@@ -129,6 +132,57 @@ export function AppointmentDetailSheet({
   const { assistants, assignAssistant, removeAssistant, updateAssistDuration, isAssigning } = useAppointmentAssistants(appointment?.id || null);
   const canAddNotes = hasPermission('add_appointment_notes');
   const canManageAssistants = hasPermission('create_appointments') || hasPermission('view_team_appointments');
+  const isManagerOrAdmin = user ? ['admin', 'super_admin', 'manager'].some(r => (user as any).roles?.includes?.(r)) : false;
+
+  // Forward link: find redo appointments linked to this appointment
+  const { data: linkedRedos = [] } = useQuery({
+    queryKey: ['linked-redos', appointment?.id],
+    queryFn: async () => {
+      if (!appointment?.id) return [];
+      const { data } = await supabase
+        .from('appointments')
+        .select('id, appointment_date, staff_name, service_name, status')
+        .eq('original_appointment_id', appointment.id)
+        .not('status', 'in', '("cancelled")');
+      return data || [];
+    },
+    enabled: !!appointment?.id && open,
+  });
+
+  // Approve redo mutation
+  const approveRedo = useMutation({
+    mutationFn: async () => {
+      if (!appointment?.id || !user?.id) throw new Error('Missing data');
+      const { error } = await supabase
+        .from('appointments')
+        .update({ redo_approved_by: user.id, status: 'confirmed' })
+        .eq('id', appointment.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+      toast.success('Redo approved');
+    },
+    onError: (e: Error) => toast.error('Failed to approve redo', { description: e.message }),
+  });
+
+  // Decline redo mutation
+  const declineRedo = useMutation({
+    mutationFn: async () => {
+      if (!appointment?.id) throw new Error('Missing data');
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'cancelled', notes: (appointment.notes || '') + '\n[Redo declined]' })
+        .eq('id', appointment.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+      toast.success('Redo declined');
+      onOpenChange(false);
+    },
+    onError: (e: Error) => toast.error('Failed to decline redo', { description: e.message }),
+  });
 
   // Fetch team for assistant picker
   const { data: teamMembers = [] } = useTeamDirectory(undefined, {
@@ -268,16 +322,53 @@ export function AppointmentDetailSheet({
             <div className="p-6 space-y-6">
               {/* Redo Badge */}
               {(appointment as any).is_redo && (
-                <div className="flex items-center justify-between bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2 border border-amber-200 dark:border-amber-800">
-                  <div className="flex items-center gap-2 text-sm">
-                    <RotateCcw className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                    <span className="font-medium text-amber-700 dark:text-amber-300">Redo / Adjustment</span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2 border border-amber-200 dark:border-amber-800">
+                    <div className="flex items-center gap-2 text-sm">
+                      <RotateCcw className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      <span className="font-medium text-amber-700 dark:text-amber-300">Redo / Adjustment</span>
+                    </div>
+                    {(appointment as any).redo_reason && (
+                      <Badge variant="outline" className="text-[10px] border-amber-300 text-amber-700 dark:text-amber-300">
+                        {(appointment as any).redo_reason}
+                      </Badge>
+                    )}
                   </div>
-                  {(appointment as any).redo_reason && (
-                    <Badge variant="outline" className="text-[10px] border-amber-300 text-amber-700 dark:text-amber-300">
-                      {(appointment as any).redo_reason}
-                    </Badge>
+                  {/* Approval actions for pending redos */}
+                  {appointment.status === 'pending' && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        className="flex-1 h-8 text-xs"
+                        onClick={() => approveRedo.mutate()}
+                        disabled={approveRedo.isPending || declineRedo.isPending}
+                      >
+                        <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                        Approve Redo
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 h-8 text-xs text-destructive hover:text-destructive"
+                        onClick={() => declineRedo.mutate()}
+                        disabled={approveRedo.isPending || declineRedo.isPending}
+                      >
+                        <XCircle className="h-3.5 w-3.5 mr-1" />
+                        Decline
+                      </Button>
+                    </div>
                   )}
+                </div>
+              )}
+
+              {/* Forward link: this appointment has a redo */}
+              {linkedRedos.length > 0 && (
+                <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2 border border-blue-200 dark:border-blue-800">
+                  <RotateCcw className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-sm text-blue-700 dark:text-blue-300">
+                    Redo scheduled: {linkedRedos[0].service_name || 'Service'} on {linkedRedos[0].appointment_date}
+                    {linkedRedos[0].staff_name && ` with ${linkedRedos[0].staff_name}`}
+                  </span>
                 </div>
               )}
 

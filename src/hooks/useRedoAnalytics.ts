@@ -23,6 +23,8 @@ export interface RedoAnalytics {
   financialImpact: number;
   byStylist: RedoByStylists[];
   byReason: RedoByReason[];
+  weeklyTrend: number[];
+  repeatRedoClients: number;
 }
 
 export function useRedoAnalytics(days: number = 30) {
@@ -33,18 +35,18 @@ export function useRedoAnalytics(days: number = 30) {
   return useQuery({
     queryKey: ['redo-analytics', orgId, days],
     queryFn: async (): Promise<RedoAnalytics> => {
-      if (!orgId) return { totalRedos: 0, totalAppointments: 0, redoRate: 0, financialImpact: 0, byStylist: [], byReason: [] };
+      if (!orgId) return { totalRedos: 0, totalAppointments: 0, redoRate: 0, financialImpact: 0, byStylist: [], byReason: [], weeklyTrend: [], repeatRedoClients: 0 };
 
       // Fetch all appointments in the period
       const { data: appointments, error } = await supabase
         .from('appointments')
-        .select('id, staff_user_id, staff_name, is_redo, redo_reason, original_appointment_id, total_price, original_price')
+        .select('id, staff_user_id, staff_name, is_redo, redo_reason, original_appointment_id, total_price, original_price, client_id, appointment_date')
         .eq('organization_id', orgId)
         .gte('appointment_date', dateFrom)
         .not('status', 'in', '("cancelled")');
 
       if (error || !appointments) {
-        return { totalRedos: 0, totalAppointments: 0, redoRate: 0, financialImpact: 0, byStylist: [], byReason: [] };
+        return { totalRedos: 0, totalAppointments: 0, redoRate: 0, financialImpact: 0, byStylist: [], byReason: [], weeklyTrend: [], repeatRedoClients: 0 };
       }
 
       const totalAppointments = appointments.length;
@@ -108,7 +110,27 @@ export function useRedoAnalytics(days: number = 30) {
         .map(([reason, count]) => ({ reason, count }))
         .sort((a, b) => b.count - a.count);
 
-      return { totalRedos, totalAppointments, redoRate, financialImpact, byStylist, byReason };
+      // Weekly trend (last 12 weeks)
+      const weeklyTrend: number[] = [];
+      const now = new Date();
+      for (let w = 11; w >= 0; w--) {
+        const weekStart = new Date(now.getTime() - (w + 1) * 7 * 24 * 60 * 60 * 1000);
+        const weekEnd = new Date(now.getTime() - w * 7 * 24 * 60 * 60 * 1000);
+        const weekStartStr = format(weekStart, 'yyyy-MM-dd');
+        const weekEndStr = format(weekEnd, 'yyyy-MM-dd');
+        const weekRedos = redos.filter(r => r.appointment_date >= weekStartStr && r.appointment_date < weekEndStr).length;
+        weeklyTrend.push(weekRedos);
+      }
+
+      // Repeat redo clients (clients with 2+ redos)
+      const clientRedoCount = new Map<string, number>();
+      for (const redo of redos) {
+        const cid = (redo as any).client_id;
+        if (cid) clientRedoCount.set(cid, (clientRedoCount.get(cid) || 0) + 1);
+      }
+      const repeatRedoClients = Array.from(clientRedoCount.values()).filter(c => c >= 2).length;
+
+      return { totalRedos, totalAppointments, redoRate, financialImpact, byStylist, byReason, weeklyTrend, repeatRedoClients };
     },
     enabled: !!orgId,
   });

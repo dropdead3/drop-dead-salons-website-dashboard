@@ -20,6 +20,8 @@ interface BookingRequest {
   redo_reason?: string;
   original_appointment_id?: string;
   redo_pricing_override?: number;
+  redo_requires_approval?: boolean;
+  redo_is_manager?: boolean;
 }
 
 async function phorestRequest(
@@ -55,7 +57,6 @@ async function phorestRequest(
   if (!response.ok) {
     console.error(`Phorest API error (${response.status}):`, responseText);
     
-    // Parse error for better messaging
     try {
       const errorJson = JSON.parse(responseText);
       const errorCode = errorJson.errorCode || errorJson.code;
@@ -101,13 +102,63 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const bookingData: BookingRequest = await req.json();
-    const { branch_id, client_id, staff_id, service_ids, start_time, notes, is_redo, redo_reason, original_appointment_id, redo_pricing_override } = bookingData;
+    const { branch_id, client_id, staff_id, service_ids, start_time, notes, is_redo, redo_reason, original_appointment_id, redo_pricing_override, redo_requires_approval, redo_is_manager } = bookingData;
 
     if (!branch_id || !client_id || !staff_id || !service_ids?.length || !start_time) {
       throw new Error("Missing required fields: branch_id, client_id, staff_id, service_ids, start_time");
     }
 
     console.log(`Creating booking for client ${client_id} with staff ${staff_id} at ${start_time}`);
+
+    // --- Redo validation ---
+    let redoFinalPrice: number | null = null;
+    let redoOriginalPrice: number | null = null;
+    
+    if (is_redo && original_appointment_id) {
+      // Fetch original appointment
+      const { data: origAppt } = await supabase
+        .from("appointments")
+        .select("appointment_date, total_price, organization_id")
+        .eq("id", original_appointment_id)
+        .single();
+
+      if (origAppt) {
+        redoOriginalPrice = origAppt.total_price;
+
+        // Validate redo window
+        const { data: orgData } = await supabase
+          .from("organizations")
+          .select("settings")
+          .eq("id", origAppt.organization_id)
+          .single();
+
+        const settings = (orgData?.settings || {}) as Record<string, any>;
+        const windowDays = settings.redo_window_days ?? 14;
+        const origDate = new Date(origAppt.appointment_date);
+        const daysDiff = Math.floor((Date.now() - origDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (daysDiff > windowDays && !redo_is_manager) {
+          throw new Error(`Redo window expired. Original appointment is ${daysDiff} days old (limit: ${windowDays} days).`);
+        }
+
+        // Calculate redo pricing
+        if (redo_pricing_override != null) {
+          redoFinalPrice = redo_pricing_override;
+        } else {
+          const policy = settings.redo_pricing_policy || 'free';
+          const pct = settings.redo_pricing_percentage ?? 50;
+          if (policy === 'free') redoFinalPrice = 0;
+          else if (policy === 'percentage' && redoOriginalPrice != null) redoFinalPrice = redoOriginalPrice * (pct / 100);
+          else redoFinalPrice = redoOriginalPrice;
+        }
+      }
+    }
+
+    // Determine appointment status (pending if redo requires approval and user is not manager)
+    let appointmentStatus = 'confirmed';
+    if (is_redo && redo_requires_approval && !redo_is_manager) {
+      appointmentStatus = 'pending';
+    }
 
     // Build the booking request body
     const phorestBooking = {
@@ -164,7 +215,7 @@ serve(async (req) => {
     // Create local record
     const appointmentId = response.appointmentId || response.id || `local-${Date.now()}`;
     
-    const localRecord = {
+    const localRecord: Record<string, any> = {
       phorest_id: appointmentId,
       stylist_user_id: staffMapping?.user_id || null,
       phorest_staff_id: staff_id,
@@ -174,13 +225,20 @@ serve(async (req) => {
       start_time: startTimeLocal,
       end_time: endTimeLocal,
       service_name: serviceName,
-      status: 'confirmed',
+      status: appointmentStatus,
       notes: notes || null,
       is_redo: is_redo || false,
       redo_reason: is_redo ? redo_reason || null : null,
       original_appointment_id: is_redo ? original_appointment_id || null : null,
-      redo_pricing_override: is_redo ? redo_pricing_override ?? null : null,
+      redo_pricing_override: is_redo ? (redoFinalPrice ?? redo_pricing_override ?? null) : null,
     };
+
+    if (redoOriginalPrice != null) {
+      localRecord.original_price = redoOriginalPrice;
+    }
+    if (redoFinalPrice != null) {
+      localRecord.total_price = redoFinalPrice;
+    }
 
     const { error: insertError } = await supabase
       .from("phorest_appointments")
@@ -188,6 +246,53 @@ serve(async (req) => {
 
     if (insertError) {
       console.error("Failed to create local record:", insertError);
+    }
+
+    // --- Manager notification for redo ---
+    if (is_redo) {
+      try {
+        // Look up org from location
+        const { data: locData } = await supabase
+          .from("locations")
+          .select("organization_id")
+          .eq("phorest_branch_id", branch_id)
+          .maybeSingle();
+
+        if (locData?.organization_id) {
+          const { data: orgSettings } = await supabase
+            .from("organizations")
+            .select("settings")
+            .eq("id", locData.organization_id)
+            .single();
+
+          const s = (orgSettings?.settings || {}) as Record<string, any>;
+          if (s.redo_notification_enabled !== false) {
+            // Insert in-app notification for managers
+            const { data: managers } = await supabase
+              .from("user_roles")
+              .select("user_id")
+              .in("role", ["admin", "manager", "super_admin"]);
+
+            if (managers && managers.length > 0) {
+              const notifications = managers.map((m) => ({
+                user_id: m.user_id,
+                type: 'redo_booking',
+                title: 'Redo Appointment Booked',
+                message: `Redo for ${client?.name || 'Client'}: ${redo_reason || 'No reason'}. Service: ${serviceName}.`,
+                severity: 'info',
+                metadata: { appointment_id: appointmentId, redo_reason, original_appointment_id },
+              }));
+
+              await supabase.from("notifications").insert(notifications).throwOnError().catch(() => {
+                // notifications table may not exist yet, silently ignore
+                console.log("[redo] Notification insert skipped (table may not exist)");
+              });
+            }
+          }
+        }
+      } catch (notifErr) {
+        console.log("[redo] Notification error (non-fatal):", notifErr);
+      }
     }
 
     return new Response(
