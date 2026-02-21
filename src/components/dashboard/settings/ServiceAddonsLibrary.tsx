@@ -10,7 +10,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2, Package, Check, X, Clock, Link2, AlertTriangle, GripVertical, Sparkles, FolderOpen, Scissors } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, Check, X, Clock, Link2, AlertTriangle, GripVertical, Sparkles, FolderOpen, Scissors, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useServiceAddons, useCreateServiceAddon, useUpdateServiceAddon, useDeleteServiceAddon, useReorderServiceAddons, type ServiceAddon } from '@/hooks/useServiceAddons';
@@ -181,6 +181,8 @@ export function ServiceAddonsLibrary({ organizationId, categories = [] }: Servic
   const [duration, setDuration] = useState('');
   const [linkedServiceId, setLinkedServiceId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [assignMode, setAssignMode] = useState<'none' | 'category' | 'service'>('none');
 
   const resetForm = () => {
     setShowForm(false);
@@ -191,6 +193,8 @@ export function ServiceAddonsLibrary({ organizationId, categories = [] }: Servic
     setCost('');
     setDuration('');
     setLinkedServiceId(null);
+    setSelectedCategoryId(null);
+    setAssignMode('none');
   };
 
   const startEdit = (addon: ServiceAddon) => {
@@ -215,10 +219,31 @@ export function ServiceAddonsLibrary({ organizationId, categories = [] }: Servic
       linked_service_id: linkedServiceId || null,
     };
 
+    const onSuccessWithAssignment = (data: any) => {
+      const addonId = data?.id;
+      // Auto-create assignment if category selected
+      if (addonId && selectedCategoryId && assignMode === 'category') {
+        createAssignment.mutate({
+          organization_id: organizationId,
+          addon_id: addonId,
+          target_type: 'category',
+          target_category_id: selectedCategoryId,
+        });
+      } else if (addonId && selectedCategoryId && assignMode === 'service' && linkedServiceId) {
+        createAssignment.mutate({
+          organization_id: organizationId,
+          addon_id: addonId,
+          target_type: 'service',
+          target_service_id: linkedServiceId,
+        });
+      }
+      resetForm();
+    };
+
     if (editingId) {
-      updateAddon.mutate({ id: editingId, organizationId, ...payload }, { onSuccess: resetForm });
+      updateAddon.mutate({ id: editingId, organizationId, ...payload }, { onSuccess: onSuccessWithAssignment });
     } else {
-      createAddon.mutate({ organization_id: organizationId, ...payload }, { onSuccess: resetForm });
+      createAddon.mutate({ organization_id: organizationId, ...payload }, { onSuccess: onSuccessWithAssignment });
     }
   };
 
@@ -265,28 +290,73 @@ export function ServiceAddonsLibrary({ organizationId, categories = [] }: Servic
 
   const isPending = createAddon.isPending || updateAddon.isPending;
 
-  const renderServicePicker = () => (
-    <Select value={linkedServiceId || '_none'} onValueChange={v => setLinkedServiceId(v === '_none' ? null : v)}>
-      <SelectTrigger className="h-9 text-sm">
-        <div className="flex items-center gap-1.5">
-          <Link2 className="h-3 w-3 text-muted-foreground" />
-          <SelectValue placeholder="Link to service (optional)" />
-        </div>
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="_none">No linked service</SelectItem>
-        {Object.entries(servicesByCategory).map(([cat, svcs]) => (
-          <SelectGroup key={cat}>
-            <SelectLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">{cat}</SelectLabel>
-            {svcs.map(s => (
-              <SelectItem key={s.phorest_service_id} value={s.phorest_service_id}>
-                {s.name}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        ))}
-      </SelectContent>
-    </Select>
+  const renderAssignmentPicker = () => (
+    <div className="col-span-2 space-y-2">
+      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Apply to Category / Service</p>
+      <Select
+        value={selectedCategoryId || '_none'}
+        onValueChange={v => {
+          if (v === '_none') {
+            setSelectedCategoryId(null);
+            setAssignMode('none');
+            setLinkedServiceId(null);
+          } else {
+            setSelectedCategoryId(v);
+            setAssignMode('category');
+            setLinkedServiceId(null);
+          }
+        }}
+      >
+        <SelectTrigger className="h-9 text-sm">
+          <div className="flex items-center gap-1.5">
+            <FolderOpen className="h-3 w-3 text-muted-foreground" />
+            <SelectValue placeholder="Select a category" />
+          </div>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="_none">No assignment</SelectItem>
+          {categories.map(cat => (
+            <SelectItem key={cat.id} value={cat.id}>
+              {cat.category_name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {selectedCategoryId && (
+        <Select
+          value={assignMode === 'service' && linkedServiceId ? linkedServiceId : '_entire'}
+          onValueChange={v => {
+            if (v === '_entire') {
+              setAssignMode('category');
+              setLinkedServiceId(null);
+            } else {
+              setAssignMode('service');
+              setLinkedServiceId(v);
+            }
+          }}
+        >
+          <SelectTrigger className="h-9 text-sm">
+            <div className="flex items-center gap-1.5">
+              <Scissors className="h-3 w-3 text-muted-foreground" />
+              <SelectValue placeholder="Select a service" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="_entire">Entire Category</SelectItem>
+            {(() => {
+              const catName = categories.find(c => c.id === selectedCategoryId)?.category_name;
+              const filtered = catName ? (servicesByCategory[catName] || []) : [];
+              return filtered.map(s => (
+                <SelectItem key={s.phorest_service_id} value={s.phorest_service_id}>
+                  {s.name}
+                </SelectItem>
+              ));
+            })()}
+          </SelectContent>
+        </Select>
+      )}
+    </div>
   );
 
   const renderDurationWarning = () => {
@@ -321,13 +391,19 @@ export function ServiceAddonsLibrary({ organizationId, categories = [] }: Servic
           className="col-span-2 min-h-[60px] text-sm resize-none"
           rows={2}
         />
-        <Input placeholder="Price" type="number" step="0.01" min="0" value={price} onChange={e => setPrice(e.target.value)} className="h-9 text-sm" />
-        <Input placeholder="Cost (optional)" type="number" step="0.01" min="0" value={cost} onChange={e => setCost(e.target.value)} className="h-9 text-sm" />
+        <div className="relative">
+          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input placeholder="Price" type="number" step="0.01" min="0" value={price} onChange={e => setPrice(e.target.value)} className="h-9 text-sm pl-8" />
+        </div>
+        <div className="relative">
+          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input placeholder="Cost (optional)" type="number" step="0.01" min="0" value={cost} onChange={e => setCost(e.target.value)} className="h-9 text-sm pl-8" />
+        </div>
         <Input placeholder="Duration (min)" type="number" min="0" value={duration} onChange={e => setDuration(e.target.value)} className="h-9 text-sm" />
         <div className="flex items-center gap-1">
           {cost && price && <MarginBadge margin={computeMargin(parseFloat(price) || 0, parseFloat(cost) || null)} />}
         </div>
-        <div className="col-span-2">{renderServicePicker()}</div>
+        <div className="col-span-2">{renderAssignmentPicker()}</div>
         {renderDurationWarning()}
       </div>
       <div className="flex items-center gap-2 justify-end">
