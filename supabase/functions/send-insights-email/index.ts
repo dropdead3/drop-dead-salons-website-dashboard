@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendOrgEmail, sendEmail } from "../_shared/email-sender.ts";
 import { buildSignedUrl } from "../_shared/signed-url.ts";
+import { PLATFORM_NAME } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -252,7 +253,7 @@ serve(async (req: Request): Promise<Response> => {
         const dashboardUrl = `${siteUrl}/dashboard`;
         const frequency = prefs.insights_email_frequency || "weekly";
         const subjectPrefix = isTestSend ? "[TEST] " : "";
-        const subject = `${subjectPrefix}Your ${frequency === "daily" ? "Daily" : frequency === "monday" ? "Monday" : "Weekly"} Zura Insights`;
+        const subject = `${subjectPrefix}Your ${frequency === "daily" ? "Daily" : frequency === "monday" ? "Monday" : "Weekly"} ${PLATFORM_NAME} Insights`;
 
         const innerHtml = buildInsightsContent(insights, userName, frequency, unsubscribeUrl, dashboardUrl);
 

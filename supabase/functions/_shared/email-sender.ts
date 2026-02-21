@@ -61,7 +61,7 @@ interface OrgBranding {
   primary_contact_email: string | null;
 }
 
-const PLATFORM_DOMAIN = "mail.getzura.com";
+const PLATFORM_DOMAIN = `mail.${PLATFORM_URL.replace("https://", "")}`;
 const PLATFORM_FROM = `${PLATFORM_NAME} <notifications@${PLATFORM_DOMAIN}>`;
 
 const BUTTON_RADIUS_MAP: Record<string, string> = {
@@ -220,7 +220,7 @@ export async function sendOrgEmail(
     }
   }
 
-  const senderName = branding?.email_sender_name || branding?.name || "Zura";
+  const senderName = branding?.email_sender_name || branding?.name || PLATFORM_NAME;
   const fromAddress = `${senderName} <notifications@${PLATFORM_DOMAIN}>`;
   const replyTo = payload.replyTo || branding?.email_reply_to || branding?.primary_contact_email || undefined;
   const brandedHtml = buildBrandedTemplate(branding, payload.html, unsubscribeUrl);
@@ -301,7 +301,7 @@ function buildSocialIconsHtml(links: SocialLinks | null): string {
  * Wrap inner HTML content in a branded email template.
  */
 function buildBrandedTemplate(branding: OrgBranding | null, innerHtml: string, unsubscribeUrl?: string | null): string {
-  const orgName = branding?.name || "Zura";
+  const orgName = branding?.name || PLATFORM_NAME;
   const accentColor = branding?.email_accent_color || "#000000";
   const logoUrl = branding?.email_logo_url || branding?.logo_url || null;
   const headerStyle = branding?.email_header_style || "centered";

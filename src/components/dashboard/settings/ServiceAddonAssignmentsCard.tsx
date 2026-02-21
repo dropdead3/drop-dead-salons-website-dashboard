@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { PLATFORM_NAME } from '@/lib/brand';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -225,7 +226,7 @@ export function ServiceAddonAssignmentsCard({ organizationId, categories, servic
           </div>
         </div>
         <CardDescription>
-          Assign add-ons to categories or specific services. During booking, Zura surfaces these as smart recommendations.
+          Assign add-ons to categories or specific services. During booking, {PLATFORM_NAME} surfaces these as smart recommendations.
         </CardDescription>
       </CardHeader>
       <CardContent>

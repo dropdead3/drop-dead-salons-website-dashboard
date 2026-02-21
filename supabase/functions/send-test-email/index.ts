@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendOrgEmail } from "../_shared/email-sender.ts";
+import { PLATFORM_URL } from "../_shared/brand.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,12 +23,12 @@ const sampleVariables: Record<string, string> = {
   handbook_count: "2",
   handbook_list: '<li style="margin-bottom: 8px;">Employee Handbook v2.0</li><li style="margin-bottom: 8px;">Safety Guidelines</li>',
   handbook_names: "Employee Handbook v2.0, Safety Guidelines",
-  dashboard_url: "https://getzura.com/dashboard",
+  dashboard_url: `${PLATFORM_URL}/dashboard`,
   stylist_name: "Test Stylist",
   current_day: "42",
   is_urgent: "false",
   user_name: "New Team Member",
-  login_url: "https://getzura.com/staff-login",
+  login_url: `${PLATFORM_URL}/staff-login`,
   staff_name: "Staff Member",
   strike_type: "Late Arrival",
   strike_severity: "Warning",

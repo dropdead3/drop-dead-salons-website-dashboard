@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { PLATFORM_NAME } from '@/lib/brand';
 
 interface PlatformFeedbackInput {
   type: 'feature_request' | 'bug_report';
@@ -66,7 +67,7 @@ export function useSubmitPlatformFeedback() {
     },
     onSuccess: () => {
       toast.success('Feedback submitted successfully', {
-        description: 'Thank you — the Zura team will review your submission.',
+        description: `Thank you — the ${PLATFORM_NAME} team will review your submission.`,
       });
     },
     onError: (error: Error) => {
