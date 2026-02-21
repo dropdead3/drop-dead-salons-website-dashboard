@@ -1,39 +1,51 @@
 
 
-## Make Category and Add-On Rows Clickable for Editing
+## Multi-Select for Add-On Category/Service Assignments
 
-### Current State
+### The Problem
 
-Both cards have edit functionality, but it's only accessible via small pencil icons that appear on hover. The row content area (name, description, price) is not clickable.
+The "Apply to Category / Service" picker currently only allows selecting one category (and optionally one service within it). When an add-on like "Olaplex Treatment" applies to multiple categories (e.g., Color, Blonding, Extensions), you have to save and re-edit repeatedly to create each assignment.
+
+### Solution
+
+Replace the single-select dropdown with a checkbox-based multi-select, allowing you to pick multiple categories and/or specific services in one save action. Each selection creates a separate assignment row in the database (the existing data model already supports this).
+
+### How It Will Work
+
+1. **Category picker** becomes a popover with checkboxes (similar to the location multi-select pattern already in the codebase)
+2. **When one category is selected**, an optional service-level drill-down appears (same as today) letting you pick specific services within that category
+3. **When multiple categories are selected**, the service drill-down is hidden -- it applies to the entire category for each selection
+4. **On save**, one assignment is created per selected category/service
+5. **Label** updates dynamically: "No assignment", "Color", "2 categories", etc.
 
 ### Changes
 
-**1. Service Categories card (`ServicesSettingsContent.tsx`)**
+**1. State changes in `ServiceAddonsLibrary.tsx`**
 
-Make the name/service-count area (the `<div className="flex-1 min-w-0">` block inside each `SortableCategoryRow`) clickable. Clicking it opens the rename dialog for that category -- the same action as the pencil icon button.
+- Replace `selectedCategoryId: string | null` with `selectedCategoryIds: string[]`
+- Keep `assignMode` and `linkedServiceId` for the single-category + specific-service case
 
-- Add `onClick` + `cursor-pointer` to the name/count div
-- Trigger: `setCategoryDialogMode('rename'); setEditingCategory(cat); setCategoryDialogOpen(true);`
-- The color badge (popover trigger) and action buttons remain independent click targets
-- Add a subtle hover indicator so users know the row is clickable
+**2. Replace `renderAssignmentPicker()` UI**
 
-**2. Service Add-Ons card (`ServiceAddonsLibrary.tsx`)**
+- Swap the `Select` component for a `Popover` with a checkbox list (categories)
+- Each category row has a `Checkbox` + category name
+- When exactly 1 category is checked, show the optional service-level Select below
+- When 0 or 2+ categories are checked, hide the service Select
 
-Make the content area of each `SortableAddonRow` clickable. Clicking it triggers `startEdit(addon)` -- the same inline edit that the pencil icon triggers.
+**3. Update `handleSave()` assignment logic**
 
-- Add `onClick={onEdit}` + `cursor-pointer` to the content div (`<div className="flex-1 min-w-0">`)
-- The drag handle, quick-assign popover, and delete button remain independent click targets
-- Add the same subtle hover indicator
+- Currently creates one assignment. Updated to loop over `selectedCategoryIds` and create one assignment per category (or one service assignment if in single-category + service mode)
+- Uses `Promise.all` with the existing `createAssignment.mutate` for each
 
-### Visual Treatment
+**4. Update `resetForm()`**
 
-Both rows already have `hover:bg-muted/40`. Adding `cursor-pointer` to the content area is sufficient to signal clickability. No new styles needed.
+- Clear `selectedCategoryIds` to `[]` instead of `null`
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `ServicesSettingsContent.tsx` | Add `onClick` + `cursor-pointer` to category row content div (~line 414) |
-| `ServiceAddonsLibrary.tsx` | Add `onClick={onEdit}` + `cursor-pointer` to addon row content div (~line 91) |
+| `ServiceAddonsLibrary.tsx` | Replace single-select category picker with multi-select checkbox popover; update save logic to create multiple assignments |
 
-Two small, focused edits. No new components, no database changes.
+Single file change. No database changes needed -- the existing `service_addon_assignments` table already supports multiple assignments per add-on.
+
