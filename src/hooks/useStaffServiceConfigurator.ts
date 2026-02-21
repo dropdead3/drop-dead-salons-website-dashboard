@@ -95,21 +95,44 @@ export function useBulkToggleCategoryQualifications() {
   });
 }
 
+/** Service-provider roles that should appear in the stylist selector */
+const SERVICE_PROVIDER_ROLES = ['stylist', 'stylist_assistant', 'booth_renter'] as const;
+
 /**
  * Fetch active team members for the stylist selector dropdown.
+ * Filters to service-provider roles only and optionally by location.
  */
-export function useActiveStylists(organizationId: string | undefined) {
+export function useActiveStylists(organizationId: string | undefined, locationId?: string) {
   return useQuery({
-    queryKey: ['active-stylists', organizationId],
+    queryKey: ['active-stylists', organizationId, locationId],
     queryFn: async () => {
       if (!organizationId) return [];
-      const { data, error } = await supabase
+
+      // 1. Get user_ids that have a service-provider role
+      const { data: roleRows, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('role', SERVICE_PROVIDER_ROLES);
+      if (rolesError) throw rolesError;
+      const providerUserIds = (roleRows || []).map(r => r.user_id);
+      if (providerUserIds.length === 0) return [];
+
+      // 2. Fetch employee profiles filtered to those user_ids
+      let query = supabase
         .from('employee_profiles')
-        .select('user_id, display_name, full_name, photo_url')
+        .select('user_id, display_name, full_name, photo_url, location_id')
         .eq('organization_id', organizationId)
         .eq('is_active', true)
         .eq('is_approved', true)
+        .in('user_id', providerUserIds)
         .order('display_name');
+
+      // 3. Optional location filter
+      if (locationId && locationId !== 'all') {
+        query = query.eq('location_id', locationId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
