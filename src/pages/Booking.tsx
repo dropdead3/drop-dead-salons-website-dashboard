@@ -184,7 +184,7 @@ export default function Booking() {
                 Are you a returning client? You don't need a new-client consult.
               </p>
               <a
-                href="https://booking.dropdeadsalon.com"
+                href="#"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-3 inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:opacity-70 transition-opacity"
@@ -487,10 +487,10 @@ export default function Booking() {
                     Email
                   </h3>
                   <a
-                    href="mailto:contact@dropdeadsalon.com"
+                    href="mailto:contact@salon.com"
                     className="text-muted-foreground font-sans font-light hover:text-foreground transition-colors"
                   >
-                    contact@dropdeadsalon.com
+                    contact@salon.com
                   </a>
                 </div>
               </div>

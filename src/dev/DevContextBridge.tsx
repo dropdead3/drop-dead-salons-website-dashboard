@@ -10,7 +10,7 @@ import { useQueryClient } from '@tanstack/react-query';
  * OWNER EMAIL — only this user's browser state is captured.
  * Change this to your email address.
  */
-const OWNER_EMAIL = 'eric@dropdeadhair.com';
+const OWNER_EMAIL = 'admin@example.com';
 
 /**
  * How often to send context updates (in ms).

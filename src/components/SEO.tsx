@@ -98,11 +98,7 @@ export function SEO({
       name: area,
       "@id": `https://en.wikipedia.org/wiki/${area},_Arizona`,
     })),
-    sameAs: [
-      "https://instagram.com/dropdeadsalon",
-      "https://facebook.com/dropdeadsalon",
-      "https://tiktok.com/@dropdeadsalon",
-    ],
+    sameAs: [],
   }));
 
   // Organization schema linking all locations
@@ -140,11 +136,7 @@ export function SEO({
       },
       telephone: location.phone,
     })),
-    sameAs: [
-      "https://instagram.com/dropdeadsalon",
-      "https://facebook.com/dropdeadsalon",
-      "https://tiktok.com/@dropdeadsalon",
-    ],
+    sameAs: [],
   };
 
   // Services offered schema

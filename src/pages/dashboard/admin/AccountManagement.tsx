@@ -73,7 +73,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
-import DropDeadLogo from '@/assets/brand-logo-secondary.svg';
+import BrandLogo from '@/assets/brand-logo-secondary.svg';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { QRCodeFullScreen } from '@/components/dashboard/QRCodeFullScreen';
 
@@ -104,7 +104,7 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
     <div className="bg-gradient-to-b from-[hsl(40,30%,96%)] to-[hsl(35,25%,92%)] rounded-xl p-6 shadow-inner">
       <div className="bg-white rounded-lg shadow-xl overflow-hidden mx-auto relative" style={{ aspectRatio: '8.5/11', maxWidth: '340px' }}>
         <div className="bg-gradient-to-r from-[hsl(0,0%,8%)] to-[hsl(0,0%,15%)] py-3 px-4 text-center">
-          <img src={DropDeadLogo} alt={PLATFORM_NAME} className="h-3 mx-auto invert" />
+          <img src={BrandLogo} alt={PLATFORM_NAME} className="h-3 mx-auto invert" />
           <p className="text-[hsl(40,30%,70%)] text-[7px] mt-0.5 tracking-[0.2em] uppercase">Staff Portal</p>
         </div>
         <div className="flex flex-col items-center px-6 py-4">

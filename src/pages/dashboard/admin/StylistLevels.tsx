@@ -288,12 +288,12 @@ export default function StylistLevels() {
           <p className="text-sm text-muted-foreground">
             Level-based service pricing is displayed on the client-facing website{' '}
             <a 
-              href="https://www.dropdeadsalon.com" 
+              href="/" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              www.dropdeadsalon.com
+              your website
             </a>
             . To adjust or edit level pricing, you can do so in the{' '}
             <a 

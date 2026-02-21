@@ -68,7 +68,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
-import DropDeadLogo from '@/assets/brand-logo-secondary.svg';
+import BrandLogo from '@/assets/brand-logo-secondary.svg';
 import { QRCodeFullScreen } from '@/components/dashboard/QRCodeFullScreen';
 import { formatRelativeTime } from '@/lib/format';
 import { ImageWithSkeleton } from '@/components/ui/image-skeleton';
@@ -101,7 +101,7 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
       <div className="bg-white rounded-lg shadow-xl overflow-hidden mx-auto relative" style={{ aspectRatio: '8.5/11', maxWidth: '340px' }}>
         <div className="bg-gradient-to-r from-[hsl(0,0%,8%)] to-[hsl(0,0%,15%)] py-3 px-4 text-center">
           <ImageWithSkeleton
-            src={DropDeadLogo}
+            src={BrandLogo}
             alt="Salon"
             className="h-3 w-auto mx-auto invert"
             wrapperClassName="mx-auto"

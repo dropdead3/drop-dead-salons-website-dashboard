@@ -23,7 +23,7 @@ const stylists: Stylist[] = [
   {
     id: "1",
     name: "Kristi D.",
-    instagram: "@dropdeadkristi",
+    instagram: "@stylist_kristi",
     level: "LEVEL III STYLIST",
     specialties: ["BLONDING", "VIVIDS", "EXTENSIONS"],
     imageUrl: "https://images.unsplash.com/photo-1595959183082-7b570b7e1daf?w=600&h=800&fit=crop",

@@ -18,7 +18,7 @@ const DEFAULT_SETTINGS: AnnouncementBarSettings = {
   message_highlight: 'professional',
   message_suffix: 'looking for our extensions?',
   cta_text: 'Shop Our Extensions Here',
-  cta_url: 'https://dropdeadextensions.com',
+  cta_url: '#',
   open_in_new_tab: true,
 };
 
