@@ -26,6 +26,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { CategoryFormDialog } from './CategoryFormDialog';
 import { ServiceEditorDialog } from './ServiceEditorDialog';
 import { ServiceAddonsLibrary } from './ServiceAddonsLibrary';
+import { RedoPolicySettings } from './RedoPolicySettings';
 import { ServiceAddonAssignmentsCard } from './ServiceAddonAssignmentsCard';
 import { toast } from 'sonner';
 import {
@@ -565,6 +566,9 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
           />
         )}
         </div>{/* end row 2 grid */}
+
+        {/* Redo & Adjustment Policy */}
+        <RedoPolicySettings />
 
         {/* Unified Service Editor Dialog (create + edit) */}
         <ServiceEditorDialog
