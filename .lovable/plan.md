@@ -1,236 +1,139 @@
 
 
-## Redo / Adjustment Service Feature -- Full Build Plan
+## Redo Feature Gap Closure -- Remaining Build Items
 
-### Problem
-
-When a client returns for a correction or redo, there is no structured way to flag it as such. The appointment looks identical to a regular booking, which means:
-- No visibility into which stylists generate redos and how often
-- No automatic pricing adjustments (most salons comp redos or charge reduced rates)
-- No link between the original appointment and the correction
-- No communication templates for the sensitive "we'll make this right" scenario
-- No way to measure the financial impact of quality issues
-
----
-
-### Architecture Overview
-
-This feature adds a **Redo/Adjustment flag** to the existing booking and appointment infrastructure rather than creating a separate service category. It threads through four layers: data, booking UI, organization policy, and analytics.
-
-```text
-+-------------------------------+
-|   Organization Settings       |
-|   (redo pricing policy)       |
-+-------------------------------+
-         |
-         v
-+-------------------------------+
-|   Booking Flow                |
-|   (redo toggle + link to      |
-|    original appointment)      |
-+-------------------------------+
-         |
-         v
-+-------------------------------+
-|   Appointments Table          |
-|   (is_redo, redo_reason,      |
-|    original_appointment_id,   |
-|    redo_pricing_override)     |
-+-------------------------------+
-         |
-         v
-+-------------------------------+
-|   Analytics + Alerts          |
-|   (redo rate by stylist,      |
-|    financial impact, trends)  |
-+-------------------------------+
-```
+### What's Already Working
+- Database schema (all 5 redo columns on appointments)
+- Redo Policy Settings card (pricing, window, approval toggle, reason requirement, notifications toggle)
+- Booking flow redo toggle with reason picker, pricing indicator, manager override input, approval warning
+- Edge function accepts redo metadata
+- Redo badge + reason display on AppointmentDetailSheet
+- Redo analytics card on Stats (rate, by stylist, by reason, financial impact)
 
 ---
 
-### 1. Database Migration
+### Gap 1: Original Appointment Picker (Critical)
 
-**Table: `appointments`** -- add columns
+The `originalAppointmentId` state variable exists but is never set -- there's no UI to link a redo to the original appointment.
 
-| Column | Type | Default | Purpose |
-|--------|------|---------|---------|
-| `is_redo` | `boolean` | `false` | Flag marking this as a redo/adjustment |
-| `redo_reason` | `text` | `null` | Why the redo is needed (e.g., "Color didn't hold", "Uneven cut") |
-| `original_appointment_id` | `uuid` (FK to appointments) | `null` | Links back to the original appointment |
-| `redo_pricing_override` | `numeric` | `null` | Per-booking price override (null = use org policy) |
-| `redo_approved_by` | `uuid` (FK to employee_profiles.user_id) | `null` | Manager/admin who approved the redo if approval is required |
+**What to build:**
+- In `QuickBookingPopover.tsx`, after the Reason field, add an "Original Appointment" section
+- When the client is already selected, query their recent appointments (last N days based on `redo_window_days`) from the `appointments` table
+- Display as a compact selectable list: service name, date, stylist name
+- Selecting one sets `originalAppointmentId` and auto-populates the pricing reference (original price)
+- If no client selected yet, show a disabled state: "Select a client first"
+- If the selected original appointment is outside the redo window, show an amber warning but still allow managers to proceed
 
-**Organization settings** (stored in `organizations.settings` JSONB)
-
-New keys within the existing `settings` JSONB column:
-
-```json
-{
-  "redo_pricing_policy": "free",        // "free" | "percentage" | "custom" | "full_price"
-  "redo_pricing_percentage": 50,         // used when policy = "percentage"
-  "redo_requires_approval": false,       // if true, redo flag requires manager/admin sign-off
-  "redo_approval_roles": ["admin", "manager"],  // who can approve
-  "redo_reason_required": true,          // force reason entry
-  "redo_window_days": 14,               // how many days after original apt a redo is valid
-  "redo_notification_enabled": true      // send notification to manager when redo is flagged
-}
-```
-
-No new tables needed. RLS is already in place on `appointments`.
+**Files:** `QuickBookingPopover.tsx`
 
 ---
 
-### 2. Booking Flow Changes
+### Gap 2: Forward Link on Original Appointment
 
-**File: `QuickBookingPopover.tsx`**
+When viewing the original appointment's detail, there's no indication that a redo was booked for it.
 
-On the **Confirm** step (step 5), add a collapsible "Redo / Adjustment" section:
+**What to build:**
+- In `AppointmentDetailSheet.tsx`, query appointments where `original_appointment_id = current appointment.id`
+- If any exist, show a "Redo Scheduled" badge with a link to the redo appointment (date, stylist)
+- Clicking opens that appointment's detail sheet
 
-1. **Toggle**: "This is a redo or adjustment" (Switch component)
-2. When toggled ON, reveal:
-   - **Original Appointment Picker**: Search by client name + date to find the original booking. Shows a compact card with the original service, date, and stylist.
-   - **Reason field**: Required or optional based on org setting (`redo_reason_required`). Dropdown with common reasons + free text:
-     - Color didn't hold
-     - Uneven cut / missed spots
-     - Client dissatisfied with style
-     - Processing error
-     - Other (free text)
-   - **Price Override**: Shows the org's default redo pricing policy with the calculated price. Includes an override input for managers to set a custom price. Non-manager roles see the policy price as read-only.
-   - **Approval Badge**: If `redo_requires_approval` is true and the current user is not in `redo_approval_roles`, show a "Pending Approval" badge. The booking is created with `status: 'pending'` until approved.
-
-3. When the booking is submitted with `is_redo: true`:
-   - The `create-phorest-booking` edge function receives the redo metadata
-   - Price is adjusted per org policy (or override)
-   - The `original_appointment_id` is stored
-   - If approval is required, status is set to `pending` instead of `confirmed`
-
-**File: `AppointmentDetailSheet.tsx`**
-
-When viewing a redo appointment:
-- Show a distinctive "Redo" badge next to the status badge
-- Display the redo reason
-- Link to the original appointment (clickable, opens that appointment's detail)
-- Show who approved it (if approval was required)
-- On the original appointment, show a "Has Redo" indicator linking forward
-
-**File: `create-phorest-booking` edge function**
-
-Add handling for redo fields:
-- Accept `is_redo`, `redo_reason`, `original_appointment_id`, `redo_pricing_override`
-- Look up org redo pricing policy to calculate final price if no override
-- Validate `redo_window_days` (reject if original appointment is too old)
-- Store all redo columns on the new appointment record
+**Files:** `AppointmentDetailSheet.tsx`
 
 ---
 
-### 3. Organization Settings UI
+### Gap 3: Redo Pricing Applied to Total
 
-**File: `src/components/dashboard/settings/` (new component: `RedoPolicySettings.tsx`)**
+The policy badge shows the pricing type but doesn't actually compute or apply the adjusted price.
 
-A settings card within the Services Settings page:
+**What to build:**
+- In `QuickBookingPopover.tsx`, when redo is toggled ON and an original appointment is linked:
+  - Fetch the original appointment's `total_price`
+  - Calculate the redo price based on org policy (free = 0, percentage = original * percentage/100, full = original price)
+  - Display the calculated price clearly
+  - If the manager enters an override, that takes precedence
+  - Pass the final computed price as `redo_pricing_override` (or adjust `total_price` directly)
+- In `create-phorest-booking` edge function: if `is_redo` and no `redo_pricing_override`, look up the org's policy and the original appointment's price to compute the final `total_price`
 
-- **Pricing Policy**: Radio group -- Free / Percentage Discount / Custom Amount / Full Price
-- **Discount Percentage**: Slider (0-100%) visible when "Percentage" is selected
-- **Require Approval**: Switch -- when ON, redos from non-manager roles need sign-off
-- **Approval Roles**: Multi-select of roles (admin, manager, super_admin)
-- **Require Reason**: Switch -- force stylists to enter a reason
-- **Redo Window**: Number input -- days after original appointment within which a redo is valid (default 14, max 90)
-- **Manager Notification**: Switch -- notify managers when a redo is flagged
-
-Reads/writes to `organizations.settings` JSONB.
-
-**File: `ServicesSettingsContent.tsx`**
-
-Add the `RedoPolicySettings` card to the settings grid.
+**Files:** `QuickBookingPopover.tsx`, `create-phorest-booking/index.ts`
 
 ---
 
-### 4. Notification Flow
+### Gap 4: Redo Window Validation in Edge Function
 
-When a redo booking is created:
-- If `redo_notification_enabled`: Send an internal notification (toast or push if configured) to managers at the location
-- The notification includes: client name, original stylist, redo reason, and price applied
-- Uses the existing `enqueue-service-emails` function pattern with a new `action: 'redo'` type
-- Email template: empathetic, professional tone. "A redo has been scheduled for [Client] -- [Reason]. Original service by [Stylist] on [Date]."
+The redo window setting exists but isn't enforced.
 
----
+**What to build:**
+- In `create-phorest-booking`, when `is_redo` and `original_appointment_id` are provided:
+  - Fetch the original appointment's date
+  - Fetch the org's `redo_window_days` from settings
+  - If the difference exceeds the window, return an error (unless a manager override flag is passed)
 
-### 5. Analytics
-
-**New hook: `useRedoAnalytics.ts`**
-
-Queries:
-- Redo count and rate by stylist (last 30/60/90 days)
-- Redo count by service category
-- Redo count by reason
-- Financial impact (sum of revenue difference between original price and redo price)
-- Trend line (weekly redo count over time)
-- Repeat redo clients (clients with 2+ redo appointments)
-
-**Stats Dashboard (`Stats.tsx`)**
-
-New card: **"Redo & Adjustment Insights"** (admin/manager only via VisibilityGate)
-
-Contents:
-- **Redo Rate KPI**: Total redos / Total appointments (last 30 days), with trend arrow
-- **By Stylist**: Horizontal bar chart ranking stylists by redo count, with redo rate percentage
-- **By Reason**: Pie or horizontal bar showing reason distribution
-- **Financial Impact**: Total revenue foregone (original price - redo price summed)
-- **Coaching Signal**: If any stylist exceeds a configurable threshold (e.g., >5% redo rate), flag with an alert badge
-
-**Analytics Hub Integration**
-
-Add redo rate as a metric in the Services Intelligence subtab alongside rebooking rate and efficiency metrics. This surfaces redo patterns in the context of service quality.
+**Files:** `create-phorest-booking/index.ts`
 
 ---
 
-### 6. Overrides and Customization Summary
+### Gap 5: Approval Workflow (Pending Queue)
 
-| Aspect | Default | Override |
-|--------|---------|----------|
-| Pricing | Org policy (free/percentage/etc.) | Per-booking price override by manager |
-| Approval | Not required | Toggle on per org; role-restricted |
-| Reason | Required | Toggle off per org |
-| Window | 14 days | Configurable 1-90 days per org |
-| Notifications | Enabled | Toggle off per org |
-| Analytics threshold | 5% redo rate | Configurable in settings (future phase) |
+The approval warning shows in the UI but the appointment is still created as `confirmed`.
 
----
+**What to build:**
+- In booking submission: if `is_redo` and `redo_requires_approval` and the current user is not in `redo_approval_roles`, set the appointment status to `pending` instead of `confirmed`
+- In `AppointmentDetailSheet.tsx`: for pending redo appointments, show an "Approve" button visible only to managers/admins
+  - Approving sets `redo_approved_by` to the current user's ID and changes status to `confirmed`
+  - Declining changes status to `cancelled` with a note
+- On the schedule view, pending redos should appear with a distinctive visual treatment (amber/dashed border or similar)
 
-### 7. Files Changed/Created
-
-| File | Action |
-|------|--------|
-| **Migration** | Add `is_redo`, `redo_reason`, `original_appointment_id`, `redo_pricing_override`, `redo_approved_by` to `appointments` |
-| `src/components/dashboard/settings/RedoPolicySettings.tsx` | **Create** -- org-level redo policy configuration card |
-| `src/components/dashboard/settings/ServicesSettingsContent.tsx` | **Edit** -- add RedoPolicySettings to the grid |
-| `src/components/dashboard/schedule/QuickBookingPopover.tsx` | **Edit** -- add redo toggle, reason picker, original appointment linker, price override on confirm step |
-| `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` | **Edit** -- show redo badge, reason, original link, approval status |
-| `supabase/functions/create-phorest-booking/index.ts` | **Edit** -- accept and store redo metadata, apply pricing policy, validate redo window |
-| `src/hooks/useRedoAnalytics.ts` | **Create** -- redo rate, by-stylist, by-reason, financial impact queries |
-| `src/pages/dashboard/Stats.tsx` | **Edit** -- add Redo and Adjustment Insights card |
+**Files:** `QuickBookingPopover.tsx`, `AppointmentDetailSheet.tsx`, `create-phorest-booking/index.ts`
 
 ---
 
-### 8. Build Sequence
+### Gap 6: Manager Notification on Redo Booking
 
-1. Database migration (new columns on `appointments`)
-2. `RedoPolicySettings.tsx` + wire into `ServicesSettingsContent.tsx`
-3. Booking flow redo toggle and metadata in `QuickBookingPopover.tsx`
-4. Edge function updates for redo handling
-5. `AppointmentDetailSheet.tsx` redo display
-6. `useRedoAnalytics.ts` hook
-7. Stats dashboard redo card
-8. Notification wiring (redo email/notification)
+The toggle exists but no notification fires.
+
+**What to build:**
+- After a redo booking is created in the edge function, if `redo_notification_enabled` is true:
+  - Query managers at the appointment's location
+  - Insert a record into a notifications mechanism (in-app toast via realtime, or leverage the existing `enqueue-service-emails` pattern with action type `redo`)
+  - Notification content: client name, original stylist, redo reason, price applied
+
+**Files:** `create-phorest-booking/index.ts`
 
 ---
 
-### 9. Gap Analysis and Edge Cases
+### Gap 7: Enhanced Analytics (Trend Line + Repeat Redo Clients)
 
-- **What if the original appointment was from Phorest (imported)?** The linker should search both native and imported appointments by client + date range.
-- **What if a different stylist does the redo?** Fully supported -- the redo tracks `original_appointment_id` which has the original stylist. The redo appointment has its own `staff_user_id`. Analytics attribute the redo to the *original* stylist.
-- **Multi-location:** A redo could happen at a different location than the original. The original appointment link handles this transparently.
-- **Redo of a redo:** Supported via the same `original_appointment_id` chain. Analytics can detect repeat redos.
-- **Approval workflow:** If approval is required and the user is not authorized, the appointment is created as `pending`. Managers see it in their queue and can approve (setting `redo_approved_by` and changing status to `confirmed`).
-- **Window expiration:** If the original appointment is older than `redo_window_days`, the UI shows a warning but still allows managers to override.
+Current analytics show aggregate counts but miss longitudinal trends.
+
+**What to build:**
+- In `useRedoAnalytics.ts`, add:
+  - Weekly redo count for the last 12 weeks (for a trend sparkline)
+  - "Repeat redo clients" -- clients with 2+ redo appointments in the period
+- In `Stats.tsx` redo card:
+  - Add a small trend sparkline next to the redo rate KPI
+  - Add a "Repeat Redo Clients" count (clients needing multiple corrections signals a deeper quality issue)
+
+**Files:** `useRedoAnalytics.ts`, `Stats.tsx`
+
+---
+
+### Build Sequence
+
+1. Original Appointment Picker (Gap 1) -- unlocks Gaps 3 and 4
+2. Redo pricing calculation (Gap 3) -- depends on picker
+3. Redo window validation (Gap 4) -- depends on picker
+4. Forward link on original appointment (Gap 2) -- independent
+5. Approval workflow (Gap 5) -- independent
+6. Manager notification (Gap 6) -- independent
+7. Enhanced analytics (Gap 7) -- independent
+
+| Gap | Priority | Complexity |
+|-----|----------|------------|
+| Original Appointment Picker | High | Medium |
+| Redo Pricing Applied | High | Low |
+| Redo Window Validation | Medium | Low |
+| Forward Link | Medium | Low |
+| Approval Workflow | Medium | Medium |
+| Manager Notification | Low | Medium |
+| Enhanced Analytics | Low | Low |
 
