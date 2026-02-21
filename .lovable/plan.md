@@ -1,94 +1,65 @@
 
 
-## Staff-Service Configurator
+## Enhance Staff-Service Configurator: Location Filter, Role Filter, and Alphabetical Sorting
 
-### What You Get
+### What Changes
 
-A new card in the Services & Schedule settings page where admins can control which stylists are qualified to perform which services. This directly affects what can be booked for each stylist.
+The Stylist Service Assignments card gets three key upgrades:
+
+1. **Location filter** -- dropdown to filter the stylist list by their assigned location
+2. **Alphabetical A-Z filter** -- quick letter buttons to jump to stylists by first letter
+3. **Service-provider-only filter** -- the dropdown only shows stylists, stylist assistants, and booth renters (excludes admins, managers, receptionists, operations assistants, etc.)
+4. **UI polish** -- better spacing, filter bar layout, count indicators, and visual hierarchy
 
 ### How It Works
 
-1. **Select a stylist** from a dropdown at the top of the card
-2. **See all service categories** as collapsible sections, each with checkboxes for individual services
-3. **Toggle entire categories** on/off with a single click (select all / deselect all)
-4. **Changes save immediately** with an undo toast (consistent with the rest of the services page)
-5. When no qualifications exist for a stylist, all services default to "available" (graceful fallback for new team members)
+**Filter Bar** (above the stylist selector):
+- **Location dropdown**: Select a location to narrow the stylist list. Defaults to "All Locations."
+- **A-Z bar**: Row of letter buttons. Clicking "A" filters the dropdown to stylists whose name starts with "A." Clicking the active letter again clears the filter.
 
-### Where It Lives
+**Role Filtering** (automatic, no UI toggle):
+- The `useActiveStylists` hook gets updated to join against `user_roles` and only return users with roles: `stylist`, `stylist_assistant`, or `booth_renter`
+- This eliminates non-service-providers from the screenshot (Admin Assistant, Manager, Receptionist, Operations Assistant)
 
-New card in the Services & Schedule settings bento grid, placed after the existing Service Categories + Services row. Title: **"Stylist Service Assignments"**.
+**Alphabetical sorting**:
+- Stylists are always sorted alphabetically by display_name/full_name
+- The A-Z bar highlights letters that have matching stylists
 
-### Data Model
+### Gap Analysis and Enhancement Opportunities
 
-Uses the existing `staff_service_qualifications` table (already created, currently empty):
-
-| Column | Type | Purpose |
-|--------|------|---------|
-| `user_id` | uuid (FK employee_profiles) | The stylist |
-| `service_id` | uuid (FK services) | The service |
-| `location_id` | text | Optional location scope |
-| `custom_price` | numeric | Optional price override per stylist |
-| `is_active` | boolean | Whether qualified (default true) |
-
-Unique constraint already exists on `(user_id, service_id, location_id)`.
-
-### Downstream Effect
-
-The booking wizard already filters stylists via `useQualifiedStaffForServices`. This configurator will need a **bridge** so the booking wizard also consults `staff_service_qualifications` (not just the Phorest sync table). When manual qualifications exist, they take priority.
-
-### Gap Analysis and Enhancements Identified
-
-| Gap | Fix |
-|-----|-----|
-| **No admin UI** for managing qualifications | This plan builds the configurator |
-| **Booking wizard only reads `phorest_staff_services`** | Update `useQualifiedStaffForServices` to also check `staff_service_qualifications` as a secondary/override source |
-| **No RLS write policies** on `staff_service_qualifications` | Add INSERT/UPDATE/DELETE policies for admin/manager roles |
-| **No "select all" for a category** | Category-level checkbox toggles all services in that group |
-| **No bulk assignment** (assign a service to multiple stylists) | Future enhancement (Phase 2) -- this plan is stylist-first |
-| **No custom pricing per stylist** | The `custom_price` column exists but will be surfaced as an optional inline field (Phase 2) |
-| **Stylist-First booking flow reads Phorest IDs** | The `useStaffQualifiedServices` hook queries `phorest_staff_services` by `phorest_staff_id` -- needs to also query `staff_service_qualifications` by `user_id` for manual entries |
+| Area | Finding | Action |
+|------|---------|--------|
+| **Non-providers in dropdown** | Admins, managers, receptionists showing in selector | Fix: filter by service-provider roles |
+| **No location scoping** | Can't see "which stylists at Location X do which services" | Fix: add location filter |
+| **No quick navigation** | Large teams need fast alphabetical access | Fix: A-Z letter bar |
+| **Stylist count missing** | No indicator of how many stylists match current filters | Enhancement: show count badge |
+| **Search** | No text search for stylist name | Future: add search input for very large teams (20+) |
+| **Bulk assign by service** | Can only assign services per stylist, not stylists per service | Future Phase 2: inverse matrix view |
+| **Location-scoped qualifications** | `location_id` column exists but configurator doesn't use it | Future: allow different service sets per location for the same stylist |
 
 ### Technical Plan
 
-**1. Database Migration**
-- Add RLS policies on `staff_service_qualifications`:
-  - SELECT: authenticated users in the same org
-  - INSERT/UPDATE/DELETE: admin, manager, super_admin roles
+**File: `src/hooks/useStaffServiceConfigurator.ts`**
 
-**2. New Hook: `useStaffServiceConfigurator.ts`**
-- `useStaffQualifications(userId)` -- fetch all rows from `staff_service_qualifications` for a user
-- `useToggleServiceQualification()` -- upsert or update `is_active` for a (user_id, service_id) pair
-- `useBulkToggleCategoryQualifications()` -- batch upsert for all services in a category
+Update `useActiveStylists` to:
+- Accept optional `locationId` parameter
+- Join with `user_roles` to filter by `stylist`, `stylist_assistant`, `booth_renter` roles only
+- Apply location filter on `employee_profiles.location_id` when set
+- Return results sorted alphabetically
 
-**3. Update `useStaffServiceQualifications.ts`**
-- Modify `useQualifiedStaffForServices` to also query `staff_service_qualifications` when `phorest_staff_services` has no data (or merge both sources)
-- Modify `useStaffQualifiedServices` similarly for the stylist-first booking flow
+**File: `src/components/dashboard/settings/StaffServiceConfiguratorCard.tsx`**
 
-**4. New Component: `StaffServiceConfiguratorCard.tsx`**
-- Stylist selector (dropdown of active team members)
-- Category accordion with service checkboxes
-- Category-level "select all" toggle
-- Undo toast on every toggle action
-- Empty state when no stylist is selected
-
-**5. Wire into `ServicesSettingsContent.tsx`**
-- Import and render the new card in the bento grid layout
+- Add state for `locationFilter` and `letterFilter`
+- Import `useActiveLocations` for the location dropdown
+- Add a filter bar row with Location select + A-Z letter buttons
+- Filter the stylists list client-side by selected letter
+- Show active letter count and total stylist count
+- Polish card styling: tighter spacing, muted filter labels, responsive layout
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| Migration SQL | RLS policies for `staff_service_qualifications` |
-| `src/hooks/useStaffServiceConfigurator.ts` | New hook for CRUD on qualifications |
-| `src/hooks/useStaffServiceQualifications.ts` | Update to also read from `staff_service_qualifications` |
-| `src/components/dashboard/settings/StaffServiceConfiguratorCard.tsx` | New UI component |
-| `src/components/dashboard/settings/ServicesSettingsContent.tsx` | Add the new card to the layout |
-
-### Access Control
-
-| Action | Who Can Do It |
-|--------|--------------|
-| View configurator | Admin, Manager, Super Admin |
-| Toggle qualifications | Admin, Manager, Super Admin |
-| Custom pricing (future) | Admin, Super Admin |
+| `src/hooks/useStaffServiceConfigurator.ts` | Filter `useActiveStylists` by service-provider roles and optional location |
+| `src/components/dashboard/settings/StaffServiceConfiguratorCard.tsx` | Add location dropdown, A-Z bar, role filtering, UI enhancements |
 
