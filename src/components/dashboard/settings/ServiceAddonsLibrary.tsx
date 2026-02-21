@@ -88,7 +88,7 @@ function SortableAddonRow({
         <GripVertical className="h-4 w-4" />
       </button>
 
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 cursor-pointer" onClick={onEdit}>
         <p className="text-sm font-medium truncate">{addon.name}</p>
         {addon.description && (
           <p className="text-[11px] text-muted-foreground truncate mt-0.5">{addon.description}</p>
