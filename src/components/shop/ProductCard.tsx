@@ -32,7 +32,7 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
         <h3 className="font-medium text-sm leading-tight line-clamp-2 text-foreground">{product.name}</h3>
 
         <div className="flex items-center justify-between pt-1">
-          <p className="text-base font-semibold text-foreground">
+          <p className="text-base font-medium text-foreground">
             ${(product.retail_price ?? 0).toFixed(2)}
           </p>
           {!inStock ? (

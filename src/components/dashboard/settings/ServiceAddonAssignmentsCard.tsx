@@ -29,7 +29,7 @@ function AddonChip({ addon, onRemove }: { addon: ServiceAddon; onRemove: () => v
   return (
     <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-medium">
       <span className="truncate max-w-[140px]">{addon.name}</span>
-      <span className="text-primary font-semibold">{formatCurrency(addon.price)}</span>
+      <span className="text-primary font-medium">{formatCurrency(addon.price)}</span>
       <button onClick={onRemove} className="text-muted-foreground hover:text-foreground transition-colors ml-0.5">
         <X className="h-3 w-3" />
       </button>

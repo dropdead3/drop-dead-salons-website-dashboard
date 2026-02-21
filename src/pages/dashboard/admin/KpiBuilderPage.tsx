@@ -106,7 +106,7 @@ export default function KpiBuilderPage() {
               </h3>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {kpis.map(kpi => (
-                  <Card key={kpi.id} className="rounded-2xl shadow-2xl">
+                  <Card key={kpi.id} className="rounded-xl shadow-lg">
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <CardTitle className="text-base font-medium">{kpi.display_name}</CardTitle>

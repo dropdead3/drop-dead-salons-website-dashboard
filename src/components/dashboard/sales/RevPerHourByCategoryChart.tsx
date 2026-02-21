@@ -200,7 +200,7 @@ export function RevPerHourByCategoryChart({ dateFrom, dateTo, locationId, filter
                             transition={{ delay: 0.3 + i * 0.05 }}
                             style={{ left: `${Math.min(barPct + 1, 85)}%` }}
                           >
-                            <span className="text-xs font-semibold tabular-nums whitespace-nowrap">
+                            <span className="text-xs font-medium tabular-nums whitespace-nowrap">
                               <BlurredAmount>{formatCurrency(cat.revPerHour)}</BlurredAmount>/hr
                             </span>
                           </motion.div>
@@ -254,7 +254,7 @@ export function RevPerHourByCategoryChart({ dateFrom, dateTo, locationId, filter
                                       <span className="flex-1 truncate max-w-[200px]">{s.name}</span>
                                       <span className="text-xs text-muted-foreground tabular-nums w-12 text-right">{s.avgDuration}m</span>
                                       <span className="text-xs tabular-nums w-16 text-right"><BlurredAmount>{formatCurrency(s.avgRevenue)}</BlurredAmount></span>
-                                      <span className="text-xs font-semibold tabular-nums w-20 text-right text-primary"><BlurredAmount>{formatCurrency(s.revPerHour)}</BlurredAmount>/hr</span>
+                                      <span className="text-xs font-medium tabular-nums w-20 text-right text-primary"><BlurredAmount>{formatCurrency(s.revPerHour)}</BlurredAmount>/hr</span>
                                       <span className="text-xs text-muted-foreground tabular-nums w-10 text-right">{s.bookings}×</span>
                                     </div>
                                   ))}

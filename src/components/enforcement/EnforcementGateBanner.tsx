@@ -42,7 +42,7 @@ export function EnforcementGateBanner({
   const banner = (
     <div
       className={cn(
-        'rounded-2xl border border-[hsl(var(--platform-border))] bg-[hsl(var(--platform-card))] p-6 sm:p-8',
+        'rounded-xl border border-[hsl(var(--platform-border))] bg-[hsl(var(--platform-card))] p-6 sm:p-8',
         className
       )}
     >

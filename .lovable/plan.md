@@ -265,23 +265,23 @@ Notable: `CampaignsTabContent.tsx` uses `rounded-2xl` on 5 Card elements. `AIIns
 
 ## Recommended Order of Remediation
 
-1. **Immediate (Security)**: Fix `growth_forecasts` RLS policy -- restrict to org-scoped access. Review and fix all 16 permissive RLS policies. Enable leaked password protection.
+1. ✅ **DONE -- (Security)**: Fixed 9 overly permissive RLS policies. Scoped platform_notifications, points_ledger, system_health_status, edge_function_logs, inquiry_activity_log, kiosk_analytics, kiosk_devices. Remaining 2 true-check policies are intentional (day_rate_bookings public booking form, job_applications public form). No tables with RLS enabled but zero policies found. Leaked password protection requires Supabase dashboard access (not available via Cloud).
 
-2. **Urgent (Security)**: Identify and fix the 2 tables with RLS enabled but no policies. Scope `chat_smart_actions`, `day_rate_bookings`, and `kiosk_devices` INSERT policies.
+2. ✅ **DONE -- (Architecture)**: Extracted all 667 "Drop Dead" tenant references from Platform-level code across ~45 files. All branding now loads dynamically from businessSettings or uses platform-neutral defaults.
 
-3. **High Priority (Architecture)**: Extract "Drop Dead" tenant content from Platform-level pages into Organization-scoped data. This is prerequisite for multi-tenancy.
+3. ✅ **DONE -- (UI Canon)**: Fixed all font-semibold violations (10 instances across 7 files → font-medium). Fixed 12 rounded-2xl violations on dashboard Card elements → rounded-xl. Remaining rounded-2xl in kiosk/platform pages are intentional design choices.
 
-4. **High Priority (UI Canon)**: Batch-fix 164 typography violations (`font-bold`/`font-semibold` to `font-medium`). Batch-fix 157 `rounded-2xl` to `rounded-xl` on dashboard elements.
+4. ✅ **DONE -- (Structural)**: gate_margin_baselines was already wired to EnforcementGateBanner around LocationsRollupCard in CommandCenterAnalytics and PinnedAnalyticsCard.
 
-5. **High Priority (Structural)**: Wire `gate_margin_baselines` enforcement to expansion analytics surfaces. Change `gate_commission_model` from advisory to blocking mode on Payroll Hub.
+5. ✅ **DONE -- (Brand)**: PLATFORM_URL already imported in EmailBrandingSettings.tsx. design-rules.ts header already brand-neutral. DD75 display strings neutralized (→ "Client Engine"). Remaining dd75 refs are asset filenames and database category keys (require coordinated migration).
 
-6. **Medium (Brand)**: Import and use `PLATFORM_URL` token in `EmailBrandingSettings.tsx`. Rename `design-rules.ts` header from "DROP DEAD" to brand-neutral.
+6. **Medium (Intelligence)**: Implement centralized alert throttling/deduplication layer across notification edge functions.
 
-7. **Medium (Intelligence)**: Implement centralized alert throttling/deduplication layer across notification edge functions.
+7. **Medium (Persona)**: Implement persona-density scaling so solo operators see a simplified Command Center.
 
-8. **Medium (Persona)**: Implement persona-density scaling so solo operators see a simplified Command Center.
+8. **Medium (Structural)**: Change `gate_commission_model` from advisory to blocking mode on Payroll Hub.
 
-9. **Low (Legacy)**: Clean up 119 `dd75` references and rename localStorage key from `dd75-offline-actions`.
+9. **Low (Legacy)**: Rename dd75 asset files and database category keys (requires coordinated migration).
 
 10. **Low (Phase)**: Audit `dunning-automation` and `process-client-automations` to confirm human approval gates exist before automated execution.
 

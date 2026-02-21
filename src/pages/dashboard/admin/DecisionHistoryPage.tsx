@@ -43,7 +43,7 @@ export default function DecisionHistoryPage() {
             <Loader2 className="h-6 w-6 animate-spin text-[hsl(var(--platform-foreground-muted))]" />
           </div>
         ) : !recommendations?.length ? (
-          <Card className="rounded-2xl shadow-2xl">
+          <Card className="rounded-xl shadow-lg">
             <CardContent className="py-12 text-center">
               <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
                 No recommendations have been generated yet. Visit the Leadership tab in Analytics to generate your first analysis.
@@ -56,7 +56,7 @@ export default function DecisionHistoryPage() {
             const StatusIcon = config.icon;
 
             return (
-              <Card key={rec.id} className="rounded-2xl shadow-2xl">
+              <Card key={rec.id} className="rounded-xl shadow-lg">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">

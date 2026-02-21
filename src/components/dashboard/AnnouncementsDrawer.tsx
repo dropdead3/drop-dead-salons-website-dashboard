@@ -194,7 +194,7 @@ export function AnnouncementsDrawer({ isLeadership }: AnnouncementsWidgetProps) 
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98, y: -4 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="w-full rounded-2xl shadow-lg border border-border/40 bg-card overflow-hidden"
+            className="w-full rounded-xl shadow-lg border border-border/40 bg-card overflow-hidden"
           >
             {/* Top gradient accent */}
             <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />

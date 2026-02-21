@@ -292,7 +292,7 @@ export function CustomSectionEditor({ sectionId, sectionType, sectionLabel, styl
                     onLabelChange(editingLabel.trim());
                   }
                 }}
-                className="text-lg font-semibold h-auto py-1 px-2"
+                className="text-lg font-medium h-auto py-1 px-2"
               />
             </div>
           ) : (

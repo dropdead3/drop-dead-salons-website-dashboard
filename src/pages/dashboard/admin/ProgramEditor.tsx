@@ -1128,7 +1128,7 @@ export default function ProgramEditor() {
         {config && (
           <div className="sticky bottom-0 left-0 right-0 z-50 mt-6 -mx-4 lg:-mx-6">
             <div className="bg-gradient-to-t from-background via-background to-background/80 pt-4 pb-6 px-4 lg:px-6">
-              <div className="flex items-center justify-between gap-4 p-4 bg-card border rounded-2xl shadow-lg">
+              <div className="flex items-center justify-between gap-4 p-4 bg-card border rounded-xl shadow-lg">
                 <div className="flex items-center gap-3">
                   {hasUnsavedChanges && (
                     <div className="flex items-center gap-2 text-destructive">

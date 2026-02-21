@@ -30,7 +30,7 @@ export function SidebarGreeting({ greeting, subtitle, firstName }: SidebarGreeti
           className="overflow-hidden"
         >
           <div className="px-6 py-4 border-b border-border/30">
-            <p className="text-sm font-display font-semibold tracking-wide text-foreground">
+            <p className="text-sm font-display font-medium tracking-wide text-foreground">
               {greeting} <span className="text-foreground/70">{firstName}</span>
             </p>
             {subtitle && (

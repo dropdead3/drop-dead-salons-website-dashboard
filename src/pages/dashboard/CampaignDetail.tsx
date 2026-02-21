@@ -384,7 +384,7 @@ export default function CampaignDetail() {
         </div>
 
         {/* Progress + Actions */}
-        <Card className="p-5 rounded-2xl shadow-md">
+        <Card className="p-5 rounded-xl shadow-md">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium">{doneCount}/{tasks.length} complete</span>
@@ -460,7 +460,7 @@ export default function CampaignDetail() {
         </Card>
 
         {/* Leadership note */}
-        <Card className="p-4 rounded-2xl border-primary/10 bg-primary/5">
+        <Card className="p-4 rounded-xl border-primary/10 bg-primary/5">
           <div className="flex items-center justify-between mb-1">
             <p className="text-xs font-medium text-muted-foreground">Leadership Note</p>
             <Button
