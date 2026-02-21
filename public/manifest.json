@@ -1,7 +1,7 @@
 {
-  "name": "Drop Dead 75 Dashboard",
-  "short_name": "DD75",
-  "description": "Salon management dashboard for Drop Dead 75",
+  "name": "Zura Platform",
+  "short_name": "Zura",
+  "description": "Guided Intelligence for Scaling Operators",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#0f0f0f",

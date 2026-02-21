@@ -1083,7 +1083,7 @@ export default function MyProfile() {
                     <div className="flex-1">
                       <Label htmlFor="dd_certified" className="flex items-center gap-2 cursor-pointer">
                         <img 
-                          src="/assets/dd75-icon.svg" 
+                          src="/assets/brand-icon.svg" 
                           alt="Certified" 
                           className="w-5 h-5"
                           onError={(e) => { e.currentTarget.style.display = 'none'; }}

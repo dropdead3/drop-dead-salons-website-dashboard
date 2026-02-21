@@ -1,86 +1,44 @@
 
+# Audit Remediation Plan — COMPLETE ✅
 
-# Remaining Audit Plan: Items #7 and #9
+All 10 audit items have been remediated.
 
-## Item #7 -- Persona Density Scaling
+## Summary
 
-### Problem
-All roles currently see nearly the same dashboard density. The `dashboard_element_visibility` table has ~153 elements per role, but almost all are set to `is_visible = true`. Solo operators (stylists, booth renters) are exposed to the same 8+ Command Center cards, leadership widgets, and analytics surfaces as multi-location owners -- violating the persona scaling doctrine.
+| # | Item | Status |
+|---|------|--------|
+| 1 | Security — RLS hardening | ✅ Done |
+| 2 | Architecture — Entity hierarchy | ✅ Done |
+| 3 | UI Canon — Typography (font-bold → font-medium) | ✅ Done |
+| 4 | UI Canon — Radius (rounded-2xl → rounded-xl) | ✅ Done |
+| 5 | Structural Gates — gate_margin_baselines | ✅ Done |
+| 6 | Alert Throttling & Deduplication | ✅ Done |
+| 7 | Persona Density Scaling | ✅ Done |
+| 8 | Commission Gate (gate_commission_model) | ✅ Done |
+| 9 | Legacy dd75 Asset & DB Key Renames | ✅ Done |
+| 10 | Automation Autonomy Audit | ✅ Done |
 
-### Current State
-- VisibilityGate infrastructure is healthy and already wraps dashboard elements
-- The `dashboard_element_visibility` table has entries for all roles
-- Stylists have only 5 elements hidden; booth renters and bookkeepers have 0 hidden
-- 154+ elements are visible to every persona by default
+## Item #7 — Persona Density Scaling (Final)
 
-### Approach
-Run a SQL migration to set `is_visible = false` for elements that should be hidden from simpler personas. No code changes required -- the existing VisibilityGate system will enforce the new defaults automatically.
+Updated `dashboard_element_visibility` to hide enterprise-complexity elements from simpler personas:
 
-**Persona-specific hiding rules:**
+| Role | Hidden Elements | Total |
+|------|----------------|-------|
+| booth_renter | 53 | 153 |
+| stylist_assistant | 49 | 153 |
+| bookkeeper | 40 | 153 |
+| stylist | 32 | 153 |
+| receptionist | 27 | 153 |
+| operations_assistant | 23 | 153 |
+| manager | 22 | 154 |
+| admin | 13 | 154 |
+| super_admin | 12 | 154 |
+| admin_assistant | 6 | 153 |
 
-| Role | Elements to Hide | Rationale |
-|------|-----------------|-----------|
-| `stylist` | Leadership Widgets, Leadership Cards, Payroll admin, multi-location analytics, operations management | Stylists need personal performance, not enterprise metrics |
-| `stylist_assistant` | Same as stylist + additional analytics hub leadership/operations elements | Assistants need even less complexity |
-| `booth_renter` | All leadership, operations, payroll, program admin, team overview cards | Booth renters are independent operators -- simplest view |
-| `receptionist` | Leadership analytics, payroll, program admin, forecasting | Receptionists need scheduling and client tools, not financial analytics |
-| `bookkeeper` | Operations widgets, leadership widgets, program cards, team overview | Bookkeepers need financial surfaces only |
+## Item #9 — Legacy dd75 Renames (Final)
 
-Estimated: ~40-60 visibility rows updated per role, targeting elements in categories like "Leadership Widgets", "Leadership Cards", "Analytics Hub - Leadership", "Forecasting", and "Payroll".
-
----
-
-## Item #9 -- Legacy dd75 Asset and DB Key Renames
-
-### Problem
-74 references to `dd75` remain across 8 source files. These are internal asset filenames and database category keys from a legacy tenant brand.
-
-### Current State
-- 4 SVG asset files: `dd75-icon.svg`, `dd75-icon-white.svg`, `dd75-logo.svg`, `dd75-logo-white.svg`
-- Import aliases in `EmailTemplateEditor.tsx`, `ColoredLogo.tsx`, `Program.tsx`
-- Category key `'dd75'` used in `Training.tsx`, `VideoUploadDialog.tsx`, `VideoLibraryManager.tsx`, `TeamProgressDashboard.tsx`
-- Database `training_videos.category` column allows `'dd75'` as a value (but 0 rows currently use it)
-- No data migration needed -- the table is empty
-
-### Approach
-
-**Step 1: Rename asset files**
-- `dd75-icon.svg` -> `brand-icon.svg`
-- `dd75-icon-white.svg` -> `brand-icon-white.svg`
-- `dd75-logo.svg` -> `brand-wordmark.svg`
-- `dd75-logo-white.svg` -> `brand-wordmark-white.svg`
-
-**Step 2: Update all imports** (6 files)
-- `EmailTemplateEditor.tsx` -- update 4 imports and logo preset IDs (`dd75-icon-black` -> `brand-icon-black`, etc.)
-- `ColoredLogo.tsx` -- update import from `dd75-logo.svg` to `brand-wordmark.svg`
-- `Program.tsx` -- update import from `dd75-logo.svg` to `brand-wordmark.svg`
-- `MyProfile.tsx` -- update asset path from `dd75-icon.svg` to `brand-icon.svg`
-
-**Step 3: Update category keys** (4 files)
-- Replace `'dd75'` category key with `'client_engine'` in:
-  - `Training.tsx`
-  - `VideoUploadDialog.tsx`
-  - `VideoLibraryManager.tsx`
-  - `TeamProgressDashboard.tsx`
-
-**Step 4: Database migration**
-- Update any `training_videos` rows with `category = 'dd75'` to `'client_engine'` (currently 0 rows, but future-proofs the schema)
-
-### Technical Details
-
-**Files modified:**
-- 4 SVG files renamed (copy + delete pattern since direct rename isn't available)
-- 8 TypeScript/TSX files updated with new import paths and category keys
-- 1 SQL migration for category key update
-- Total: ~12 file operations
-
-**Risk:** Low. No data exists with the old category key. Asset renames are internal-only (not user-facing URLs). All changes are mechanical find-and-replace.
-
----
-
-## Execution Order
-
-1. **#9 first** (legacy dd75 renames) -- purely mechanical, no risk
-2. **#7 second** (persona density scaling) -- SQL migration to set visibility defaults
-
-After both are complete, all 10 audit remediation items will be marked done.
+- Renamed 4 SVG assets: `dd75-*` → `brand-icon.svg`, `brand-icon-white.svg`, `brand-wordmark.svg`, `brand-wordmark-white.svg`
+- Updated all imports in EmailTemplateEditor, ColoredLogo, Program, MyProfile
+- Replaced `'dd75'` category key with `'client_engine'` in Training, VideoUploadDialog, VideoLibraryManager, TeamProgressDashboard
+- Updated DB rows (0 affected, future-proofed)
+- Updated public/manifest.json, sw.js, offline.html brand references

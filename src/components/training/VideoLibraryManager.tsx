@@ -44,7 +44,7 @@ interface TrainingVideo {
 
 const categoryLabels: Record<string, string> = {
   onboarding: 'Onboarding',
-  dd75: 'Client Engine Program',
+  client_engine: 'Client Engine Program',
   technique: 'Technique',
   product: 'Product Knowledge',
   'client-service': 'Client Service',

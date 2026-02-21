@@ -47,7 +47,7 @@ interface VideoUploadDialogProps {
 
 const categories = [
   { value: 'onboarding', label: 'Onboarding' },
-  { value: 'dd75', label: 'Client Engine Program' },
+  { value: 'client_engine', label: 'Client Engine Program' },
   { value: 'technique', label: 'Technique' },
   { value: 'product', label: 'Product Knowledge' },
   { value: 'client-service', label: 'Client Service' },

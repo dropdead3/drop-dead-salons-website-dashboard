@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import DD75Logo from '@/assets/dd75-logo.svg';
+import BrandWordmark from '@/assets/brand-wordmark.svg';
 import { ImageWithSkeleton } from '@/components/ui/image-skeleton';
 
 interface ColoredLogoProps {
@@ -18,7 +18,7 @@ export function ColoredLogo({
   alt = 'Logo'
 }: ColoredLogoProps) {
   const [svgContent, setSvgContent] = useState<string | null>(null);
-  const displayUrl = logoUrl || DD75Logo;
+  const displayUrl = logoUrl || BrandWordmark;
   
   // For SVG files that we want to colorize, fetch and inline them
   useEffect(() => {

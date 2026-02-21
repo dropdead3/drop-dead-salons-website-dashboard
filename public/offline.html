@@ -105,7 +105,7 @@
   <script>
     // Check for cached data and display what's available
     if ('caches' in window) {
-      caches.open('dd75-cache-v1').then(cache => {
+      caches.open('zura-cache-v1').then(cache => {
         cache.keys().then(requests => {
           if (requests.length > 0) {
             document.getElementById('cachedData').style.display = 'block';
