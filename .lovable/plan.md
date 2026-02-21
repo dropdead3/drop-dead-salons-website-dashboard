@@ -1,171 +1,148 @@
 
-## Rearchitecting the Add-Ons System: A Proper Configurator
 
-### What the User Wants (vs. What Was Built)
+## Services Settings Page: Deep Dive Analysis + Enhancement Plan
 
-The current system is built backwards. It uses a text-label approach where each category row gets a "recommendation" that is just a string label optionally matched by name to a Phorest service. There is no pricing, no cost, no margin tracking, and no assignment to specific services.
+### Current Architecture Overview
 
-What's needed is a **proper two-layer architecture**:
+The Services Settings page has **four cards** stacked vertically:
 
-1. **Add-Ons Library** — Define add-ons as standalone entities with a name, price, and cost (for margin tracking). These exist at the organization level and are reusable.
-2. **Add-On Assignments** — Attach library add-ons to:
-   - A **full category** (every service in that category can trigger the recommendation)
-   - **Specific services** (more surgical — only when booking "Full Balayage" does "Olaplex Treatment" appear)
+1. **SERVICE CATEGORIES** -- Drag-to-reorder list with color badges, rename/delete actions
+2. **SERVICE ADD-ONS** -- Library of add-on items with price/cost/margin tracking
+3. **BOOKING ADD-ON RECOMMENDATIONS** -- Assignment UI linking add-ons to categories/services
+4. **SERVICES** -- Accordion of categories, each expanding to show services with click-to-edit
 
----
-
-### Data Architecture
-
-Two new tables replace the current `service_category_addons` approach:
-
-**Table 1: `service_addons` (the library)**
-
-| Column | Type | Notes |
-|---|---|---|
-| `id` | UUID | PK |
-| `organization_id` | UUID | FK → organizations |
-| `name` | TEXT | "Olaplex Treatment", "Scalp Treatment" |
-| `description` | TEXT nullable | Optional detail |
-| `price` | NUMERIC | What the client pays |
-| `cost` | NUMERIC nullable | Product/supply cost for margin tracking |
-| `duration_minutes` | INTEGER nullable | Time to add to appointment |
-| `is_active` | BOOLEAN | Soft delete |
-| `display_order` | INTEGER | For sorting |
-| `created_at` | TIMESTAMPTZ | |
-| `updated_at` | TIMESTAMPTZ | |
-
-**Table 2: `service_addon_assignments` (the attachments)**
-
-| Column | Type | Notes |
-|---|---|---|
-| `id` | UUID | PK |
-| `organization_id` | UUID | FK → organizations |
-| `addon_id` | UUID | FK → service_addons |
-| `target_type` | TEXT | `'category'` or `'service'` |
-| `target_category_id` | UUID nullable | FK → service_category_colors |
-| `target_service_id` | UUID nullable | FK → services |
-| `display_order` | INTEGER | Within each target |
-| `created_at` | TIMESTAMPTZ | |
-
-RLS on both tables follows `is_org_member` for SELECT, `is_org_admin` for INSERT/UPDATE/DELETE.
-
-The existing `service_category_addons` table stays untouched (it's in the DB, removing it could break things). We build the new system alongside it. The booking wizard will be updated to query the new tables.
+Each service opens a **tabbed editor dialog** (Details, Level Pricing, Stylist Overrides, Location Pricing, Seasonal). There's also a separate "Add Service" dialog (`ServiceFormDialog`) used only for creation, which has **different fields** than the editor -- this is a core problem.
 
 ---
 
-### What Gets Built
+### Issues Found
 
-**Part 1: Add-Ons Library Page (new card in Services Settings)**
+#### Issue 1: Two Separate Service Dialogs With Different Fields
 
-A top-level "SERVICE ADD-ONS" card in `ServicesSettingsContent.tsx`:
+`ServiceFormDialog` (create) has fields the `ServiceEditorDialog` (edit) does NOT:
+- `finishing_time_minutes`
+- `content_creation_time_minutes`
+- `processing_time_minutes`
+- `requires_new_client_consultation`
 
-- Full-width table of defined add-ons: Name | Price | Cost | Margin | Duration | Actions
-- "+ Add Add-On" opens an inline form (or dialog) with:
-  - Name (required)
-  - Price (required, numeric input)
-  - Cost (optional, numeric input — for margin tracking)
-  - Duration (optional, minutes)
-  - Description (optional)
-- Each row has Edit (inline) and Delete (with confirmation) actions
-- Margin is computed live as `((price - cost) / price) * 100` shown as a muted percentage badge
+Conversely, the editor has:
+- `cost` field
+- `bookable_online` toggle
+- Level Pricing / Stylist Overrides / Location Pricing / Seasonal tabs
 
-**Part 2: Category & Service Assignments**
+This means a service created with finishing/processing time settings **cannot be edited** for those same fields later. These are orphaned fields after creation.
 
-The "BOOKING ADD-ON RECOMMENDATIONS" card becomes a proper assignment UI:
+**Fix:** Consolidate into one dialog. Use `ServiceEditorDialog` for both create and edit. Add the missing fields (`finishing_time_minutes`, `content_creation_time_minutes`, `processing_time_minutes`, `requires_new_client_consultation`) to the editor's Details tab. Remove `ServiceFormDialog` entirely.
 
-- Each category row expands to show:
-  - **Assigned add-ons** (from the library) — shown as chips with price badges
-  - A "+ Assign Add-On" button opens a dropdown/combobox of available library add-ons
-  - Below the category-level assignments, each service within that category has its own sub-row with its own specific add-on assignments
+#### Issue 2: Delete Button Has No Confirmation
 
-**Part 3: Booking Wizard Update**
+In the SERVICES accordion, the trash icon on each service row calls `deleteService.mutate(svc.id)` directly with no confirmation dialog. A single misclick permanently soft-deletes a service.
 
-The `QuickBookingPopover.tsx` `addonSuggestions` memo is updated to query the new tables:
-- When category is selected: look up `service_addon_assignments` with `target_type = 'category'` AND `target_category_id = catEntry.id`
-- When specific services are selected: also surface `service_addon_assignments` with `target_type = 'service'` AND `target_service_id IN selectedServiceIds`
-- The `ServiceAddonToast` suggestions are now native `service_addons` objects (with real price/cost/duration) instead of Phorest service lookup
+**Fix:** Add an `AlertDialog` confirmation (same pattern as category delete) before deactivating a service.
+
+#### Issue 3: Service List Rows Missing Active/Inactive Toggle
+
+The service rows in the accordion show name, duration, and price, but there's no way to quickly toggle a service's active status without opening the full editor. The `handleToggleActive` function exists (line 216) but is never called from the UI.
+
+**Fix:** Add a subtle Switch or toggle icon on hover in each service row to enable/disable a service inline.
+
+#### Issue 4: No Inline Service Reordering Within a Category
+
+Categories can be drag-reordered, but individual services within a category cannot. They're sorted alphabetically by name from the database query. There's no `display_order` on services.
+
+**Fix (future consideration):** This would require a `display_order` column on the `services` table. Flag as a Phase 2 enhancement, not critical for now.
+
+#### Issue 5: Duplicate "Haircuts" and "Haircut" Categories
+
+The live data shows both "Haircut" (8 services) and "Haircuts" (0 services). This is likely a data quality issue, not a code issue, but the UI should help prevent this by warning when creating a category with a similar name.
+
+**Fix:** Add a fuzzy match warning in `CategoryFormDialog` when the entered name closely matches an existing category (e.g., Levenshtein distance check or simple `.includes()` / plural detection).
+
+#### Issue 6: "Haircuts" and "Vivids" Show 0 Services -- No Visual Distinction
+
+Empty categories look identical to populated ones. There's no visual cue (muted styling, warning badge) to indicate a category is unused.
+
+**Fix:** Mute the text and add a subtle "empty" indicator for categories with 0 services in the SERVICE CATEGORIES card.
+
+#### Issue 7: Services Card Doesn't Show Cost or Margin Inline
+
+The accordion service rows show duration and price but not cost. Since cost is tracked on services, showing a quick margin indicator inline (like the add-ons library does) would give at-a-glance margin visibility.
+
+**Fix:** When `svc.cost` is set, show a small margin badge next to the price in the service row (same `MarginBadge` component from the add-ons library).
+
+#### Issue 8: "Add service to {Category}" Button Creates via the Wrong Dialog
+
+The "+ Add service to Haircut" button in the accordion uses `ServiceFormDialog` (the simpler create form). Since we're consolidating to one dialog, this should use the unified `ServiceEditorDialog` with the category pre-selected.
+
+**Fix:** After consolidation, all service creation goes through `ServiceEditorDialog` in create mode.
 
 ---
 
-### New Files
+### Enhancement Suggestions
 
-| File | Purpose |
-|---|---|
-| `supabase/migrations/...` | Create `service_addons` + `service_addon_assignments` tables with RLS |
-| `src/hooks/useServiceAddons.ts` | CRUD hooks for the library: `useServiceAddons`, `useCreateServiceAddon`, `useUpdateServiceAddon`, `useDeleteServiceAddon` |
-| `src/hooks/useServiceAddonAssignments.ts` | Hooks for assignments: `useAddonAssignments`, `useCreateAddonAssignment`, `useDeleteAddonAssignment`, `useAllAddonAssignmentsByOrg` |
-| `src/components/dashboard/settings/ServiceAddonsLibrary.tsx` | The library CRUD card |
-| `src/components/dashboard/settings/ServiceAddonAssignmentsCard.tsx` | The category + service assignment card |
+#### Enhancement A: Bulk Category Actions
 
-### Modified Files
+When a category has 0 services, show a "Delete empty category" shortcut directly on the row. For categories with services, show the count more prominently with a "view services" quick link that auto-scrolls to and expands that accordion section in the SERVICES card.
+
+#### Enhancement B: Search/Filter in Services Accordion
+
+With 66+ services across 9 categories, there's no way to quickly find a specific service. Add a search input above the accordion that filters services across all categories and auto-expands matching ones.
+
+#### Enhancement C: Batch Price Update
+
+Allow selecting multiple services within a category and applying a percentage price increase/decrease. Common for annual price adjustments.
+
+---
+
+### Implementation Plan
+
+**Step 1: Consolidate Service Dialogs**
+- Add missing fields (`finishing_time_minutes`, `content_creation_time_minutes`, `processing_time_minutes`, `requires_new_client_consultation`) to `ServiceEditorDialog`'s Details tab
+- Update all `ServiceFormDialog` callsites in `ServicesSettingsContent.tsx` to use `ServiceEditorDialog` instead
+- Remove `ServiceFormDialog.tsx`
+
+**Step 2: Add Delete Confirmation for Services**
+- Add a `deleteServiceId` / `deleteServiceName` state pair
+- Add an `AlertDialog` (same pattern as category delete at line 488)
+- Wire the trash button to set state instead of calling mutate directly
+
+**Step 3: Inline Service Toggle**
+- Add a small Switch in each service row (visible on hover or always) that calls `handleToggleActive`
+- Show muted styling for inactive services if we ever query them
+
+**Step 4: Empty Category Styling**
+- In the SERVICE CATEGORIES card, mute the row styling when `serviceCount === 0`
+- Add a small "(empty)" text or different opacity
+
+**Step 5: Duplicate Category Warning**
+- In `CategoryFormDialog`, check against existing category names
+- Show a yellow warning if a similar name exists (not blocking, just informational)
+
+**Step 6: Inline Margin Display**
+- Import or extract the `MarginBadge` component (currently in `ServiceAddonsLibrary`)
+- Show it inline in service rows when `svc.cost` is populated
+
+**Step 7: Service Search**
+- Add a search input at the top of the SERVICES card
+- Filter the accordion to only show categories/services matching the query
+
+### Files to Change
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/settings/ServicesSettingsContent.tsx` | Remove old `CategoryAddonManager` import; add `ServiceAddonsLibrary` and `ServiceAddonAssignmentsCard` cards; remove old `useAllCategoryAddons` and `phorestServiceNames` logic |
-| `src/components/dashboard/settings/CategoryAddonManager.tsx` | Deprecate/remove (replaced by `ServiceAddonAssignmentsCard`) |
-| `src/components/dashboard/schedule/QuickBookingPopover.tsx` | Swap `addonSuggestions` memo to use `useAllAddonAssignmentsByOrg` and the new `service_addons` data; update `ServiceAddonToast` props to pass native addon objects |
-| `src/components/dashboard/schedule/ServiceAddonToast.tsx` | Accept native `ServiceAddon` type instead of `PhorestService`; remove dependency on `phorest_service_id` |
-
----
-
-### UI Design of the Library Card
-
-```text
-SERVICE ADD-ONS                                    [+ Add Add-On]
-─────────────────────────────────────────────────────────────────
- Olaplex Treatment       $35.00    Cost $12    66% margin    30m  [Edit] [✕]
- K18 Treatment           $28.00    Cost $8     71% margin    15m  [Edit] [✕]
- Scalp Treatment         $45.00    Cost $15    67% margin    20m  [Edit] [✕]
- Gloss Add-On            $25.00    —           —             20m  [Edit] [✕]
-```
-
-When cost is entered, margin is computed and shown as a green/amber/red badge based on margin threshold (e.g., ≥50% = green, 30–49% = amber, <30% = red).
-
----
-
-### UI Design of the Assignment Card
-
-```text
-BOOKING ADD-ON RECOMMENDATIONS
-
-  [CO] Color                   2 add-ons            [+ Assign] [∨]
-  ┌────────────────────────────────────────────────────────────────
-  │ Category-level (triggers for any Color service):
-  │  [Olaplex Treatment $35] [×]   [K18 Treatment $28] [×]
-  │
-  │ Service-level assignments:
-  │  Full Balayage          [Scalp Treatment $45] [×]   [+ Add]
-  │  Partial Balayage       No specific add-ons          [+ Add]
-  │  Color Melt             [Gloss Add-On $25] [×]       [+ Add]
-  └────────────────────────────────────────────────────────────────
-```
-
----
-
-### Booking Wizard Behavior
-
-Category-level: When stylist picks "Color" category → show category-level add-ons in the toast (Olaplex + K18).
-Service-level: When stylist picks "Full Balayage" specifically → additionally surface "Scalp Treatment" (service-specific).
-Deduplication: If an add-on appears in both category and service assignments, show it once.
-Already-added filter: Filter out any add-on whose name matches a service already in the booking.
-
----
-
-### Migration Strategy for Existing `service_category_addons` Data
-
-The existing table has zero rows (confirmed by the database query above: `[]`). No data migration is needed. The old table will simply become unused once we point the booking wizard at the new tables.
-
----
+| `src/components/dashboard/settings/ServiceEditorDialog.tsx` | Add `finishing_time_minutes`, `content_creation_time_minutes`, `processing_time_minutes`, `requires_new_client_consultation` fields to Details tab |
+| `src/components/dashboard/settings/ServicesSettingsContent.tsx` | Replace all `ServiceFormDialog` usage with `ServiceEditorDialog`; remove import; add delete confirmation dialog for services; add empty category muting; add search input; add inline margin badges; add inline active toggle |
+| `src/components/dashboard/settings/ServiceFormDialog.tsx` | Delete file (replaced by consolidated editor) |
+| `src/components/dashboard/settings/CategoryFormDialog.tsx` | Add duplicate name warning |
+| `src/components/dashboard/settings/ServiceAddonsLibrary.tsx` | Extract `MarginBadge` to shared location or export it |
 
 ### Build Order
 
-1. Database migration (2 tables + RLS)
-2. `useServiceAddons.ts` hook
-3. `useServiceAddonAssignments.ts` hook
-4. `ServiceAddonsLibrary.tsx` component
-5. `ServiceAddonAssignmentsCard.tsx` component
-6. Wire both into `ServicesSettingsContent.tsx` (replace old card)
-7. Update `ServiceAddonToast.tsx` to accept the new type
-8. Update `QuickBookingPopover.tsx` to use new data sources
+1. Consolidate dialogs (Step 1) -- highest impact, removes confusion
+2. Delete confirmation (Step 2) -- safety
+3. Empty category styling (Step 4) -- quick visual win
+4. Duplicate category warning (Step 5) -- preventive
+5. Inline margin display (Step 6) -- visibility
+6. Service search (Step 7) -- discoverability
+7. Inline toggle (Step 3) -- convenience
 
-No new routes or navigation entries are needed. Everything lives within the existing Services Settings page.
