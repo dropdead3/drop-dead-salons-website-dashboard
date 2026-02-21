@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Users, BarChart3 } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { getLevelColor } from '@/lib/level-colors';
 import { toast } from 'sonner';
@@ -152,11 +153,16 @@ export function TeamCommissionRoster({ orgId, levels }: TeamCommissionRosterProp
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="font-display text-lg">TEAM COMMISSION ROSTER</CardTitle>
-              <CardDescription>
-                Manage level assignments and commission rates for your team. Click a stylist for details.
-              </CardDescription>
+            <div className="flex items-center gap-3">
+              <div className={tokens.card.iconBox}>
+                <Users className={tokens.card.icon} />
+              </div>
+              <div>
+                <CardTitle className={tokens.card.title}>TEAM COMMISSION ROSTER</CardTitle>
+                <CardDescription>
+                  Manage level assignments and commission rates for your team. Click a stylist for details.
+                </CardDescription>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <Button

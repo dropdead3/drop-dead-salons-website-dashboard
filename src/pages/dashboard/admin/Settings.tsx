@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
@@ -934,18 +935,11 @@ export default function Settings() {
         <div className="p-6 lg:p-8">
           {/* Back button and header */}
           <div className="mb-6">
-            <Button 
-              variant="ghost"
-              size="sm"
-              className="-ml-2 text-muted-foreground hover:text-foreground"
-              onClick={() => setActiveCategory(null)}
-            >
-              <ArrowLeft className="w-4 h-4 mr-1.5" />
-              Back to Settings
-            </Button>
-            <h1 className="font-display text-2xl lg:text-3xl">
-              {categoriesMap[activeCategory]?.label.toUpperCase()}
-            </h1>
+            <DashboardPageHeader
+              title={categoriesMap[activeCategory]?.label.toUpperCase() ?? ''}
+              backTo="/dashboard/admin/settings"
+              backLabel="Back to Settings"
+            />
           </div>
 
           {/* Category Content */}
