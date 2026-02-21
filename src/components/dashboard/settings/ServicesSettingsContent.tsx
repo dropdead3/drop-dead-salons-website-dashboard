@@ -31,6 +31,7 @@ import { ServiceEditorDialog } from './ServiceEditorDialog';
 import { ServiceAddonsLibrary } from './ServiceAddonsLibrary';
 import { RedoPolicySettings } from './RedoPolicySettings';
 import { ServiceAddonAssignmentsCard } from './ServiceAddonAssignmentsCard';
+import { StaffServiceConfiguratorCard } from './StaffServiceConfiguratorCard';
 import { toast } from 'sonner';
 import { useUndoToast } from '@/hooks/useUndoToast';
 import {
@@ -853,6 +854,15 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
           />
         )}
         </div>{/* end row 2 grid */}
+
+        {/* Row 2.5: Stylist Service Assignments */}
+        {resolvedOrgId && (
+          <StaffServiceConfiguratorCard
+            organizationId={resolvedOrgId}
+            categories={localOrder}
+            servicesByCategory={servicesByCategory}
+          />
+        )}
 
         {/* Row 3: Scheduling Blocks + Calendar Preview */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
