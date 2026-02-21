@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, ChevronDown, ChevronUp, Plus, X, Scissors, FolderOpen, Link2 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Sparkles, ChevronDown, ChevronUp, Plus, X, Scissors, FolderOpen, Link2, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { useServiceAddons, type ServiceAddon } from '@/hooks/useServiceAddons';
 import { useAddonAssignments, useCreateAddonAssignment, useDeleteAddonAssignment, type AddonAssignment } from '@/hooks/useServiceAddonAssignments';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { toast } from 'sonner';
 import type { ServiceCategoryColor } from '@/hooks/useServiceCategoryColors';
 import type { Service } from '@/hooks/useServicesData';
 import { isGradientMarker, getGradientFromMarker, getCategoryAbbreviation } from '@/utils/categoryColors';
@@ -67,6 +69,8 @@ export function ServiceAddonAssignmentsCard({ organizationId, categories, servic
   const deleteAssignment = useDeleteAddonAssignment();
 
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+
   const toggleRow = (id: string) => setExpandedRows(prev => {
     const next = new Set(prev);
     next.has(id) ? next.delete(id) : next.add(id);
@@ -118,6 +122,27 @@ export function ServiceAddonAssignmentsCard({ organizationId, categories, servic
     deleteAssignment.mutate({ id: assignmentId, organizationId });
   };
 
+  const handleBulkAssign = async (addonId: string) => {
+    setBulkOpen(false);
+    let count = 0;
+    for (const cat of categories) {
+      const existing = catAssignments[cat.id] || [];
+      if (existing.some(a => a.addon_id === addonId)) continue;
+      createAssignment.mutate({
+        organization_id: organizationId,
+        addon_id: addonId,
+        target_type: 'category',
+        target_category_id: cat.id,
+      });
+      count++;
+    }
+    if (count > 0) {
+      toast.success(`Assigned to ${count} categor${count === 1 ? 'y' : 'ies'}`);
+    } else {
+      toast.info('Already assigned to all categories');
+    }
+  };
+
   if (categories.length === 0) {
     return (
       <Card>
@@ -166,11 +191,38 @@ export function ServiceAddonAssignmentsCard({ organizationId, categories, servic
             <Sparkles className="w-5 h-5 text-primary" />
             <CardTitle className={tokens.heading.section}>BOOKING ADD-ON RECOMMENDATIONS</CardTitle>
           </div>
-          {totalAssigned > 0 && (
-            <Badge variant="secondary" className="text-xs">
-              {totalAssigned} assigned
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {totalAssigned > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {totalAssigned} assigned
+              </Badge>
+            )}
+            {/* Bulk assign */}
+            <Popover open={bulkOpen} onOpenChange={setBulkOpen}>
+              <PopoverTrigger asChild>
+                <Button size="sm" variant="outline" className="text-xs">
+                  <Layers className="h-3.5 w-3.5 mr-1" />
+                  Assign to All
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-56 p-2">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-2 pb-1.5">
+                  Pick an add-on to assign to all {categories.length} categories
+                </p>
+                <div className="space-y-0.5 max-h-48 overflow-y-auto">
+                  {allAddons.map(addon => (
+                    <button
+                      key={addon.id}
+                      className="w-full text-left px-2 py-1.5 rounded-md text-xs hover:bg-muted/60 transition-colors"
+                      onClick={() => handleBulkAssign(addon.id)}
+                    >
+                      {addon.name}
+                    </button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
         <CardDescription>
           Assign add-ons to categories or specific services. During booking, Zura surfaces these as smart recommendations.
@@ -253,7 +305,6 @@ export function ServiceAddonAssignmentsCard({ organizationId, categories, servic
                           {services.map(svc => {
                             const svcAddons = svcAssignments[svc.id] || [];
                             const existingSvcAddonIds = new Set(svcAddons.map(a => a.addon_id));
-                            // Merge with category-level to prevent duplicate assignment
                             const allExistingIds = new Set([...existingSvcAddonIds, ...existingCatAddonIds]);
 
                             return (

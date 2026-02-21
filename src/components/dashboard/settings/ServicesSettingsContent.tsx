@@ -554,7 +554,7 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Service Add-Ons Library */}
-        {resolvedOrgId && <ServiceAddonsLibrary organizationId={resolvedOrgId} />}
+        {resolvedOrgId && <ServiceAddonsLibrary organizationId={resolvedOrgId} categories={localOrder} />}
 
         {/* Booking Add-On Recommendations (assignments) */}
         {resolvedOrgId && (

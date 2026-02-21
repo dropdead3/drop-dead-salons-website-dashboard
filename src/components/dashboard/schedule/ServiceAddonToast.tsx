@@ -59,6 +59,9 @@ export function ServiceAddonToast({
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{addon.name}</p>
+                  {addon.description && (
+                    <p className="text-[11px] text-muted-foreground truncate mt-0.5">{addon.description}</p>
+                  )}
                   <div className="flex items-center gap-2 mt-0.5">
                     {addon.duration_minutes && (
                       <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
