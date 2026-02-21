@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { PLATFORM_NAME } from '@/lib/brand';
 
 interface PreferenceItem {
   key: string;
@@ -332,7 +333,7 @@ export default function NotificationPreferences() {
                 <Sparkles className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-lg font-display tracking-wide">Zura Insights Email</CardTitle>
+                <CardTitle className="text-lg font-display tracking-wide">{PLATFORM_NAME} Insights Email</CardTitle>
                 <CardDescription>Receive your personalized AI insights as a beautiful email report</CardDescription>
               </div>
             </div>
@@ -344,7 +345,7 @@ export default function NotificationPreferences() {
                   Enable Insights Email
                 </Label>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Get a curated digest of your Zura insights delivered to your inbox
+                  Get a curated digest of your {PLATFORM_NAME} insights delivered to your inbox
                 </p>
               </div>
               <Switch

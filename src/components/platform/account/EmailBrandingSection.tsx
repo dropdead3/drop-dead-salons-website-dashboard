@@ -14,6 +14,7 @@ import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { PLATFORM_NAME } from '@/lib/brand';
 
 interface EmailBrandingSectionProps {
   organizationId: string;
@@ -327,7 +328,7 @@ export function EmailBrandingSection({ organizationId }: EmailBrandingSectionPro
               {/* Footer */}
               <div style={{ backgroundColor: '#fafafa', padding: '14px 20px', borderRadius: '0 0 10px 10px', border: '1px solid #e4e4e7', borderTop: 'none', textAlign: 'center' }}>
                 <span style={{ fontSize: 11, color: '#a1a1aa' }}>
-                  Sent via <span style={{ textDecoration: 'underline' }}>Zura</span>
+                  Sent via <span style={{ textDecoration: 'underline' }}>{PLATFORM_NAME}</span>
                 </span>
               </div>
             </div>

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { PLATFORM_NAME, PLATFORM_NAME_FULL } from '@/lib/brand';
 import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -324,7 +325,7 @@ export default function UnifiedLogin() {
                 ? `You've been invited as ${platformInvitation?.role.replace('platform_', '').replace('_', ' ')}`
                 : isLogin
                 ? 'Sign in to access your dashboard'
-                : 'Get started with Zura'}
+                : `Get started with ${PLATFORM_NAME}`}
             </p>
           </div>
 
@@ -558,7 +559,7 @@ export default function UnifiedLogin() {
       {/* Bottom branding */}
       <div className="py-6 text-center relative z-10">
         <p className="text-slate-600 text-sm">
-          &copy; {new Date().getFullYear()} Zura Platform
+          &copy; {new Date().getFullYear()} {PLATFORM_NAME_FULL}
         </p>
       </div>
     </div>

@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
+import { AI_ASSISTANT_NAME_DEFAULT, PLATFORM_NAME } from '@/lib/brand';
 
 type Message = { role: 'user' | 'assistant'; content: string };
 
@@ -74,9 +75,9 @@ export function AIHelpTab() {
           {isEmpty ? (
             <div className="flex flex-col items-center justify-center h-[280px] text-center">
               <ZuraAvatar size="lg" className="mb-4" />
-              <h3 className="font-medium text-lg mb-2">Zura</h3>
+              <h3 className="font-medium text-lg mb-2">{AI_ASSISTANT_NAME_DEFAULT}</h3>
               <p className="text-sm text-muted-foreground mb-6 max-w-[280px]">
-                I'm Zura, your AI assistant. Ask me anything about using the platform.
+                I'm {AI_ASSISTANT_NAME_DEFAULT}, your AI assistant. Ask me anything about using {PLATFORM_NAME}.
               </p>
               <div className="flex flex-wrap gap-2 justify-center">
                 {EXAMPLE_PROMPTS.map((prompt) => (

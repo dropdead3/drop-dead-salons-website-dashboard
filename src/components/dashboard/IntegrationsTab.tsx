@@ -15,6 +15,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useNavigate } from 'react-router-dom';
+import { PLATFORM_NAME } from '@/lib/brand';
 import { 
   Link2, 
   Plus, 
@@ -184,7 +185,7 @@ export function IntegrationsTab() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Subscribe to your Zura appointments from Apple Calendar, Google Calendar, or Outlook. One-way and read-only — your personal events stay private.
+              Subscribe to your {PLATFORM_NAME} appointments from Apple Calendar, Google Calendar, or Outlook. One-way and read-only — your personal events stay private.
             </p>
           </CardContent>
         </Card>

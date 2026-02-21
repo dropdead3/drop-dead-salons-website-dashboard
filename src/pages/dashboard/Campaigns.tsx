@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { PLATFORM_NAME } from '@/lib/brand';
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof Rocket }> = {
   active: { label: 'Active', color: 'text-primary', icon: Rocket },
@@ -84,7 +85,7 @@ export default function Campaigns() {
           <div className="text-center py-16 space-y-3">
             <Target className="w-10 h-10 mx-auto text-muted-foreground/20" />
             <p className="text-muted-foreground text-sm">No campaigns yet</p>
-            <p className="text-xs text-muted-foreground/60">Campaigns are created from Zura AI insights via "Let's Implement"</p>
+            <p className="text-xs text-muted-foreground/60">Campaigns are created from {PLATFORM_NAME} AI insights via "Let's Implement"</p>
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

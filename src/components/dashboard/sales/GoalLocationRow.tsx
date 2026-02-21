@@ -9,6 +9,7 @@ import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { Button } from '@/components/ui/button';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
+import { PLATFORM_NAME } from '@/lib/brand';
 import { useGoalPeriodRevenue } from '@/hooks/useGoalPeriodRevenue';
 import { GoalPaceTrendPanel } from './GoalPaceTrendPanel';
 import type { HoursJson, HolidayClosure } from '@/hooks/useLocations';
@@ -252,7 +253,7 @@ export function GoalLocationRow({
             </div>
           </ScrollArea>
           <div className="text-[10px] text-muted-foreground text-center pt-2 border-t border-border/30">
-            Powered by Zura AI
+            Powered by {PLATFORM_NAME} AI
           </div>
         </DialogContent>
       </Dialog>

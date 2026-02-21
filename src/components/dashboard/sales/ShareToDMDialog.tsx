@@ -18,6 +18,7 @@ import { useTeamMembers } from '@/hooks/team-chat/useTeamMembers';
 import { useDMChannels } from '@/hooks/team-chat/useDMChannels';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { PLATFORM_NAME } from '@/lib/brand';
 import { toast } from 'sonner';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 
@@ -50,7 +51,7 @@ export function ShareToDMDialog({ open, onOpenChange, planTitle, planContent }: 
   const formatPitchMessage = () => {
     const prefix = customMessage
       ? `${customMessage}\n\n---\n\n`
-      : `Hey team — Zura flagged that we're behind pace on our revenue goal. Here's the recovery plan I'd like to discuss:\n\n---\n\n`;
+      : `Hey team — ${PLATFORM_NAME} flagged that we're behind pace on our revenue goal. Here's the recovery plan I'd like to discuss:\n\n---\n\n`;
     const cleanContent = planContent.replace(/---ACTIONS---[\s\S]*?(---END---|$)/g, '').trim();
     return `${prefix}**📋 ${planTitle}**\n\n${cleanContent}`;
   };
