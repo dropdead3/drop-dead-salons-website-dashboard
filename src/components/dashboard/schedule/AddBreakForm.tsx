@@ -3,8 +3,9 @@ import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, Clock, Loader2, Coffee } from 'lucide-react';
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ChevronLeft, Clock, Loader2, Coffee, ChevronsUpDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -50,12 +51,13 @@ export function AddBreakForm({ date, time, onBack, onComplete, defaultStylistId 
   const roles = useEffectiveRoles();
   const createBreak = useCreateBreakRequest();
 
-  const isAdmin = roles.some(r => ['admin', 'manager', 'super_admin'].includes(r));
+  const isAdmin = roles.some(r => ['admin', 'manager', 'super_admin', 'front_desk', 'receptionist'].includes(r));
 
   const [breakType, setBreakType] = useState<BreakType>('break');
   const [selectedDuration, setSelectedDuration] = useState<number>(60); // minutes, 0 = full day
   const [notes, setNotes] = useState('');
   const [selectedUserId, setSelectedUserId] = useState(defaultStylistId || user?.id || '');
+  const [staffSearchOpen, setStaffSearchOpen] = useState(false);
 
   // Fetch team members for admin dropdown
   const { data: teamMembers = [] } = useQuery({
@@ -162,18 +164,46 @@ export function AddBreakForm({ date, time, onBack, onComplete, defaultStylistId 
       {isAdmin && teamMembers.length > 0 && (
         <div>
           <span className="text-xs text-muted-foreground mb-1.5 block">For</span>
-          <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-            <SelectTrigger className="h-9 text-sm">
-              <SelectValue placeholder="Select team member" />
-            </SelectTrigger>
-            <SelectContent>
-              {teamMembers.map(member => (
-                <SelectItem key={member.user_id} value={member.user_id}>
-                  {member.display_name || member.full_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={staffSearchOpen} onOpenChange={setStaffSearchOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={staffSearchOpen}
+                className="w-full h-9 justify-between text-sm font-normal"
+              >
+                {selectedUserId
+                  ? (teamMembers.find(m => m.user_id === selectedUserId)?.display_name ||
+                     teamMembers.find(m => m.user_id === selectedUserId)?.full_name ||
+                     'Select team member')
+                  : 'Select team member'}
+                <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Search team member..." />
+                <CommandList>
+                  <CommandEmpty>No team member found.</CommandEmpty>
+                  <CommandGroup>
+                    {teamMembers.map(member => (
+                      <CommandItem
+                        key={member.user_id}
+                        value={member.display_name || member.full_name || ''}
+                        onSelect={() => {
+                          setSelectedUserId(member.user_id);
+                          setStaffSearchOpen(false);
+                        }}
+                      >
+                        <Check className={cn('mr-2 h-3.5 w-3.5', selectedUserId === member.user_id ? 'opacity-100' : 'opacity-0')} />
+                        {member.display_name || member.full_name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
       )}
 

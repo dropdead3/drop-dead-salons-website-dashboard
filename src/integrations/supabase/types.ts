@@ -15499,6 +15499,7 @@ export type Database = {
           is_full_day: boolean
           notes: string | null
           organization_id: string
+          reason: string | null
           request_type: string
           reviewed_at: string | null
           reviewed_by: string | null
@@ -15517,6 +15518,7 @@ export type Database = {
           is_full_day?: boolean
           notes?: string | null
           organization_id: string
+          reason?: string | null
           request_type: string
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -15535,6 +15537,7 @@ export type Database = {
           is_full_day?: boolean
           notes?: string | null
           organization_id?: string
+          reason?: string | null
           request_type?: string
           reviewed_at?: string | null
           reviewed_by?: string | null

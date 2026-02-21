@@ -1,0 +1,1 @@
+ALTER TABLE public.time_off_requests ADD COLUMN IF NOT EXISTS reason TEXT DEFAULT 'break';
