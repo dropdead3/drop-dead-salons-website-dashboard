@@ -93,12 +93,21 @@ export function StylistLevelsContent() {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
-      const { data } = await supabase
+      // Try organization_admins first
+      const { data: adminData } = await supabase
         .from('organization_admins')
         .select('organization_id')
         .eq('user_id', user.id)
         .maybeSingle();
-      return data;
+      if (adminData?.organization_id) return adminData;
+      // Fallback to employee_profiles
+      const { data: empData } = await supabase
+        .from('employee_profiles')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .not('organization_id', 'is', null)
+        .maybeSingle();
+      return empData;
     },
   });
   const orgId = orgData?.organization_id;
