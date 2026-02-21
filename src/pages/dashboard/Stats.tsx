@@ -17,6 +17,9 @@ import {
 import { Link } from 'react-router-dom';
 
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useAddonMarginAnalytics } from '@/hooks/useAddonMarginAnalytics';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { PhorestSyncButton } from '@/components/dashboard/PhorestSyncButton';
 import { PersonalGoalsCard } from '@/components/dashboard/sales/PersonalGoalsCard';
 import { TierProgressAlert } from '@/components/dashboard/sales/TierProgressAlert';
@@ -32,6 +35,9 @@ export default function Stats() {
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
 
   const { formatCurrency, formatCurrencyWhole } = useFormatCurrency();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  const { data: marginData } = useAddonMarginAnalytics(orgId);
 
   // Check if user is admin/manager
   const isAdmin = roles.some(role => ['admin', 'super_admin', 'manager'].includes(role));
@@ -291,6 +297,47 @@ export default function Stats() {
                 </p>
               )}
             </Card>
+
+            {/* Add-On Margins Card - admin/manager only */}
+            {isAdmin && marginData && marginData.addonsWithCost > 0 && (
+              <VisibilityGate
+                elementKey="addon_margins_card"
+                elementName="Add-On Margins"
+                elementCategory="Stats"
+              >
+                <Card className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-primary" />
+                      <h2 className="font-display text-sm tracking-wide">ADD-ON MARGINS</h2>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      {marginData.addonsWithCost} of {marginData.totalAddons} with cost data
+                    </Badge>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <StatCard
+                      label="Avg Margin"
+                      value={`${marginData.avgMarginPct.toFixed(0)}%`}
+                    />
+                    {marginData.topMargin.map((addon, i) => (
+                      <StatCard
+                        key={addon.name}
+                        label={i === 0 ? 'Highest Margin' : `#${i + 1} Margin`}
+                        value={`${addon.marginPct.toFixed(0)}%`}
+                      />
+                    ))}
+                  </div>
+
+                  {marginData.lowMargin.length > 0 && marginData.lowMargin[0].name !== marginData.topMargin[0]?.name && (
+                    <p className="text-xs text-muted-foreground mt-4 text-center">
+                      Lowest margin: <strong>{marginData.lowMargin[0].name}</strong> at {marginData.lowMargin[0].marginPct.toFixed(0)}% ({formatCurrency(marginData.lowMargin[0].price)} price, {formatCurrency(marginData.lowMargin[0].cost)} cost)
+                    </p>
+                  )}
+                </Card>
+              </VisibilityGate>
+            )}
         </div>
       </div>
     </DashboardLayout>
