@@ -21,6 +21,7 @@ export interface RedoAnalytics {
   totalAppointments: number;
   redoRate: number;
   financialImpact: number;
+  commissionImpact: number;
   byStylist: RedoByStylists[];
   byReason: RedoByReason[];
   weeklyTrend: number[];
@@ -35,7 +36,7 @@ export function useRedoAnalytics(days: number = 30) {
   return useQuery({
     queryKey: ['redo-analytics', orgId, days],
     queryFn: async (): Promise<RedoAnalytics> => {
-      if (!orgId) return { totalRedos: 0, totalAppointments: 0, redoRate: 0, financialImpact: 0, byStylist: [], byReason: [], weeklyTrend: [], repeatRedoClients: 0 };
+      if (!orgId) return { totalRedos: 0, totalAppointments: 0, redoRate: 0, financialImpact: 0, commissionImpact: 0, byStylist: [], byReason: [], weeklyTrend: [], repeatRedoClients: 0 };
 
       // Get location IDs belonging to this org for filtering phorest_appointments
       const { data: orgLocations } = await supabase
@@ -45,7 +46,7 @@ export function useRedoAnalytics(days: number = 30) {
 
       const locationIds = orgLocations?.map(l => l.id) || [];
       if (locationIds.length === 0) {
-        return { totalRedos: 0, totalAppointments: 0, redoRate: 0, financialImpact: 0, byStylist: [], byReason: [], weeklyTrend: [], repeatRedoClients: 0 };
+        return { totalRedos: 0, totalAppointments: 0, redoRate: 0, financialImpact: 0, commissionImpact: 0, byStylist: [], byReason: [], weeklyTrend: [], repeatRedoClients: 0 };
       }
 
       // Fetch all phorest_appointments in the period, filtered by org locations
@@ -57,7 +58,7 @@ export function useRedoAnalytics(days: number = 30) {
         .not('status', 'in', '("cancelled")');
 
       if (error || !appointments) {
-        return { totalRedos: 0, totalAppointments: 0, redoRate: 0, financialImpact: 0, byStylist: [], byReason: [], weeklyTrend: [], repeatRedoClients: 0 };
+        return { totalRedos: 0, totalAppointments: 0, redoRate: 0, financialImpact: 0, commissionImpact: 0, byStylist: [], byReason: [], weeklyTrend: [], repeatRedoClients: 0 };
       }
 
       // Resolve stylist names
@@ -85,6 +86,10 @@ export function useRedoAnalytics(days: number = 30) {
         const origPrice = redo.original_price ?? redoPrice;
         financialImpact += Math.max(0, origPrice - redoPrice);
       }
+
+      // Commission impact: estimate at ~40% avg commission rate on lost revenue
+      const avgCommissionRate = 0.40;
+      const commissionImpact = financialImpact * avgCommissionRate;
 
       // By stylist — attribute redo to the original stylist if linked, otherwise to the redo appointment's stylist
       const stylistMap = new Map<string, { name: string; redoCount: number; totalCount: number }>();
@@ -154,7 +159,7 @@ export function useRedoAnalytics(days: number = 30) {
       }
       const repeatRedoClients = Array.from(clientRedoCount.values()).filter(c => c >= 2).length;
 
-      return { totalRedos, totalAppointments, redoRate, financialImpact, byStylist, byReason, weeklyTrend, repeatRedoClients };
+      return { totalRedos, totalAppointments, redoRate, financialImpact, commissionImpact, byStylist, byReason, weeklyTrend, repeatRedoClients };
     },
     enabled: !!orgId,
   });
