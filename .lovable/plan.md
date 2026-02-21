@@ -1,28 +1,18 @@
 
+## Match Time Axis Background to Sidebar Color
 
-## Align Red Dots with Day Labels
+### Problem
+The time labels column (showing "9 AM", "10 AM", etc.) on the left side of the schedule uses a generic muted gray that doesn't match the sidebar. The user wants visual consistency between the sidebar and this time gutter.
 
-### Change
+### Changes
 
-**File: `src/components/dashboard/schedule/ScheduleHeader.tsx`** (lines 352-360)
+**File: `src/components/dashboard/schedule/DayView.tsx`**
 
-Currently the red dot and the label+date column are siblings in a horizontal flex, which vertically centers the dot against both lines of text. Instead, move the dot inside the day label row so it sits at the same vertical position as "Sun" / "Mon":
+1. **Time labels column** (line 633): Change `bg-muted/30` to `bg-sidebar`
+2. **Week indicator header** (line 606): Change `bg-muted/70` to `bg-sidebar`
 
-**Current structure:**
-```
-[dot] [Sun]
-       [22]
-```
+**File: `src/components/dashboard/schedule/WeekView.tsx`**
 
-**New structure:**
-```
-[dot Sun]
-  [22]
-```
+1. **Time labels column** (line 433): Change `bg-muted/10` to `bg-sidebar`
 
-Specifically:
-1. Remove the outer `flex items-center gap-1` wrapper
-2. Change the inner `flex-col items-center` div back to being the direct button child
-3. Replace the plain day label `<span>` with a `flex items-center gap-1` row containing the dot (if closed) and the label text
-4. Date number stays on its own line below, unchanged
-
+This uses the existing `sidebar` color token (`hsl(var(--sidebar-background))`), which is already defined in `tailwind.config.ts` and adapts per-theme (cream, rose, sage, ocean, platform) and per-mode (light/dark). No new CSS variables needed.
