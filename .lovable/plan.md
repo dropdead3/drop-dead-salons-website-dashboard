@@ -1,100 +1,106 @@
 
 
-## Per-Stylist Timing & Pricing Overrides
+## Level-Based Commission Rates + Per-Stylist Overrides
 
-### Recommendation: Consolidate into `staff_service_qualifications`
+### What This Solves
 
-You currently have **two separate tables** that both try to store per-stylist pricing:
+Right now, commission rates are set as flat revenue bands (e.g., "$0-$5K = 35%, $5K-$10K = 40%") -- which is a good default structure, but doesn't account for the fact that different **stylist levels** should earn different commission percentages. A New Talent stylist shouldn't earn the same commission rate as a Signature Artist.
 
-| Table | Has Price | Has Duration | Used By |
-|-------|-----------|-------------|---------|
-| `staff_service_qualifications` | `custom_price` (column exists, **unused in UI**) | No duration column | Staff Service Configurator card |
-| `service_stylist_price_overrides` | `price` (actively used) | No duration column | Service Editor pricing tab |
+This feature adds two things:
+1. **Default commission rates per stylist level** -- so each level (New Talent through Icon Artist) has a service commission % and retail commission % baked in
+2. **Per-stylist overrides** -- for special circumstances where an individual stylist needs a different rate than their level dictates (e.g., a negotiated contract, a probationary rate, or a bonus structure)
 
-**The right move**: Add `custom_duration_minutes` to `staff_service_qualifications`, wire the existing `custom_price` column into the UI, and deprecate `service_stylist_price_overrides` over time. This way, qualification + pricing + timing all live in one row per stylist-service pair -- which is how the data actually works operationally.
+### How It Works
 
-### What Gets Built
+Each stylist level gets two new fields:
+- **Service Commission %** -- the default rate that level earns on services
+- **Retail Commission %** -- the default rate that level earns on product sales
 
-**1. Database: Add `custom_duration_minutes` column**
-- Add `custom_duration_minutes INTEGER NULL` to `staff_service_qualifications`
-- This mirrors what the Phorest sync table (`phorest_staff_services`) already has
+When calculating payroll commission, the resolution order becomes:
+1. Per-stylist override (if one exists) -- highest priority
+2. Stylist level default rate -- based on the stylist's assigned level
+3. Org-wide commission tiers (existing revenue-band system) -- fallback
 
-**2. Staff Service Configurator Card: Inline Override Editing**
-
-When a stylist is selected and a service is expanded, each service row gets:
-- The existing enable/disable checkbox (unchanged)
-- A small **price override** input (pre-filled with salon base price in muted text, editable to set a custom price)
-- A small **duration override** input (pre-filled with salon base duration in muted text, editable to set a custom duration)
-- A "reset" button to clear overrides back to salon defaults
-- Visual indicator (badge or dot) when a service has active overrides
-
-The layout stays compact: checkbox + service name on the left, price + duration inputs on the right (inline).
-
-**3. Pricing Resolution Engine Update**
-
-The existing 5-tier pricing engine gets a small adjustment:
-- Tier 1 (highest priority) stays: Individual Stylist Override -- but now reads from `staff_service_qualifications.custom_price` instead of `service_stylist_price_overrides.price`
-- Booking components also read `custom_duration_minutes` when calculating appointment end times
-
-**4. Hooks Update**
-
-- `useStaffQualifications` already selects `custom_price` -- add `custom_duration_minutes`
-- Add a new `useUpdateStylistServiceOverride` mutation to update price/duration on the qualification row
-- Update `useBookingLevelPricing` or create a companion `useBookingStylistOverrides` to resolve per-stylist timing in booking flows
+Per-stylist overrides are stored with a **reason** field (e.g., "Negotiated contract", "90-day probation rate") and an optional **expiry date** so temporary overrides auto-expire.
 
 ### What the UI Looks Like
 
-In the Staff Service Configurator, after selecting a stylist:
+**Stylist Levels Editor** (existing card in Settings) gets enhanced:
+- Each level row now shows two inline commission rate fields (Service % and Retail %)
+- When editing a level, the commission rates are editable alongside the name and description
+- A small info notice explains "These rates apply to all stylists at this level unless individually overridden"
 
-```text
-[x] Balayage                          $180  |  120min
-    (salon: $150)                     (salon: 90min)
-                                      [Reset to defaults]
+**Per-Stylist Commission Overrides** (new section in the Stylist Levels card or as a companion card):
+- A list of stylists who have active overrides
+- Each override shows: stylist name, their level's default rate, their override rate, reason, and expiry
+- An "Add Override" button that lets you pick a stylist, set custom service % and retail %, enter a reason, and optionally set an expiry date
+- Expired overrides are visually dimmed and can be cleared
 
-[x] Root Touch-Up                     --     |  --
-    No overrides (uses salon defaults)
+### Database Changes
 
-[ ] Bridal Updo                       (disabled - not assigned)
-```
+**1. Add commission columns to `stylist_levels`:**
+- `service_commission_rate NUMERIC NULL` -- default service commission as a decimal (e.g., 0.35 for 35%)
+- `retail_commission_rate NUMERIC NULL` -- default retail commission as a decimal
 
-- Price and duration inputs only appear for enabled services
-- Muted "(salon: $X)" text shows what the default is for context
-- "--" means no override set (uses salon default)
-- Override values are highlighted with a subtle accent indicator
+**2. Create `stylist_commission_overrides` table:**
 
-### Gap Analysis
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID PK | |
+| organization_id | UUID FK | Scoped to org |
+| user_id | UUID | The stylist being overridden |
+| service_commission_rate | NUMERIC NULL | Custom service rate |
+| retail_commission_rate | NUMERIC NULL | Custom retail rate |
+| reason | TEXT | Why this override exists |
+| expires_at | TIMESTAMPTZ NULL | Optional auto-expiry |
+| is_active | BOOLEAN DEFAULT true | Soft deactivation |
+| created_by | UUID | Who set it |
+| created_at / updated_at | TIMESTAMPTZ | Standard timestamps |
 
-| Area | Status | Note |
-|------|--------|------|
-| `custom_price` column | Exists, unused | Wire into UI |
-| `custom_duration_minutes` column | Missing | Add via migration |
-| `service_stylist_price_overrides` table | Redundant | Keep for now as backward compat; stop writing to it from new UI |
-| Booking flow duration resolution | Not stylist-aware | Add lookup for stylist-specific duration |
-| Service Editor pricing tab | Uses old override table | Future: point to unified table |
+- Unique constraint on (organization_id, user_id) so each stylist has at most one active override
+- RLS: org members can view, org admins can create/update/delete
 
 ### Technical Plan
 
-**Migration**: Add `custom_duration_minutes` column to `staff_service_qualifications`
+**Migration:**
+- Add `service_commission_rate` and `retail_commission_rate` to `stylist_levels`
+- Create `stylist_commission_overrides` table with RLS policies, indexes, and updated_at trigger
 
-**File: `src/hooks/useStaffServiceConfigurator.ts`**
-- Add `custom_duration_minutes` to `StaffQualification` interface and query select
-- Add `useUpdateStylistServiceOverride` mutation for updating `custom_price` and `custom_duration_minutes`
-- Add `useResetStylistServiceOverride` mutation to null out both fields
+**File: `src/hooks/useStylistLevels.ts`**
+- Add `service_commission_rate` and `retail_commission_rate` to the `StylistLevel` interface
+- Include them in `useSaveStylistLevels` mutation payloads
 
-**File: `src/components/dashboard/settings/StaffServiceConfiguratorCard.tsx`**
-- Add inline price and duration inputs per service row (only for enabled/checked services)
-- Show salon default values as reference text
-- Add override indicator badges on service rows and category headers
-- Add reset-to-defaults button per service
+**File: `src/hooks/useStylistCommissionOverrides.ts` (new)**
+- `useStylistCommissionOverrides(orgId)` -- fetch all active overrides (with optional `expires_at` filtering)
+- `useUpsertCommissionOverride` -- create or update an override
+- `useDeleteCommissionOverride` -- remove an override
+- `resolveCommissionRate(userId, type: 'service' | 'retail')` -- utility that checks override first, then level default
 
-**File: `src/hooks/useServiceLevelPricing.ts`**
-- No changes needed yet (level pricing is a different tier)
+**File: `src/components/dashboard/settings/StylistLevelsContent.tsx`**
+- Add inline Service % and Retail % inputs per level row (visible in both view and edit modes)
+- Include the rates in the save payload
+- Add a "Commission Overrides" section below the levels list showing active overrides with add/edit/remove
+
+**File: `src/components/dashboard/settings/CommissionOverrideDialog.tsx` (new)**
+- Dialog for adding/editing a per-stylist commission override
+- Stylist picker, service rate input, retail rate input, reason text field, optional expiry date picker
+
+### Relationship to Existing Commission Systems
+
+| System | Purpose | Still Used? |
+|--------|---------|-------------|
+| `commission_tiers` (revenue bands) | Org-wide fallback for service commissions based on revenue thresholds | Yes -- fallback when no level rate or override exists |
+| `retail_commission_config` | Org-wide retail commission (flat or tiered) | Yes -- fallback for retail when no level rate or override exists |
+| **Stylist Level rates** (new) | Default rates per experience tier | New -- primary source |
+| **Per-stylist overrides** (new) | Individual exceptions | New -- highest priority |
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| Migration | Add `custom_duration_minutes` to `staff_service_qualifications` |
-| `src/hooks/useStaffServiceConfigurator.ts` | Add override mutations, update types and query |
-| `src/components/dashboard/settings/StaffServiceConfiguratorCard.tsx` | Inline price/duration inputs, override indicators, reset button |
+| Migration | Add columns to `stylist_levels`, create `stylist_commission_overrides` table |
+| `src/hooks/useStylistLevels.ts` | Add commission rate fields to interface and mutations |
+| `src/hooks/useStylistCommissionOverrides.ts` | New hook for override CRUD and rate resolution |
+| `src/components/dashboard/settings/StylistLevelsContent.tsx` | Add commission rate inputs per level + override management section |
+| `src/components/dashboard/settings/CommissionOverrideDialog.tsx` | New dialog for per-stylist override editing |
 
