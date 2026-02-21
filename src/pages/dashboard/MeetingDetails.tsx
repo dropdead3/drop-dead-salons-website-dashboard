@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -81,12 +82,13 @@ export default function MeetingDetails() {
   if (!meeting) {
     return (
       <DashboardLayout>
-        <div className="p-6 lg:p-8 max-w-4xl mx-auto">
-          <Button variant="ghost" onClick={() => navigate('/dashboard/schedule-meeting')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Meetings
-          </Button>
-          <Card className="mt-6">
+        <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+          <DashboardPageHeader
+            title="Meeting Details"
+            backTo="/dashboard/schedule-meeting"
+            backLabel="Back to Meetings"
+          />
+          <Card>
             <CardContent className="p-8 text-center text-muted-foreground">
               Meeting not found.
             </CardContent>
@@ -103,10 +105,12 @@ export default function MeetingDetails() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
-        <Button variant="ghost" onClick={() => navigate('/dashboard/schedule-meeting')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Meetings
-        </Button>
+        <DashboardPageHeader
+          title={`1:1 with ${canManage ? teamMemberName : (meeting.coach?.display_name || meeting.coach?.full_name || 'Coach')}`}
+          description={meetingTypes[meeting.meeting_type || 'other'] || meeting.meeting_type}
+          backTo="/dashboard/schedule-meeting"
+          backLabel="Back to Meetings"
+        />
 
         {/* Meeting Header */}
         <Card>

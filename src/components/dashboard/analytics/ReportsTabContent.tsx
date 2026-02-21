@@ -18,6 +18,7 @@ import {
   CalendarDays,
   Wand2,
   Calendar,
+  ArrowLeft,
   ArrowRight,
   ShoppingBag,
   Wallet,
@@ -363,12 +364,15 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
     }
     return (
       <div className="space-y-4">
-        <button 
+        <Button 
+          variant="ghost"
+          size="sm"
+          className="-ml-2 text-muted-foreground hover:text-foreground"
           onClick={handleCloseReport}
-          className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
         >
-          ← Back to Reports
-        </button>
+          <ArrowLeft className="w-4 h-4 mr-1.5" />
+          Back to Reports
+        </Button>
         {renderSelectedReport()}
       </div>
     );

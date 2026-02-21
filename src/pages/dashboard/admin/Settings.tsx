@@ -65,6 +65,7 @@ import {
   Lightbulb,
   ShoppingBag,
   Globe,
+  ArrowLeft,
 } from 'lucide-react';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
@@ -934,11 +935,13 @@ export default function Settings() {
           {/* Back button and header */}
           <div className="mb-6">
             <Button 
-              variant="ghost" 
-              className="mb-4 -ml-2 text-muted-foreground hover:text-foreground"
+              variant="ghost"
+              size="sm"
+              className="-ml-2 text-muted-foreground hover:text-foreground"
               onClick={() => setActiveCategory(null)}
             >
-              ← Back to Settings
+              <ArrowLeft className="w-4 h-4 mr-1.5" />
+              Back to Settings
             </Button>
             <h1 className="font-display text-2xl lg:text-3xl">
               {categoriesMap[activeCategory]?.label.toUpperCase()}

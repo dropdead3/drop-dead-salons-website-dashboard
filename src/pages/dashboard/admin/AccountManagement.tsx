@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { GenerateTestAccountsButton } from '@/components/dashboard/GenerateTestAccountsButton';
 import { CreateAdminAccountDialog } from '@/components/dashboard/CreateAdminAccountDialog';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -642,24 +643,19 @@ export default function AccountManagement() {
   return (
     <DashboardLayout>
       <div className="p-6 max-w-5xl mx-auto space-y-6">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex items-start gap-4">
-            <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-              <Link to="/dashboard/admin/management">
-                <ArrowLeft className="w-5 h-5" />
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-2xl font-display">Account Invitations & Approvals</h1>
-              <p className="text-muted-foreground">Invite new team members and manage account access</p>
+        <DashboardPageHeader
+          title="Account Invitations & Approvals"
+          description="Invite new team members and manage account access"
+          backTo="/dashboard/admin/management"
+          backLabel="Back to Management"
+          actions={
+            <div className="flex items-center gap-2 flex-wrap">
+              <CreateAdminAccountDialog onSuccess={() => refetchApprovals()} />
+              <GenerateTestAccountsButton />
+              <InviteStaffDialog />
             </div>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <CreateAdminAccountDialog onSuccess={() => refetchApprovals()} />
-            <GenerateTestAccountsButton />
-            <InviteStaffDialog />
-          </div>
-        </div>
+          }
+        />
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

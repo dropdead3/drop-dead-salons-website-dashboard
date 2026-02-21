@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { differenceInDays, isPast } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -98,9 +99,7 @@ export default function ChallengeDetail() {
         <div className="p-8 text-center">
           <Trophy className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <h2 className="text-xl font-medium mb-2">Challenge not found</h2>
-          <Link to="/dashboard/admin/challenges">
-            <Button>Back to Challenges</Button>
-          </Link>
+          <Button onClick={() => navigate('/dashboard/admin/challenges')}>Back to Challenges</Button>
         </div>
       </DashboardLayout>
     );
@@ -130,68 +129,52 @@ export default function ChallengeDetail() {
   return (
     <DashboardLayout>
       <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 mb-6">
-          <div className="flex items-start gap-4">
-            <Link to="/dashboard/admin/challenges">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-            </Link>
-            <div>
-              <div className="flex items-center gap-3 mb-1">
-                <h1 className="font-display text-2xl sm:text-3xl">{challenge.title}</h1>
-                <Badge className={statusColors[challenge.status]}>
-                  {challenge.status}
-                </Badge>
-              </div>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <MetricIcon className="w-4 h-4" />
-                  <span>{metricLabels[challenge.metric_type]}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <TypeIcon className="w-4 h-4" />
-                  <span className="capitalize">{challenge.challenge_type}</span>
-                </div>
-              </div>
+        <DashboardPageHeader
+          title={challenge.title}
+          description={`${metricLabels[challenge.metric_type]} · ${challenge.challenge_type}`}
+          backTo="/dashboard/admin/challenges"
+          backLabel="Back to Challenges"
+          actions={
+            <div className="flex items-center gap-3">
+              <Badge className={statusColors[challenge.status]}>
+                {challenge.status}
+              </Badge>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {challenge.status === 'draft' && (
+                    <DropdownMenuItem onClick={() => handleStatusChange('active')}>
+                      <Play className="w-4 h-4 mr-2" />
+                      Start Challenge
+                    </DropdownMenuItem>
+                  )}
+                  {challenge.status === 'active' && (
+                    <DropdownMenuItem onClick={() => handleStatusChange('completed')}>
+                      <Square className="w-4 h-4 mr-2" />
+                      End Challenge
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem>
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Details
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    className="text-destructive"
+                    onClick={() => setDeleteConfirmOpen(true)}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-          </div>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <MoreVertical className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {challenge.status === 'draft' && (
-                <DropdownMenuItem onClick={() => handleStatusChange('active')}>
-                  <Play className="w-4 h-4 mr-2" />
-                  Start Challenge
-                </DropdownMenuItem>
-              )}
-              {challenge.status === 'active' && (
-                <DropdownMenuItem onClick={() => handleStatusChange('completed')}>
-                  <Square className="w-4 h-4 mr-2" />
-                  End Challenge
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem>
-                <Edit className="w-4 h-4 mr-2" />
-                Edit Details
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="text-destructive"
-                onClick={() => setDeleteConfirmOpen(true)}
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+          }
+        />
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Main Content */}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -379,15 +380,12 @@ export default function ViewProfile() {
       <div className="p-6 lg:p-8 max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate('/dashboard/directory')}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Directory
-          </Button>
+          <DashboardPageHeader
+            title={profile.display_name || profile.full_name}
+            description="Editing profile as Super Admin"
+            backTo="/dashboard/directory"
+            backLabel="Back to Directory"
+          />
           
           <div className="flex items-start gap-4">
             <Avatar className="w-16 h-16">
