@@ -1,134 +1,63 @@
 
 
-## Unify Commission Tiers into Stylist Levels
+## Settings Page UI Audit and Fixes
 
-### Problem
+### Issues Found
 
-Two separate systems define commission rates:
+**1. Card Header Pattern Violations (canonical-card-header-pattern)**
+The Experience Levels and Team Commission Roster cards use the old pattern where the icon is missing from the card header. Per the design system, all card headers must include a `tokens.card.iconBox` with a `tokens.card.icon` to the left of the `CardTitle`.
 
-| System | Table | What it does |
-|--------|-------|-------------|
-| **Stylist Levels** | `stylist_levels` | Has `service_commission_rate` and `retail_commission_rate` columns — but all 7 levels currently have NULL rates |
-| **Commission Tiers** | `commission_tiers` | Revenue-band brackets (Base 0-5k at 35%, Standard 5k-10k at 40%, etc.) with separate "applies_to" logic for services vs products |
+- `StylistLevelsContent.tsx` -- Experience Levels card has no icon box
+- `TeamCommissionRoster.tsx` -- Team Commission Roster card has no icon box
+- `CommissionIntelligence.tsx` -- Team Commission Breakdown card uses an inline icon without the proper icon box wrapper
 
-These model the same thing. A stylist's level IS their commission tier. The revenue-band approach adds complexity without value — a Level 3 stylist earns Level 3 rates regardless of whether they did $4k or $8k in a period. The tier system only exists because the level rates were never populated.
+**2. Typography Rule Violations (design-rules)**
+- `CommissionIntelligence.tsx` line 221: Uses `font-semibold` on the total row -- this is a **banned** weight class (max is `font-medium` / 500)
+- `CommissionIntelligence.tsx` line 101: Section heading uses raw `text-lg font-display` instead of `tokens.heading.card`
 
-### Solution
+**3. Settings Sub-Page Header Inconsistency**
+The Stylist Levels sub-page uses a raw inline back button and a manually styled `h1` (line 937-948 in Settings.tsx). This is inconsistent with other pages that use `DashboardPageHeader`. The header should use the canonical `DashboardPageHeader` component for consistency with other settings sub-pages.
 
-Make `stylist_levels` the single source of truth for commission rates. Remove the `commission_tiers` system entirely.
+**4. CommissionIntelligence Summary Cards Missing Icon Box Standard**
+The three summary cards in `CommissionIntelligence.tsx` use `p-3 rounded-lg bg-primary/10` for their icon containers. The canonical token is `tokens.card.iconBox` (`w-10 h-10 bg-muted flex items-center justify-center rounded-lg`). These should be aligned.
 
-### What Changes
+**5. Missing Canonical Card Title Token**
+Several `CardTitle` elements use `font-display text-lg` instead of `tokens.card.title` (`font-display text-base tracking-wide`). This creates an inconsistent heading size.
 
-**1. Populate level commission rates**
+Affected locations:
+- `StylistLevelsContent.tsx` line 283
+- `TeamCommissionRoster.tsx` line 156
 
-Seed the 7 existing stylist levels with commission rates that align with the current tier structure:
+---
 
-| Level | Label | Service % | Retail % |
-|-------|-------|-----------|----------|
-| 1 | New Talent | 35% | 10% |
-| 2 | Studio Artist | 38% | 10% |
-| 3 | Core Artist | 40% | 10% |
-| 4 | Lead Artist | 43% | 10% |
-| 5 | Senior Artist | 45% | 10% |
-| 6 | Signature Artist | 48% | 10% |
-| 7 | Icon Artist | 50% | 10% |
+### Plan
 
-These rates are editable from the existing Experience Levels editor in Settings, which already has commission rate input fields.
+**File: `src/components/dashboard/settings/StylistLevelsContent.tsx`**
+- Add icon box (`tokens.card.iconBox` with `Layers` icon) to Experience Levels card header
+- Replace raw `font-display text-lg` on CardTitle with `tokens.card.title`
 
-**2. Simplify the commission resolution engine**
+**File: `src/components/dashboard/settings/TeamCommissionRoster.tsx`**
+- Add icon box (`tokens.card.iconBox` with `Users` icon) to Team Commission Roster card header
+- Replace raw `font-display text-lg` on CardTitle with `tokens.card.title`
 
-The `useResolveCommission` hook currently resolves: Override > Level > Tier Fallback. After this change:
+**File: `src/components/dashboard/payroll/CommissionIntelligence.tsx`**
+- Fix `font-semibold` on total row (line 221) -- replace with `font-medium`
+- Replace section heading (line 101) with `tokens.heading.card`
+- Add icon box to the Team Commission Breakdown card header (line 168)
+- Align summary card icon containers to `tokens.card.iconBox`
+- Use `tokens.card.title` on CardTitle
 
-- **Override** (per-stylist exception) -- stays the same
-- **Level** (from `stylist_levels`) -- becomes the primary source (rates are now populated)
-- **Tier Fallback** -- removed entirely
+**File: `src/pages/dashboard/admin/Settings.tsx`**
+- Replace the raw back button + h1 in the active category view (lines 937-948) with `DashboardPageHeader`, matching the pattern used on all other settings sub-pages. This gives consistent back-button behavior, proper `font-display text-xl md:text-2xl` sizing, and correct layout alignment.
 
-For stylists with no level assigned and no override, the system returns 0% (with a clear "Unassigned" indicator prompting the admin to assign a level). This enforces the Zura non-negotiable: commission models must be defined before payouts.
-
-**3. Remove Commission Tiers infrastructure**
-
-- Delete `CommissionTiersEditor.tsx` component
-- Delete `useCommissionTiers.ts` hook
-- Remove the `CommissionTiersEditor` import from `StylistLevelsContent.tsx`
-- Update `useResolveCommission.ts` to remove tier fallback logic
-- Update `usePayrollAnalytics.ts` to remove tier references
-- Update `useTierDistribution.ts` to work from levels instead of tiers
-- Update `EarningsBreakdownCard.tsx` (My Pay) to use level-based resolution
-- Update `PayrollSummaryReport.tsx` to use level-based resolution
-- Update `CommissionIntelligence.tsx` to remove "Tier Fallback" as a source badge
-
-**4. Update Commission Intelligence (Payroll tab)**
-
-The "Source" column simplifies to just two values:
-- **Level Default** — rate comes from assigned level
-- **Override** — rate comes from individual exception
-
-Stylists with no level show "Unassigned" with a warning indicator.
-
-### Technical Plan
-
-**Database: Seed level commission rates**
-- UPDATE each `stylist_levels` row to set `service_commission_rate` and `retail_commission_rate`
-- No schema changes needed — columns already exist
-
-**`src/hooks/useResolveCommission.ts`**
-- Remove `useCommissionTiers` import and tier fallback logic
-- Resolution becomes: Override > Level > return zeros with empty source
-- Remove `calculateCommission` from the return (no longer needed)
-
-**`src/hooks/useCommissionTiers.ts`** -- DELETE
-- All consumers will be updated to use level-based resolution
-
-**`src/components/dashboard/sales/CommissionTiersEditor.tsx`** -- DELETE
-
-**`src/hooks/useTierDistribution.ts`**
-- Remove `useCommissionTiers` dependency
-- Build distribution from stylist levels instead of revenue tiers
-
-**`src/hooks/usePayrollAnalytics.ts`**
-- Remove `useCommissionTiers` import, use `useStylistLevels` for rate lookups
-
-**`src/components/dashboard/mypay/EarningsBreakdownCard.tsx`**
-- Replace `useCommissionTiers` with level-based resolution from `useResolveCommission`
-
-**`src/components/dashboard/reports/PayrollSummaryReport.tsx`**
-- Replace `useCommissionTiers` with `useResolveCommission`
-
-**`src/components/dashboard/settings/StylistLevelsContent.tsx`**
-- Remove `CommissionTiersEditor` import and render
-
-**`src/components/dashboard/payroll/CommissionIntelligence.tsx`**
-- Remove "Tier Fallback" source badge
-- Show warning for unassigned stylists
-
-**`src/hooks/usePayrollForecasting.ts`**
-- Check if it references commission tiers and update accordingly
+---
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/hooks/useResolveCommission.ts` | Remove tier fallback, simplify to Override > Level |
-| `src/hooks/useCommissionTiers.ts` | Deleted |
-| `src/components/dashboard/sales/CommissionTiersEditor.tsx` | Deleted |
-| `src/hooks/useTierDistribution.ts` | Rebuild on levels instead of tiers |
-| `src/hooks/usePayrollAnalytics.ts` | Remove tier dependency |
-| `src/components/dashboard/mypay/EarningsBreakdownCard.tsx` | Use level-based resolution |
-| `src/components/dashboard/reports/PayrollSummaryReport.tsx` | Use level-based resolution |
-| `src/components/dashboard/settings/StylistLevelsContent.tsx` | Remove CommissionTiersEditor |
-| `src/components/dashboard/payroll/CommissionIntelligence.tsx` | Remove tier fallback badge, add unassigned warning |
-| `src/hooks/usePayrollForecasting.ts` | Update if tier-dependent |
-
-### Enforcement
-
-After this change, an admin **must** assign a stylist to a level before that stylist earns commission. This aligns with the Zura non-negotiable: "Commission models must be defined before payouts." The Team Commission Roster will surface unassigned stylists with a clear warning.
-
-### Further Improvement Suggestions
-
-| Enhancement | Description |
-|-------------|-------------|
-| **Level rate editor inline** | When editing a level in the Experience Levels card, show a live preview of how many stylists would be affected by a rate change |
-| **Rate change impact simulation** | Before saving a level's new commission rate, show projected impact on this period's total commissions |
-| **Unassigned enforcement** | Block payroll finalization if any active stylist has no level assigned |
-| **Rate history** | Track when level rates change in `commission_rate_history` for audit trail |
+| `src/components/dashboard/settings/StylistLevelsContent.tsx` | Add icon box, fix card title token |
+| `src/components/dashboard/settings/TeamCommissionRoster.tsx` | Add icon box, fix card title token |
+| `src/components/dashboard/payroll/CommissionIntelligence.tsx` | Fix banned font weight, standardize tokens, add icon box |
+| `src/pages/dashboard/admin/Settings.tsx` | Replace raw header with `DashboardPageHeader` |
 
