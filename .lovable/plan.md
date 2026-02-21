@@ -1,96 +1,83 @@
 
 
-## Clarify and Enhance Break vs Block Scheduling
+## Dark Mode Glassmorphism for Service Category Colors
 
-### The Problem
+### Current State
 
-Right now there are two scheduling block types defined in settings — **Break** and **Block** — but:
+All three calendar renderers (DayView, WeekView, CalendarColorPreview) apply category colors as **solid opaque backgrounds** via inline `style={{ backgroundColor: catColor.bg }}`. This works well in light mode but looks flat and harsh against the dark charcoal surfaces.
 
-1. The UI only lets you create "Breaks" (via the Coffee icon in QuickBookingPopover and the right-click context menu)
-2. There is no way to create a "Block" (admin tasks, training, meetings, cleaning) from anywhere in the app
-3. The database function `create_break_request` hardcodes `service_category = 'Block'` for ALL entries, so even lunch breaks are stored as category "Block" — meaning the "Break" color in settings is never actually used on the calendar
-4. For payroll (Gusto), **breaks** (meal, rest) have legal tracking requirements while **blocks** (admin time, training) are just productive non-service hours — these must be distinguishable
+### Target Aesthetic (from your screenshot)
 
-### What This Plan Does
+Same color palettes but rendered as **translucent glass panels**:
+- Background at ~25-30% opacity with `backdrop-blur`
+- Thin 1px border using the category color at ~40% opacity
+- Text remains legible with slightly lightened/desaturated variants
+- Maintains the luxury dark-mode layering already used elsewhere in the app
 
-**Rename and expand the AddBreakForm into a unified "Add Time Block" form** that lets admins choose between Break-type entries and Block-type entries, each with their own sub-reasons. Fix the database function so the correct `service_category` is written, and the calendar renders both types with their distinct colors.
+### Approach
 
-### Detailed Changes
+Create a utility function `getGlassStyle(hexBg, hexText)` that converts any solid hex color into a glassmorphic style object. The rendering components will check `document.documentElement.classList.contains('dark')` (or use the existing theme context) to decide which style to apply.
 
-**1. Expand the type system**
+### Glass Style Formula
 
-Current `BreakType`: `break | personal | sick | vacation | other`
+For a given category color (e.g., `#f472b6` pink):
 
-New approach — two top-level modes with sub-reasons:
+| Property | Light Mode (unchanged) | Dark Mode (glass) |
+|----------|----------------------|-------------------|
+| background | `#f472b6` (solid) | `rgba(244,114,182, 0.20)` + `backdrop-blur: 12px` |
+| border | left-4 accent | `1px solid rgba(244,114,182, 0.35)` |
+| text color | `#ffffff` or `#1f2937` | Lightened variant of the category hue |
 
-| Mode | service_category | Sub-reasons | Payroll relevance |
-|------|-----------------|-------------|-------------------|
-| Break | `Break` | Lunch, Rest Break, Personal Break | Tracked as break time (meal/rest period laws) |
-| Block | `Block` | Admin Tasks, Training, Meeting, Cleaning, Personal Time, Other | Tracked as non-service hours |
+### Implementation
 
-**2. Update `AddBreakForm.tsx` -> rename to `AddTimeBlockForm.tsx`**
+**1. New utility: `getGlassCategoryStyle()` in `src/utils/categoryColors.ts`**
 
-- Add a top-level toggle: "Break" vs "Block" (two large selectable cards)
-- When "Break" is selected, show break-specific sub-reasons (Lunch, Rest Break, Personal Break) and duration presets suited for breaks (15 min, 30 min, 1 hour)
-- When "Block" is selected, show block-specific sub-reasons (Admin Tasks, Training, Meeting, Cleaning, Personal Time, Other) and broader duration presets (30 min, 1 hour, 2 hours, Half Day, Full Day)
-- Update header icon: Coffee for breaks, Clock for blocks
-- Update submit button text: "Schedule Break" vs "Schedule Block"
+Add a function that takes a hex color and returns a CSS style object with:
+- `backgroundColor`: the hex converted to rgba at 0.22 opacity
+- `backdropFilter`: `blur(12px)`
+- `border`: `1px solid` the hex at 0.35 opacity
+- `color`: a lightened text color (pastel tint at ~85% lightness)
+- `borderLeft`: removed (glass panels don't need the accent left-border)
 
-**3. Fix the DB function `create_break_request`**
+This keeps all color logic centralized in one file.
 
-Create a new migration that updates the function to accept a `p_block_mode` parameter (`'Break'` or `'Block'`):
+**2. Update `DayView.tsx` (~line 263-276)**
 
-```sql
--- Currently hardcoded:
-'Block', INITCAP(p_reason)
+Where it currently sets `backgroundColor: catColor.bg`, wrap in a dark-mode check:
+- Light mode: keep existing solid style
+- Dark mode: call `getGlassCategoryStyle(catColor.bg)` and spread the result
+- Add `backdrop-blur-xl` class conditionally in dark mode
+- Remove `border-l-4` class in dark mode (replaced by the all-around glass stroke)
 
--- Will become:
-p_block_mode, INITCAP(p_reason)
+**3. Update `WeekView.tsx` (~line 129-138)**
+
+Same pattern as DayView — conditionally apply glass style in dark mode.
+
+**4. Update `CalendarColorPreview.tsx` (~line 147-166)**
+
+Same pattern. Since this is a settings preview, it should accurately reflect what the real schedule looks like in both modes.
+
+**5. Dark-mode detection approach**
+
+Use a simple hook or inline check. Since the app already has `usePlatformTheme()` and the `dark` class on `<html>`, we can use:
+```tsx
+const isDark = document.documentElement.classList.contains('dark');
 ```
+Or import a lightweight hook that listens to the class. The schedule views already import many utilities, so a single boolean check is minimal overhead.
 
-This ensures the correct `service_category` is written to the `appointments` table so that calendar rendering uses the right color.
+### Files Modified
 
-**4. Update the hook (`useTimeOffRequests.ts`)**
+| File | Change |
+|------|--------|
+| `src/utils/categoryColors.ts` | Add `getGlassCategoryStyle(hex)` utility function |
+| `src/components/dashboard/schedule/DayView.tsx` | Conditional glass style in dark mode for appointment cells |
+| `src/components/dashboard/schedule/WeekView.tsx` | Same conditional glass treatment |
+| `src/components/dashboard/settings/CalendarColorPreview.tsx` | Same conditional glass treatment for preview accuracy |
 
-- Add `block_mode: 'Break' | 'Block'` to `CreateBreakInput`
-- Pass it through to the RPC call as `p_block_mode`
-- Update toast messages to reflect the chosen mode
+### What Stays the Same
 
-**5. Update all entry points**
-
-- **QuickBookingPopover**: The Coffee button text changes to "Add Break / Block". Show the updated form.
-- **Schedule.tsx context menu**: Rename "Add Break" to "Add Break / Block". Show the updated form.
-- **DayView.tsx / WeekView.tsx**: Already render both categories with the X-pattern overlay — no changes needed here since fixing the `service_category` write is what makes them display correctly.
-
-**6. Update settings card description**
-
-In `ServicesSettingsContent.tsx`, enhance the Scheduling Blocks card description for each type:
-- **Block**: "Non-service hours (admin tasks, training, meetings)"
-- **Break**: "Rest periods (lunch, rest breaks) — tracked for payroll compliance"
-
-### Build Sequence
-
-| # | Item | Complexity |
-|---|------|-----------|
-| 1 | New migration: update `create_break_request` to accept `p_block_mode` | Low |
-| 2 | Update `CreateBreakInput` and hook to pass `block_mode` | Trivial |
-| 3 | Rename and expand `AddBreakForm` to `AddTimeBlockForm` with mode toggle | Medium |
-| 4 | Update QuickBookingPopover and Schedule.tsx to use new component name and labels | Low |
-| 5 | Update settings card descriptions | Trivial |
-
-### Files Affected
-
-- `supabase/migrations/` — New migration to update `create_break_request` function
-- `src/components/dashboard/schedule/AddBreakForm.tsx` — Rename to `AddTimeBlockForm.tsx`, add mode toggle
-- `src/hooks/useTimeOffRequests.ts` — Add `block_mode` to input and RPC call
-- `src/components/dashboard/schedule/QuickBookingPopover.tsx` — Update import, button label
-- `src/pages/dashboard/Schedule.tsx` — Update import, context menu label, dialog title
-- `src/components/dashboard/settings/ServicesSettingsContent.tsx` — Enhanced descriptions
-
-### Payroll Integration Readiness
-
-Once this is in place, the `appointments` table will have clean data: `service_category = 'Break'` for legally tracked rest periods and `service_category = 'Block'` for productive non-service time. When Gusto integration lands, the payroll sync can:
-- Sum `Break` entries as "break hours" for labor law compliance reporting
-- Sum `Block` entries as "non-billable hours" for utilization calculations
-- Neither counts toward service revenue or commission
+- Light mode rendering is completely unchanged
+- Gradient categories (consultations, etc.) already have their own glass treatment and are unaffected
+- Block/Break X-pattern overlays work the same (the translucent background actually makes them more visible)
+- All color configuration, CRUD, and theme selection remain untouched
 
