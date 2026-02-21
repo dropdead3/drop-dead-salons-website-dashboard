@@ -1260,7 +1260,7 @@ export function QuickBookingPopover({
                     >
                       <div className="flex-1 min-w-0 mr-2">
                         <div className="font-medium text-sm">{loc.name}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">{loc.city}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">{[loc.address, loc.city].filter(Boolean).join(', ')}</div>
                       </div>
                       <div className={cn(
                         'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
