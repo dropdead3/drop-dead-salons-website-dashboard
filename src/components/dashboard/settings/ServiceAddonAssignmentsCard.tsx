@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -59,6 +60,7 @@ function AddAddonSelect({ addons, onAdd, existingIds }: { addons: ServiceAddon[]
 }
 
 export function ServiceAddonAssignmentsCard({ organizationId, categories, servicesByCategory }: ServiceAddonAssignmentsCardProps) {
+  const isMobile = useIsMobile();
   const { data: allAddons = [] } = useServiceAddons(organizationId);
   const { data: assignments = [] } = useAddonAssignments(organizationId);
   const createAssignment = useCreateAddonAssignment();
@@ -148,7 +150,7 @@ export function ServiceAddonAssignmentsCard({ organizationId, categories, servic
         <CardContent>
           <div className="px-3 py-4 text-center">
             <p className="text-sm text-muted-foreground">
-              Create add-ons in the library above first, then assign them to categories and services here.
+              Create add-ons in the library {isMobile ? 'above' : 'to the left'} first, then assign them to categories and services here.
             </p>
           </div>
         </CardContent>
