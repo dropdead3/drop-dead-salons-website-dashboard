@@ -46,6 +46,8 @@ import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { LEAD_SOURCES, getLeadSourceLabel, getLeadSourceColor, isStandardSource } from '@/lib/leadSources';
 import { MergedProfileBanner } from './clients/merge/MergedProfileBanner';
 import { VisitHistoryTimeline } from './VisitHistoryTimeline';
+import { usePreferredStylist, getStylistDisplayName } from '@/hooks/usePreferredStylist';
+import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { ClientNotesSection } from './ClientNotesSection';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
 import { BannedClientAlert } from './clients/BannedClientAlert';
@@ -96,6 +98,7 @@ interface Client {
   state?: string | null;
   zip?: string | null;
   country?: string | null;
+  preferred_stylist_id?: string | null;
 }
 
 interface ClientDetailSheetProps {
@@ -137,6 +140,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
   const [editLeadSourceCustom, setEditLeadSourceCustom] = useState('');
   const [editReferredBy, setEditReferredBy] = useState('');
   const [editExternalId, setEditExternalId] = useState('');
+  const [editPreferredStylist, setEditPreferredStylist] = useState('');
 
   // Prompts edit mode state
   const [isEditingPrompts, setIsEditingPrompts] = useState(false);
@@ -159,6 +163,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
   
   const canEdit = roles.some(role => ['admin', 'manager', 'super_admin', 'receptionist'].includes(role));
 
+  // Preferred stylist data
+  const { data: preferredStylist } = usePreferredStylist(client?.preferred_stylist_id);
+  const { data: teamMembers } = useTeamDirectory(undefined, { organizationId: selectedOrganization?.id });
+
   const startEditing = () => {
     if (!client) return;
     setEditFirstName(client.first_name || client.name?.split(' ')[0] || '');
@@ -180,7 +188,6 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
   const startEditingSettings = () => {
     if (!client) return;
     setEditCategory(client.client_category || '');
-    // If existing value is a standard source, use it; otherwise treat as "other" with custom text
     const currentSource = client.lead_source || '';
     if (isStandardSource(currentSource) || !currentSource) {
       setEditLeadSource(currentSource);
@@ -191,6 +198,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
     }
     setEditReferredBy(client.referred_by || '');
     setEditExternalId(client.external_client_id || '');
+    setEditPreferredStylist(client.preferred_stylist_id || 'none');
     setIsEditingSettings(true);
   };
 
@@ -276,6 +284,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
       const resolvedSource = editLeadSource === 'other' && editLeadSourceCustom.trim()
         ? editLeadSourceCustom.trim()
         : editLeadSource || null;
+      const resolvedStylist = editPreferredStylist === 'none' ? null : editPreferredStylist || null;
       const { error } = await supabase
         .from('phorest_clients')
         .update({
@@ -283,6 +292,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
           lead_source: resolvedSource,
           referred_by: editReferredBy || null,
           external_client_id: editExternalId || null,
+          preferred_stylist_id: resolvedStylist,
         } as any)
         .eq('id', client.id);
       if (error) throw error;
@@ -822,6 +832,28 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
                     <label className="text-xs text-muted-foreground">External Client ID</label>
                     <Input value={editExternalId} onChange={(e) => setEditExternalId(e.target.value)} className="h-8 text-sm" />
                   </div>
+                  <div className="col-span-2">
+                    <label className="text-xs text-muted-foreground">Preferred Stylist</label>
+                    <Select value={editPreferredStylist} onValueChange={setEditPreferredStylist}>
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue placeholder="Select stylist..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        {/* Show inactive current stylist as disabled context */}
+                        {preferredStylist && !preferredStylist.is_active && (
+                          <SelectItem value={preferredStylist.user_id} disabled>
+                            {getStylistDisplayName(preferredStylist)} (inactive)
+                          </SelectItem>
+                        )}
+                        {teamMembers?.map(member => (
+                          <SelectItem key={member.user_id} value={member.user_id}>
+                            {member.display_name || member.full_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-1.5">
@@ -829,7 +861,20 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
                   {client.lead_source && <p><span className="text-muted-foreground">Source:</span> {client.lead_source}</p>}
                   {client.referred_by && <p><span className="text-muted-foreground">Referred by:</span> {client.referred_by}</p>}
                   {client.external_client_id && <p><span className="text-muted-foreground">External ID:</span> {client.external_client_id}</p>}
-                  {!client.client_category && !client.lead_source && !client.referred_by && !client.external_client_id && (
+                  <p>
+                    <span className="text-muted-foreground">Preferred Stylist:</span>{' '}
+                    {client.preferred_stylist_id ? (
+                      <>
+                        {getStylistDisplayName(preferredStylist)}
+                        {preferredStylist && !preferredStylist.is_active && (
+                          <span className="text-muted-foreground ml-1">(no longer active)</span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground italic">None assigned</span>
+                    )}
+                  </p>
+                  {!client.client_category && !client.lead_source && !client.referred_by && !client.external_client_id && !client.preferred_stylist_id && (
                     <p className="text-muted-foreground italic">No settings configured</p>
                   )}
                 </div>

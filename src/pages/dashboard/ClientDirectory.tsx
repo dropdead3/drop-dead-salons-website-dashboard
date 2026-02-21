@@ -40,6 +40,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { cn } from '@/lib/utils';
 import { LEAD_SOURCES, getLeadSourceLabel, getLeadSourceColor } from '@/lib/leadSources';
 import { Megaphone } from 'lucide-react';
+import { usePreferredStylistsBatch, getStylistDisplayName } from '@/hooks/usePreferredStylist';
 import { PhorestSyncButton } from '@/components/dashboard/PhorestSyncButton';
 import { useLocations } from '@/hooks/useLocations';
 import { ClientDetailSheet } from '@/components/dashboard/ClientDetailSheet';
@@ -298,6 +299,13 @@ export default function ClientDirectory() {
   }, [filteredClients, currentPage]);
 
   const totalPages = Math.ceil(filteredClients.length / PAGE_SIZE);
+
+  // Batch-resolve preferred stylist names for visible clients
+  const stylistIdsForPage = useMemo(() => 
+    paginatedClients.map(c => c.preferred_stylist_id).filter(Boolean) as string[],
+    [paginatedClients]
+  );
+  const { data: stylistMap } = usePreferredStylistsBatch(stylistIdsForPage);
 
   // Count clients per letter (for disabling empty letters)
   const letterCounts = useMemo(() => {
@@ -778,6 +786,18 @@ export default function ClientDirectory() {
                                 <Badge variant="outline" className={cn("text-[10px] py-0 px-1.5", getLeadSourceColor(client.lead_source))}>
                                   {getLeadSourceLabel(client.lead_source)}
                                 </Badge>
+                              </>
+                            )}
+                            {client.preferred_stylist_id && stylistMap && (
+                              <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1">
+                                  <User className="w-3 h-3" />
+                                  {getStylistDisplayName(stylistMap.get(client.preferred_stylist_id))}
+                                  {stylistMap.get(client.preferred_stylist_id) && !stylistMap.get(client.preferred_stylist_id)!.is_active && (
+                                    <span className="text-muted-foreground">(inactive)</span>
+                                  )}
+                                </span>
                               </>
                             )}
                           </div>
