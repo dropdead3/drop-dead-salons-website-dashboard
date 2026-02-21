@@ -160,6 +160,13 @@ export function ServicesSettingsContent() {
     return grouped;
   }, [allServices]);
 
+  // Services whose category doesn't match any configured category
+  const uncategorizedServices = useMemo(() => {
+    if (!allServices) return [];
+    const configuredNames = new Set(localOrder.map(c => c.category_name));
+    return allServices.filter(s => !configuredNames.has(s.category || ''));
+  }, [allServices, localOrder]);
+
   // Dialog states
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [categoryDialogMode, setCategoryDialogMode] = useState<'create' | 'rename'>('create');
@@ -576,6 +583,63 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                   );
                 })}
               </Accordion>
+            )}
+
+            {/* Uncategorized services section */}
+            {uncategorizedServices.length > 0 && (
+              <div className="mt-4 border border-dashed border-muted-foreground/30 rounded-lg">
+                <div className="flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className={cn(tokens.body.emphasis, 'text-muted-foreground')}>Uncategorized</span>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{uncategorizedServices.length}</Badge>
+                  </div>
+                </div>
+                <div className="px-4 pb-3 space-y-1">
+                  {uncategorizedServices.map(svc => {
+                    const margin = computeMargin(svc.price || 0, svc.cost);
+                    return (
+                      <div key={svc.id} className="flex items-center gap-3 p-2.5 rounded-md hover:bg-muted/40 transition-colors group cursor-pointer" onClick={() => openEditService(svc)}>
+                        <div className="flex-1 min-w-0">
+                          <p className={cn(tokens.body.emphasis, 'truncate')}>{svc.name}</p>
+                          <div className={cn('flex items-center gap-3', tokens.body.muted)}>
+                            {svc.category && (
+                              <span className="text-[10px] text-muted-foreground/60 italic">was: {svc.category}</span>
+                            )}
+                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{svc.duration_minutes}min</span>
+                            {svc.price != null && (
+                              <span className="flex items-center gap-1">
+                                <DollarSign className="w-3 h-3" />{formatCurrency(svc.price)}
+                              </span>
+                            )}
+                            <MarginBadge margin={margin} />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div onClick={e => e.stopPropagation()}>
+                                <Switch
+                                  checked={svc.is_active !== false}
+                                  onCheckedChange={() => handleToggleActive(svc)}
+                                  className="scale-75"
+                                />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent><p className="text-xs">{svc.is_active !== false ? 'Active' : 'Inactive'}</p></TooltipContent>
+                          </Tooltip>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteServiceId(svc.id);
+                            setDeleteServiceName(svc.name);
+                          }}>
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
