@@ -1176,7 +1176,7 @@ export function QuickBookingPopover({
                                 <Sparkles className="h-4 w-4" />
                               </div>
                               <div className="flex flex-col min-w-0 flex-1">
-                                <span className="text-sm font-medium truncate">Add-Ons</span>
+                                <span className="text-sm font-medium truncate">Add-Ons & Extras</span>
                               </div>
                               {addonSelectedCount > 0 && (
                                 <span className="shrink-0 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-medium">
@@ -1202,7 +1202,7 @@ export function QuickBookingPopover({
                 <>
                   <div className="bg-muted -mx-3 px-3 py-1.5 mb-2">
                     <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                      Add-Ons
+                      Add-Ons & Extras
                     </h4>
                   </div>
                   <div className="space-y-1">
