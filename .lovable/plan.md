@@ -1,72 +1,100 @@
 
 
-## Deep Dive: Gaps, Redundancies, and Enhancements
+## Per-Stylist Timing & Pricing Overrides
 
-### Findings Summary
+### Recommendation: Consolidate into `staff_service_qualifications`
 
-After analyzing the Staff Service Configurator, Booking Visibility Card, and their shared hooks, here are the issues organized by priority.
+You currently have **two separate tables** that both try to store per-stylist pricing:
 
----
+| Table | Has Price | Has Duration | Used By |
+|-------|-----------|-------------|---------|
+| `staff_service_qualifications` | `custom_price` (column exists, **unused in UI**) | No duration column | Staff Service Configurator card |
+| `service_stylist_price_overrides` | `price` (actively used) | No duration column | Service Editor pricing tab |
 
-### 1. REDUNDANCIES (Code Duplication)
+**The right move**: Add `custom_duration_minutes` to `staff_service_qualifications`, wire the existing `custom_price` column into the UI, and deprecate `service_stylist_price_overrides` over time. This way, qualification + pricing + timing all live in one row per stylist-service pair -- which is how the data actually works operationally.
 
-| Issue | Location | Fix |
-|-------|----------|-----|
-| **Duplicate service+category fetching** | `BookingVisibilityCard` has its own `useServicesWithCategories` local hook that duplicates what `useServicesData` + `useServiceCategoryColors` already provide | Remove the local hook; reuse the existing shared hooks that `ServicesSettingsContent` already uses |
-| **Duplicate `is_booking` toggle logic** | `BookingVisibilityCard.useToggleIsBooking` is a local mutation. The same pattern exists in `EditStylistCardDialog` as inline Supabase calls | Extract to a shared `useToggleIsBooking` mutation in `useStaffServiceConfigurator.ts` so both UIs use one source |
-| **Category bulk toggle bypasses mutation pattern** | `BookingVisibilityCard.handleToggleCategory` calls `supabase.from('services').update()` directly with `Promise.all` instead of using `useToggleBookableOnline` | Refactor to use a proper bulk mutation with correct cache invalidation and error handling |
-| **`any` type casts on stylists** | `BookingVisibilityCard` uses `(s: any)` for stylist data throughout | Use the return type from `useActiveStylists` properly |
+### What Gets Built
 
-### 2. GAPS (Missing Functionality)
+**1. Database: Add `custom_duration_minutes` column**
+- Add `custom_duration_minutes INTEGER NULL` to `staff_service_qualifications`
+- This mirrors what the Phorest sync table (`phorest_staff_services`) already has
 
-| Gap | Impact | Fix |
-|-----|--------|-----|
-| **No undo toast on category bulk toggle** | Inconsistent UX -- individual service toggles have undo, but category bulk toggles do not | Add undo toast to `handleToggleCategory` in `BookingVisibilityCard` |
-| **`useToggleBookableOnline` doesn't invalidate `booking-visibility-services`** | After toggling in the website editor, the Booking Visibility Card shows stale data until manual refresh | Add `booking-visibility-services` to invalidation list (or better, unify the query key) |
-| **No error handling on category bulk toggle** | `Promise.all` in `handleToggleCategory` has no `.catch()` -- failures are silently swallowed | Add error toast on catch |
-| **Stale `selectedUserId` after filter change** | `StaffServiceConfiguratorCard` detects when selected user leaves the filtered list (line 66) but the reset logic is commented out / no-op | Actually reset `selectedUserId` to `''` when the selected user is no longer visible |
-| **No optimistic updates** | All toggles wait for server round-trip before UI updates | Add optimistic cache updates to both toggle mutations for snappier feel |
+**2. Staff Service Configurator Card: Inline Override Editing**
 
-### 3. ENHANCEMENTS (Quality + Polish)
+When a stylist is selected and a service is expanded, each service row gets:
+- The existing enable/disable checkbox (unchanged)
+- A small **price override** input (pre-filled with salon base price in muted text, editable to set a custom price)
+- A small **duration override** input (pre-filled with salon base duration in muted text, editable to set a custom duration)
+- A "reset" button to clear overrides back to salon defaults
+- Visual indicator (badge or dot) when a service has active overrides
 
-| Enhancement | Description |
-|-------------|-------------|
-| **Unified query keys** | Standardize service query keys across `booking-visibility-services`, `services-website`, and `servicesData` to prevent stale data between pages |
-| **Loading skeleton** | Replace "Loading stylists..." and "Loading services..." text with skeleton rows for a polished feel |
-| **Disable toggles during mutation** | `BookingVisibilityCard` toggles are not disabled during pending mutations (unlike `StaffServiceConfiguratorCard` which correctly disables them) |
-| **Count badge on Stylists tab trigger** | Show the "X of Y visible" count directly on the tab trigger, not just inside the panel |
-| **Consistent card header styling** | `BookingVisibilityCard` uses raw `CardTitle` while `StaffServiceConfiguratorCard` uses `tokens.heading.section` + icon -- standardize both |
+The layout stays compact: checkbox + service name on the left, price + duration inputs on the right (inline).
 
----
+**3. Pricing Resolution Engine Update**
+
+The existing 5-tier pricing engine gets a small adjustment:
+- Tier 1 (highest priority) stays: Individual Stylist Override -- but now reads from `staff_service_qualifications.custom_price` instead of `service_stylist_price_overrides.price`
+- Booking components also read `custom_duration_minutes` when calculating appointment end times
+
+**4. Hooks Update**
+
+- `useStaffQualifications` already selects `custom_price` -- add `custom_duration_minutes`
+- Add a new `useUpdateStylistServiceOverride` mutation to update price/duration on the qualification row
+- Update `useBookingLevelPricing` or create a companion `useBookingStylistOverrides` to resolve per-stylist timing in booking flows
+
+### What the UI Looks Like
+
+In the Staff Service Configurator, after selecting a stylist:
+
+```text
+[x] Balayage                          $180  |  120min
+    (salon: $150)                     (salon: 90min)
+                                      [Reset to defaults]
+
+[x] Root Touch-Up                     --     |  --
+    No overrides (uses salon defaults)
+
+[ ] Bridal Updo                       (disabled - not assigned)
+```
+
+- Price and duration inputs only appear for enabled services
+- Muted "(salon: $X)" text shows what the default is for context
+- "--" means no override set (uses salon default)
+- Override values are highlighted with a subtle accent indicator
+
+### Gap Analysis
+
+| Area | Status | Note |
+|------|--------|------|
+| `custom_price` column | Exists, unused | Wire into UI |
+| `custom_duration_minutes` column | Missing | Add via migration |
+| `service_stylist_price_overrides` table | Redundant | Keep for now as backward compat; stop writing to it from new UI |
+| Booking flow duration resolution | Not stylist-aware | Add lookup for stylist-specific duration |
+| Service Editor pricing tab | Uses old override table | Future: point to unified table |
 
 ### Technical Plan
 
-**File: `src/hooks/useStaffServiceConfigurator.ts`**
-- Export a new `useToggleIsBooking()` mutation (extracted from `BookingVisibilityCard`)
-- Add proper cache invalidation for `booking-visibility-services` and `homepage-stylists`
+**Migration**: Add `custom_duration_minutes` column to `staff_service_qualifications`
 
-**File: `src/components/dashboard/settings/BookingVisibilityCard.tsx`**
-- Remove local `useToggleIsBooking` hook -- import from shared hook
-- Remove local `useServicesWithCategories` hook -- import `useServicesData` + `useServiceCategoryColors`
-- Fix category bulk toggle: use proper mutation with undo toast and error handling
-- Remove `any` type casts on stylists
-- Add `disabled={isPending}` to all Switch/Checkbox elements
-- Add loading skeleton placeholders
-- Standardize header styling with icon + design tokens
-- Add count badge on tab triggers
+**File: `src/hooks/useStaffServiceConfigurator.ts`**
+- Add `custom_duration_minutes` to `StaffQualification` interface and query select
+- Add `useUpdateStylistServiceOverride` mutation for updating `custom_price` and `custom_duration_minutes`
+- Add `useResetStylistServiceOverride` mutation to null out both fields
 
 **File: `src/components/dashboard/settings/StaffServiceConfiguratorCard.tsx`**
-- Fix the dead code at line 66-68 (stale user reset) -- actually reset `selectedUserId`
+- Add inline price and duration inputs per service row (only for enabled/checked services)
+- Show salon default values as reference text
+- Add override indicator badges on service rows and category headers
+- Add reset-to-defaults button per service
 
-**File: `src/hooks/useNativeServicesForWebsite.ts`**
-- Add `booking-visibility-services` to `useToggleBookableOnline` invalidation list to keep both UIs in sync
+**File: `src/hooks/useServiceLevelPricing.ts`**
+- No changes needed yet (level pricing is a different tier)
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/hooks/useStaffServiceConfigurator.ts` | Extract shared `useToggleIsBooking` mutation |
-| `src/components/dashboard/settings/BookingVisibilityCard.tsx` | Remove duplicates, fix bulk toggle, add undo/error handling, type safety, loading skeletons, disable during mutation, header polish |
-| `src/components/dashboard/settings/StaffServiceConfiguratorCard.tsx` | Fix stale user reset logic |
-| `src/hooks/useNativeServicesForWebsite.ts` | Cross-invalidate `booking-visibility-services` query key |
+| Migration | Add `custom_duration_minutes` to `staff_service_qualifications` |
+| `src/hooks/useStaffServiceConfigurator.ts` | Add override mutations, update types and query |
+| `src/components/dashboard/settings/StaffServiceConfiguratorCard.tsx` | Inline price/duration inputs, override indicators, reset button |
 
