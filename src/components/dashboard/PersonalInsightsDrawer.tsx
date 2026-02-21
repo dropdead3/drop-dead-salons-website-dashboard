@@ -338,7 +338,7 @@ export function PersonalInsightsDrawer() {
                   <div className="px-4 pb-4 pt-1">
                     <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/50">
                       <ZuraAvatar size="sm" className="w-3 h-3 opacity-40" />
-                      <span className="text-[10px] text-muted-foreground/50">Powered by Zura AI · Your personal data only</span>
+                      <span className="text-[10px] text-muted-foreground/50">{`Powered by ${PLATFORM_NAME} AI · Your personal data only`}</span>
                     </div>
                   </div>
                 </motion.div>

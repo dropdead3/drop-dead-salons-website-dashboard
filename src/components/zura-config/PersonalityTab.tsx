@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Save, X, Plus } from 'lucide-react';
 import { useZuraPersonality, useUpsertZuraPersonality, ZuraPersonalityConfig } from '@/hooks/useZuraConfig';
+import { AI_ASSISTANT_NAME_DEFAULT } from '@/lib/brand';
 
 interface PersonalityTabProps {
   organizationId: string;
@@ -34,7 +35,7 @@ export function PersonalityTab({ organizationId }: PersonalityTabProps) {
   const upsert = useUpsertZuraPersonality();
 
   const [form, setForm] = useState({
-    display_name: 'Zura',
+    display_name: AI_ASSISTANT_NAME_DEFAULT,
     tone: 'friendly' as ZuraPersonalityConfig['tone'],
     formality_level: 3,
     emoji_usage: false,
@@ -52,7 +53,7 @@ export function PersonalityTab({ organizationId }: PersonalityTabProps) {
   useEffect(() => {
     if (personality) {
       setForm({
-        display_name: personality.display_name || 'Zura',
+        display_name: personality.display_name || AI_ASSISTANT_NAME_DEFAULT,
         tone: personality.tone,
         formality_level: personality.formality_level,
         emoji_usage: personality.emoji_usage,
@@ -99,13 +100,13 @@ export function PersonalityTab({ organizationId }: PersonalityTabProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Identity</CardTitle>
-          <CardDescription>Set how Zura introduces herself</CardDescription>
+          <CardDescription>{`Set how ${AI_ASSISTANT_NAME_DEFAULT} introduces herself`}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Display Name</Label>
-              <Input value={form.display_name} onChange={e => setForm(p => ({ ...p, display_name: e.target.value }))} placeholder="Zura" />
+              <Input value={form.display_name} onChange={e => setForm(p => ({ ...p, display_name: e.target.value }))} placeholder={AI_ASSISTANT_NAME_DEFAULT} />
               <p className="text-xs text-muted-foreground">What the AI calls itself</p>
             </div>
             <div className="space-y-2">
@@ -124,7 +125,7 @@ export function PersonalityTab({ organizationId }: PersonalityTabProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Tone & Style</CardTitle>
-          <CardDescription>Configure how Zura communicates</CardDescription>
+          <CardDescription>{`Configure how ${AI_ASSISTANT_NAME_DEFAULT} communicates`}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
@@ -199,7 +200,7 @@ export function PersonalityTab({ organizationId }: PersonalityTabProps) {
           {/* Prohibited phrases */}
           <div className="space-y-2">
             <Label>Prohibited Phrases</Label>
-            <p className="text-xs text-muted-foreground">Words or phrases Zura must never use</p>
+            <p className="text-xs text-muted-foreground">{`Words or phrases ${AI_ASSISTANT_NAME_DEFAULT} must never use`}</p>
             <div className="flex gap-2">
               <Input value={newProhibited} onChange={e => setNewProhibited(e.target.value)} placeholder="Add phrase..."
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addPhrase('prohibited_phrases', newProhibited); }}}
@@ -219,7 +220,7 @@ export function PersonalityTab({ organizationId }: PersonalityTabProps) {
           {/* Encouraged phrases */}
           <div className="space-y-2">
             <Label>Encouraged Phrases</Label>
-            <p className="text-xs text-muted-foreground">Brand-aligned language Zura should prefer</p>
+            <p className="text-xs text-muted-foreground">{`Brand-aligned language ${AI_ASSISTANT_NAME_DEFAULT} should prefer`}</p>
             <div className="flex gap-2">
               <Input value={newEncouraged} onChange={e => setNewEncouraged(e.target.value)} placeholder="Add phrase..."
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addPhrase('encouraged_phrases', newEncouraged); }}}

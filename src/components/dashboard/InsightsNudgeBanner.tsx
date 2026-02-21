@@ -6,6 +6,7 @@ import { Brain, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PLATFORM_NAME } from '@/lib/brand';
 
 interface InsightsNudgeBannerProps {
   userId?: string;
@@ -92,13 +93,13 @@ export function InsightsNudgeBanner({ userId, isLeadership }: InsightsNudgeBanne
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground">
               {isNeverChecked
-                ? "You haven't explored your Zura Insights yet"
+                ? `You haven't explored your ${PLATFORM_NAME} Insights yet`
                 : `You haven't checked your insights in ${daysSinceLastCheck} days`}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {isNeverChecked
-                ? "Zura has personalized performance data and growth tips ready for you — let's grow! 🌱"
-                : "Zura has fresh performance data and growth tips waiting for you — let's grow! 🌱"}
+                ? `${PLATFORM_NAME} has personalized performance data and growth tips ready for you — let's grow! 🌱`
+                : `${PLATFORM_NAME} has fresh performance data and growth tips waiting for you — let's grow! 🌱`}
             </p>
           </div>
           <Link to="/dashboard">
