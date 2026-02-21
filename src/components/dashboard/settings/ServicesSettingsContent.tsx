@@ -341,6 +341,33 @@ export function ServicesSettingsContent() {
     });
   };
 
+  const handleRestoreToCategory = (svc: Service) => {
+    const categoryName = svc.category;
+    if (!categoryName) return;
+    const alreadyExists = localOrder.some(c => c.category_name === categoryName);
+    if (alreadyExists) {
+      // Category already exists, nothing to recreate — service is already assigned
+      showUndoToast(`'${svc.name}' is already in '${categoryName}'`, () => {});
+      return;
+    }
+    createCategory.mutate(
+      { name: categoryName, organizationId: resolvedOrgId },
+      {
+        onSuccess: () => {
+          showUndoToast(`Restored '${svc.name}' to ${categoryName}`, () => {
+            // Undo: archive the freshly recreated category
+            // We need to find it after invalidation — use name match
+            const restored = localOrder.find(c => c.category_name === categoryName);
+            if (restored) {
+              archiveCategory.mutate({ categoryId: restored.id, categoryName });
+            }
+          });
+        },
+        onError: (e) => toast.error('Failed to restore: ' + e.message),
+      }
+    );
+  };
+
   const openCreateService = (categoryName?: string) => {
     setEditorMode('create');
     setEditorService(null);
@@ -735,6 +762,19 @@ style={gradient ? { background: gradient.background, color: gradient.textColor, 
                             </TooltipTrigger>
                             <TooltipContent><p className="text-xs">{svc.is_active !== false ? 'Active' : 'Inactive'}</p></TooltipContent>
                           </Tooltip>
+                          {svc.category && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-emerald-600" onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRestoreToCategory(svc);
+                                }}>
+                                  <ArchiveRestore className="w-3 h-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent><p className="text-xs">Restore to {svc.category}</p></TooltipContent>
+                            </Tooltip>
+                          )}
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-amber-600" onClick={(e) => {
                             e.stopPropagation();
                             setArchiveServiceId(svc.id);
