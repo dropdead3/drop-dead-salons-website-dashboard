@@ -11,6 +11,7 @@ export interface RedoPolicySettings {
   redo_reason_required: boolean;
   redo_window_days: number;
   redo_notification_enabled: boolean;
+  redo_custom_reasons: string[];
 }
 
 export const REDO_POLICY_DEFAULTS: RedoPolicySettings = {
@@ -21,9 +22,10 @@ export const REDO_POLICY_DEFAULTS: RedoPolicySettings = {
   redo_reason_required: true,
   redo_window_days: 14,
   redo_notification_enabled: true,
+  redo_custom_reasons: [],
 };
 
-export const REDO_REASONS = [
+export const REDO_REASONS_DEFAULT = [
   'Color didn\'t hold',
   'Uneven cut / missed spots',
   'Client dissatisfied with style',
@@ -31,6 +33,8 @@ export const REDO_REASONS = [
   'Texture / curl pattern issue',
   'Other',
 ] as const;
+
+export const REDO_REASONS = REDO_REASONS_DEFAULT;
 
 export function useRedoPolicySettings() {
   const { effectiveOrganization } = useOrganizationContext();
@@ -56,6 +60,7 @@ export function useRedoPolicySettings() {
         redo_reason_required: (s.redo_reason_required as boolean) ?? REDO_POLICY_DEFAULTS.redo_reason_required,
         redo_window_days: (s.redo_window_days as number) ?? REDO_POLICY_DEFAULTS.redo_window_days,
         redo_notification_enabled: (s.redo_notification_enabled as boolean) ?? REDO_POLICY_DEFAULTS.redo_notification_enabled,
+        redo_custom_reasons: (s.redo_custom_reasons as string[]) ?? REDO_POLICY_DEFAULTS.redo_custom_reasons,
       };
     },
     enabled: !!orgId,

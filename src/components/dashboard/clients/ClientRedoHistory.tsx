@@ -16,15 +16,53 @@ export function ClientRedoHistory({ clientId }: ClientRedoHistoryProps) {
   const { data: redos = [], isLoading } = useQuery({
     queryKey: ['client-redo-history', clientId],
     queryFn: async () => {
-      // Query from appointments table (analytics source) for redo history
+      // Query from phorest_appointments (where redo metadata is written by the edge function)
+      // First get the phorest_client_id from the client record
+      const { data: client } = await supabase
+        .from('phorest_clients')
+        .select('phorest_client_id')
+        .eq('id', clientId)
+        .maybeSingle();
+
+      if (!client?.phorest_client_id) {
+        // Fallback: try appointments table with client_id
+        const { data } = await supabase
+          .from('appointments')
+          .select('id, service_name, appointment_date, staff_name, total_price, original_price, redo_reason, status')
+          .eq('client_id', clientId)
+          .eq('is_redo', true)
+          .order('appointment_date', { ascending: false })
+          .limit(50);
+        return data || [];
+      }
+
       const { data } = await supabase
-        .from('appointments')
-        .select('id, service_name, appointment_date, staff_name, total_price, original_price, redo_reason, status')
-        .eq('client_id', clientId)
+        .from('phorest_appointments')
+        .select('id, service_name, appointment_date, stylist_user_id, total_price, original_price, redo_reason, status')
+        .eq('phorest_client_id', client.phorest_client_id)
         .eq('is_redo', true)
         .order('appointment_date', { ascending: false })
         .limit(50);
-      return data || [];
+
+      if (!data) return [];
+
+      // Resolve stylist names
+      const stylistIds = [...new Set(data.map(a => a.stylist_user_id).filter(Boolean))] as string[];
+      let nameMap: Record<string, string> = {};
+      if (stylistIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('employee_profiles')
+          .select('user_id, display_name, full_name')
+          .in('user_id', stylistIds);
+        for (const p of profiles || []) {
+          nameMap[p.user_id] = p.display_name || p.full_name || 'Unknown';
+        }
+      }
+
+      return data.map(r => ({
+        ...r,
+        staff_name: r.stylist_user_id ? nameMap[r.stylist_user_id] || null : null,
+      }));
     },
     enabled: !!clientId,
   });

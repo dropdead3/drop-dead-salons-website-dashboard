@@ -37,16 +37,40 @@ export function useRedoAnalytics(days: number = 30) {
     queryFn: async (): Promise<RedoAnalytics> => {
       if (!orgId) return { totalRedos: 0, totalAppointments: 0, redoRate: 0, financialImpact: 0, byStylist: [], byReason: [], weeklyTrend: [], repeatRedoClients: 0 };
 
-      // Fetch all appointments in the period
+      // Get location IDs belonging to this org for filtering phorest_appointments
+      const { data: orgLocations } = await supabase
+        .from('locations')
+        .select('id')
+        .eq('organization_id', orgId);
+
+      const locationIds = orgLocations?.map(l => l.id) || [];
+      if (locationIds.length === 0) {
+        return { totalRedos: 0, totalAppointments: 0, redoRate: 0, financialImpact: 0, byStylist: [], byReason: [], weeklyTrend: [], repeatRedoClients: 0 };
+      }
+
+      // Fetch all phorest_appointments in the period, filtered by org locations
       const { data: appointments, error } = await supabase
-        .from('appointments')
-        .select('id, staff_user_id, staff_name, is_redo, redo_reason, original_appointment_id, total_price, original_price, client_id, appointment_date')
-        .eq('organization_id', orgId)
+        .from('phorest_appointments')
+        .select('id, stylist_user_id, is_redo, redo_reason, original_appointment_id, total_price, original_price, phorest_client_id, appointment_date')
+        .in('location_id', locationIds)
         .gte('appointment_date', dateFrom)
         .not('status', 'in', '("cancelled")');
 
       if (error || !appointments) {
         return { totalRedos: 0, totalAppointments: 0, redoRate: 0, financialImpact: 0, byStylist: [], byReason: [], weeklyTrend: [], repeatRedoClients: 0 };
+      }
+
+      // Resolve stylist names
+      const stylistIds = [...new Set(appointments.map(a => a.stylist_user_id).filter(Boolean))] as string[];
+      let stylistNameMap: Record<string, string> = {};
+      if (stylistIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('employee_profiles')
+          .select('user_id, display_name, full_name')
+          .in('user_id', stylistIds);
+        for (const p of profiles || []) {
+          stylistNameMap[p.user_id] = p.display_name || p.full_name || 'Unknown';
+        }
       }
 
       const totalAppointments = appointments.length;
@@ -67,21 +91,21 @@ export function useRedoAnalytics(days: number = 30) {
       
       // Count all appointments per stylist
       for (const a of appointments) {
-        const sid = a.staff_user_id;
+        const sid = a.stylist_user_id;
         if (!sid) continue;
         if (!stylistMap.has(sid)) {
-          stylistMap.set(sid, { name: a.staff_name || 'Unknown', redoCount: 0, totalCount: 0 });
+          stylistMap.set(sid, { name: stylistNameMap[sid] || 'Unknown', redoCount: 0, totalCount: 0 });
         }
         stylistMap.get(sid)!.totalCount++;
       }
 
       // For redos, try to attribute to original stylist
       for (const redo of redos) {
-        let targetStaffId = redo.staff_user_id;
+        let targetStaffId = redo.stylist_user_id;
         if (redo.original_appointment_id) {
           const original = appointments.find(a => a.id === redo.original_appointment_id);
-          if (original?.staff_user_id) {
-            targetStaffId = original.staff_user_id;
+          if (original?.stylist_user_id) {
+            targetStaffId = original.stylist_user_id;
           }
         }
         if (targetStaffId && stylistMap.has(targetStaffId)) {
@@ -125,7 +149,7 @@ export function useRedoAnalytics(days: number = 30) {
       // Repeat redo clients (clients with 2+ redos)
       const clientRedoCount = new Map<string, number>();
       for (const redo of redos) {
-        const cid = (redo as any).client_id;
+        const cid = redo.phorest_client_id;
         if (cid) clientRedoCount.set(cid, (clientRedoCount.get(cid) || 0) + 1);
       }
       const repeatRedoClients = Array.from(clientRedoCount.values()).filter(c => c >= 2).length;

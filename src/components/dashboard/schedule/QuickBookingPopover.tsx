@@ -167,40 +167,85 @@ export function QuickBookingPopover({
     total_price: number | null;
   } | null>(null);
 
-  // Query client's recent appointments for redo linking (from phorest_appointments, the active schedule table)
+  // Query client's recent appointments for redo linking (from both phorest_appointments AND native appointments)
   const { data: clientRecentAppointments = [] } = useQuery({
-    queryKey: ['client-recent-appointments', selectedClient?.phorest_client_id, redoPolicy?.redo_window_days],
+    queryKey: ['client-recent-appointments', selectedClient?.phorest_client_id, selectedClient?.id, redoPolicy?.redo_window_days],
     queryFn: async () => {
-      if (!selectedClient?.phorest_client_id) return [];
       const windowDays = redoPolicy?.redo_window_days ?? 14;
       const dateFrom = format(new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
-      const { data } = await supabase
-        .from('phorest_appointments')
-        .select('id, service_name, appointment_date, start_time, total_price, stylist_user_id')
-        .eq('phorest_client_id', selectedClient.phorest_client_id)
-        .gte('appointment_date', dateFrom)
-        .not('status', 'in', '("cancelled")')
-        .order('appointment_date', { ascending: false })
-        .limit(20);
-      // Enrich with stylist name
-      if (!data) return [];
-      const stylistIds = [...new Set(data.map(a => a.stylist_user_id).filter(Boolean))];
-      let stylistMap: Record<string, string> = {};
-      if (stylistIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('employee_profiles')
-          .select('user_id, display_name, full_name')
-          .in('user_id', stylistIds);
-        for (const p of profiles || []) {
-          stylistMap[p.user_id] = p.display_name || p.full_name || 'Unknown';
+      
+      type RecentAppt = { id: string; service_name: string | null; appointment_date: string; start_time: string; total_price: number | null; staff_name: string };
+
+      const results: RecentAppt[] = [];
+      const seenDates = new Set<string>();
+
+      // 1. Query phorest_appointments
+      if (selectedClient?.phorest_client_id) {
+        const { data } = await supabase
+          .from('phorest_appointments')
+          .select('id, service_name, appointment_date, start_time, total_price, stylist_user_id')
+          .eq('phorest_client_id', selectedClient.phorest_client_id)
+          .gte('appointment_date', dateFrom)
+          .not('status', 'in', '("cancelled")')
+          .order('appointment_date', { ascending: false })
+          .limit(20);
+
+        if (data) {
+          const stylistIds = [...new Set(data.map(a => a.stylist_user_id).filter(Boolean))] as string[];
+          let stylistMap: Record<string, string> = {};
+          if (stylistIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('employee_profiles')
+              .select('user_id, display_name, full_name')
+              .in('user_id', stylistIds);
+            for (const p of profiles || []) {
+              stylistMap[p.user_id] = p.display_name || p.full_name || 'Unknown';
+            }
+          }
+          for (const a of data) {
+            const key = `${a.appointment_date}-${a.service_name}`;
+            seenDates.add(key);
+            results.push({
+              id: a.id,
+              service_name: a.service_name,
+              appointment_date: a.appointment_date,
+              start_time: a.start_time,
+              total_price: a.total_price,
+              staff_name: a.stylist_user_id ? stylistMap[a.stylist_user_id] || 'Unknown' : 'Unknown',
+            });
+          }
         }
       }
-      return data.map(a => ({
-        ...a,
-        staff_name: a.stylist_user_id ? stylistMap[a.stylist_user_id] || 'Unknown' : 'Unknown',
-      }));
+
+      // 2. Query native appointments table (for bookings made through create_booking)
+      if (selectedClient?.id) {
+        const { data: nativeAppts } = await supabase
+          .from('appointments')
+          .select('id, service_name, appointment_date, start_time, total_price, staff_name')
+          .eq('client_id', selectedClient.id)
+          .gte('appointment_date', dateFrom)
+          .not('status', 'in', '("cancelled")')
+          .order('appointment_date', { ascending: false })
+          .limit(20);
+
+        for (const a of nativeAppts || []) {
+          const key = `${a.appointment_date}-${a.service_name}`;
+          if (!seenDates.has(key)) {
+            results.push({
+              id: a.id,
+              service_name: a.service_name,
+              appointment_date: a.appointment_date,
+              start_time: a.start_time,
+              total_price: a.total_price,
+              staff_name: a.staff_name || 'Unknown',
+            });
+          }
+        }
+      }
+
+      return results.sort((a, b) => b.appointment_date.localeCompare(a.appointment_date));
     },
-    enabled: !!selectedClient?.phorest_client_id && isRedo && open,
+    enabled: !!(selectedClient?.phorest_client_id || selectedClient?.id) && isRedo && open,
   });
 
   // Add-on toast state
@@ -557,7 +602,17 @@ export function QuickBookingPopover({
           is_redo: isRedo,
           redo_reason: isRedo ? (redoReason === 'Other' ? redoCustomReason : redoReason) || undefined : undefined,
           original_appointment_id: isRedo ? originalAppointmentId || undefined : undefined,
-          redo_pricing_override: isRedo ? redoPriceOverride : undefined,
+          // Always send computed price so edge function doesn't recalculate independently
+          redo_pricing_override: isRedo ? (() => {
+            if (redoPriceOverride != null) return redoPriceOverride;
+            const origPrice = originalAppointmentData?.total_price;
+            if (origPrice != null && redoPolicy) {
+              if (redoPolicy.redo_pricing_policy === 'free') return 0;
+              if (redoPolicy.redo_pricing_policy === 'percentage') return origPrice * (redoPolicy.redo_pricing_percentage / 100);
+              return origPrice;
+            }
+            return undefined;
+          })() : undefined,
           redo_requires_approval: isRedo ? redoPolicy?.redo_requires_approval : undefined,
           redo_is_manager: isRedo ? isManagerOrAdmin : undefined,
         },
@@ -807,7 +862,8 @@ export function QuickBookingPopover({
   const currentStepIndex = STEPS.indexOf(step);
   const effectiveStylistSelected = !!selectedStylist || !!preSelectedStylistId;
   const redoReasonValid = !isRedo || !redoPolicy?.redo_reason_required || (redoReason && (redoReason !== 'Other' || redoCustomReason.trim()));
-  const canBook = selectedClient && selectedServices.length > 0 && effectiveStylistSelected && selectedLocation && redoReasonValid;
+  const redoOriginalLinked = !isRedo || !!originalAppointmentId;
+  const canBook = selectedClient && selectedServices.length > 0 && effectiveStylistSelected && selectedLocation && redoReasonValid && redoOriginalLinked;
 
   const getStylistName = () => {
     if (preSelectedStylistName) return preSelectedStylistName;

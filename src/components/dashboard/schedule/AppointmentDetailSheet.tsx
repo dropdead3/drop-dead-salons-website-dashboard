@@ -135,27 +135,70 @@ export function AppointmentDetailSheet({
   const { roles } = useAuth();
   const isManagerOrAdmin = roles.some(r => ['admin', 'super_admin', 'manager'].includes(r));
 
-  // Forward link: find redo appointments linked to this appointment
+  // Forward link: find redo appointments linked to this appointment (check both tables)
   const { data: linkedRedos = [] } = useQuery({
     queryKey: ['linked-redos', appointment?.id],
     queryFn: async () => {
       if (!appointment?.id) return [];
-      const { data } = await supabase
+      // Check phorest_appointments first (primary source)
+      const { data: phorestRedos } = await supabase
+        .from('phorest_appointments')
+        .select('id, appointment_date, stylist_user_id, service_name, status')
+        .eq('original_appointment_id', appointment.id)
+        .not('status', 'in', '("cancelled")');
+
+      // Also check native appointments table
+      const { data: nativeRedos } = await supabase
         .from('appointments')
         .select('id, appointment_date, staff_name, service_name, status')
         .eq('original_appointment_id', appointment.id)
         .not('status', 'in', '("cancelled")');
-      return data || [];
+
+      // Resolve stylist names for phorest redos
+      const phorestResults = (phorestRedos || []).map(r => ({
+        id: r.id,
+        appointment_date: r.appointment_date,
+        staff_name: null as string | null,
+        service_name: r.service_name,
+        status: r.status,
+        _stylist_user_id: r.stylist_user_id,
+      }));
+
+      if (phorestResults.length > 0) {
+        const stylistIds = [...new Set(phorestResults.map(r => r._stylist_user_id).filter(Boolean))] as string[];
+        if (stylistIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('employee_profiles')
+            .select('user_id, display_name, full_name')
+            .in('user_id', stylistIds);
+          const nameMap: Record<string, string> = {};
+          for (const p of profiles || []) {
+            nameMap[p.user_id] = p.display_name || p.full_name || 'Unknown';
+          }
+          for (const r of phorestResults) {
+            if (r._stylist_user_id) r.staff_name = nameMap[r._stylist_user_id] || null;
+          }
+        }
+      }
+
+      // Merge and deduplicate by id
+      const all = [...phorestResults, ...(nativeRedos || []).map(r => ({ ...r, _stylist_user_id: null }))];
+      const seen = new Set<string>();
+      return all.filter(r => {
+        if (seen.has(r.id)) return false;
+        seen.add(r.id);
+        return true;
+      });
     },
     enabled: !!appointment?.id && open,
   });
 
-  // Approve redo mutation
+  // Approve redo mutation — writes to phorest_appointments (source of truth)
   const approveRedo = useMutation({
     mutationFn: async () => {
       if (!appointment?.id || !user?.id) throw new Error('Missing data');
       const { error } = await supabase
-        .from('appointments')
+        .from('phorest_appointments')
         .update({ redo_approved_by: user.id, status: 'confirmed' })
         .eq('id', appointment.id);
       if (error) throw error;
@@ -167,12 +210,12 @@ export function AppointmentDetailSheet({
     onError: (e: Error) => toast.error('Failed to approve redo', { description: e.message }),
   });
 
-  // Decline redo mutation
+  // Decline redo mutation — writes to phorest_appointments (source of truth)
   const declineRedo = useMutation({
     mutationFn: async () => {
       if (!appointment?.id) throw new Error('Missing data');
       const { error } = await supabase
-        .from('appointments')
+        .from('phorest_appointments')
         .update({ status: 'cancelled', notes: (appointment.notes || '') + '\n[Redo declined]' })
         .eq('id', appointment.id);
       if (error) throw error;
@@ -335,8 +378,8 @@ export function AppointmentDetailSheet({
                       </Badge>
                     )}
                   </div>
-                  {/* Approval actions for pending redos */}
-                  {appointment.status === 'pending' && (
+                  {/* Approval actions for pending redos — managers/admins only */}
+                  {appointment.status === 'pending' && isManagerOrAdmin && (
                     <div className="flex items-center gap-2">
                       <Button
                         size="sm"
@@ -358,6 +401,9 @@ export function AppointmentDetailSheet({
                         Decline
                       </Button>
                     </div>
+                  )}
+                  {appointment.status === 'pending' && !isManagerOrAdmin && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">Awaiting manager approval</p>
                   )}
                 </div>
               )}
