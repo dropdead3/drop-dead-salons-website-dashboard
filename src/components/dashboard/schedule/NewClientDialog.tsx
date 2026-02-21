@@ -218,17 +218,23 @@ export function NewClientDialog({
 
           <div className="space-y-2">
             <Label htmlFor="gender">Gender</Label>
-            <Select value={gender} onValueChange={setGender}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select gender (optional)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Male">Male</SelectItem>
-                <SelectItem value="Female">Female</SelectItem>
-                <SelectItem value="Non-Binary">Non-Binary</SelectItem>
-                <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap gap-2">
+              {['Male', 'Female', 'Non-Binary', 'Prefer not to say'].map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setGender(gender === option ? '' : option)}
+                  className={cn(
+                    "rounded-full px-4 py-2 text-sm font-sans border transition-colors cursor-pointer",
+                    gender === option
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background text-foreground border-input hover:bg-accent/50"
+                  )}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
           </div>
 
           {defaultLocationId && !showLocationSelector ? (
