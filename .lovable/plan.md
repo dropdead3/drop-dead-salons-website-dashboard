@@ -1,54 +1,41 @@
 
 
-## Fix Table Column Headers: Title Case with Aeonik Pro
+## Enhance Table Column Headers with Visual Prominence
 
-### The Problem
+### What Changes
 
-Table column headers across the dashboard are rendering in ALL CAPS using Aeonik Pro (font-sans). The screenshot shows "STYLIST", "LEVEL", "SVC %", "RETAIL %", "SOURCE" -- all uppercase. Per the design system, font-sans (Aeonik Pro) should NEVER be uppercase. Only font-display (Termina) gets uppercase treatment.
-
-Column headers should use Aeonik Pro with standard Title Case capitalization: "Stylist", "Level", "Svc %", "Retail %", "Source".
-
-### Root Cause
-
-Two separate patterns cause this:
-
-1. **TeamCommissionRoster.tsx** (line 195): Uses a custom grid header row with explicit `uppercase` class
-2. **CommissionIntelligence.tsx** and other tables: Use `TableHead` component -- no uppercase in the component, but some render content in caps
+The column headers ("Stylist", "Level", "Svc %", "Retail %", "Source") are too subtle at `text-[11px]` with muted color. They need to feel more like proper headings with a subtle bottom border stroke.
 
 ### Plan
 
-**1. Add a `table.columnHeader` token to `design-tokens.ts`**
+**1. Update `tokens.table.columnHeader` in `design-tokens.ts`**
 
-A new token that encodes the correct column header style: Aeonik Pro, small text, medium weight, muted color, wider tracking -- but NO uppercase.
+Increase size from `text-[11px]` to `text-xs` (12px), keep `font-medium`, use `text-foreground/60` instead of `text-muted-foreground` for slightly more prominence, and retain tracking.
 
 ```
-table: {
-  columnHeader: 'font-sans text-[11px] font-medium text-muted-foreground tracking-wider',
-}
+columnHeader: 'font-sans text-xs font-medium text-foreground/60 tracking-wider',
 ```
 
-**2. Fix `TeamCommissionRoster.tsx`**
+**2. Update `TeamCommissionRoster.tsx` header row**
 
-Remove `uppercase` from the custom grid header row (line 195) and apply the new `tokens.table.columnHeader` token. Change text content to Title Case:
-- "Stylist", "Level", "Svc %", "Retail %", "Source"
+Add a bottom border to the header row container to create the subtle stroke effect:
 
-**3. Audit `CommissionIntelligence.tsx`**
+```tsx
+<div className={cn(
+  "grid grid-cols-[28px_1fr_140px_70px_70px_90px] gap-2 px-3 py-2 border-b border-border/60",
+  tokens.table.columnHeader
+)}>
+```
 
-Verify the `TableHead` content uses Title Case (it likely already does since it uses natural text). No changes expected.
+- Increase vertical padding from `py-1.5` to `py-2` for breathing room above the stroke
+- Add `border-b border-border/60` for the subtle underline
 
-**4. Update `design-rules.ts`**
-
-Add a rule documenting that table column headers must use font-sans (Aeonik Pro) with Title Case -- never uppercase.
-
-**5. Update design system rule files**
-
-Add the table column header rule to `.cursor/rules/design-system.mdc` so future generation follows this pattern.
+No other files need changes -- this updates the token globally and adds the stroke to the roster header row.
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/lib/design-tokens.ts` | Add `table.columnHeader` token |
-| `src/components/dashboard/settings/TeamCommissionRoster.tsx` | Remove `uppercase`, apply token, Title Case text |
-| `src/lib/design-rules.ts` | Add column header rule |
-| `.cursor/rules/design-system.mdc` | Document table column header standard |
+| `src/lib/design-tokens.ts` | Bump `columnHeader` to `text-xs`, use `text-foreground/60` |
+| `src/components/dashboard/settings/TeamCommissionRoster.tsx` | Add `border-b border-border/60`, increase padding |
+
