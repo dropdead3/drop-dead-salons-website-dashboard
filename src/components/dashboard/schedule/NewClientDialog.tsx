@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { usePOSConfig } from '@/hooks/usePOSData';
 import { format } from 'date-fns';
+import { useOrgDefaults } from '@/hooks/useOrgDefaults';
 import { useNavigate } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
 import {
@@ -91,36 +92,39 @@ export function NewClientDialog({
   const [notes, setNotes] = useState('');
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [birthday, setBirthday] = useState<Date | undefined>(undefined);
-  const [birthMonth, setBirthMonth] = useState<string>('');
-  const [birthDay, setBirthDay] = useState<string>('');
-  const [birthYear, setBirthYear] = useState<string>('');
+  const [birthdayInput, setBirthdayInput] = useState('');
 
-  const currentYear = new Date().getFullYear();
-  const years = useMemo(() => Array.from({ length: 101 }, (_, i) => currentYear - i), [currentYear]);
-  const months = useMemo(() => [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-  ], []);
-  const daysInMonth = useMemo(() => {
-    if (birthMonth === '' || birthYear === '') return 31;
-    return new Date(Number(birthYear), Number(birthMonth) + 1, 0).getDate();
-  }, [birthMonth, birthYear]);
+  const { locale } = useOrgDefaults();
+  const isMonthFirst = locale === 'en' || locale === 'en-US';
+  const birthdayPlaceholder = isMonthFirst ? 'MM/DD/YYYY' : 'DD/MM/YYYY';
 
-  // Sync dropdown selections → birthday Date
-  useEffect(() => {
-    if (birthMonth !== '' && birthDay !== '' && birthYear !== '') {
-      setBirthday(new Date(Number(birthYear), Number(birthMonth), Number(birthDay)));
-    } else {
-      setBirthday(undefined);
+  const handleBirthdayInput = useCallback((raw: string) => {
+    const digits = raw.replace(/\D/g, '').slice(0, 8);
+    let formatted = '';
+    for (let i = 0; i < digits.length; i++) {
+      if (i === 2 || i === 4) formatted += '/';
+      formatted += digits[i];
     }
-  }, [birthMonth, birthDay, birthYear]);
+    setBirthdayInput(formatted);
 
-  // Clamp day if month/year changes reduce available days
-  useEffect(() => {
-    if (birthDay !== '' && Number(birthDay) > daysInMonth) {
-      setBirthDay(String(daysInMonth));
+    if (digits.length === 8) {
+      const p1 = parseInt(digits.slice(0, 2), 10);
+      const p2 = parseInt(digits.slice(2, 4), 10);
+      const year = parseInt(digits.slice(4, 8), 10);
+      const month = isMonthFirst ? p1 : p2;
+      const day = isMonthFirst ? p2 : p1;
+      const now = new Date();
+      const minYear = now.getFullYear() - 100;
+      if (month >= 1 && month <= 12 && day >= 1 && year >= minYear && year <= now.getFullYear()) {
+        const date = new Date(year, month - 1, day);
+        if (date.getMonth() === month - 1 && date.getDate() === day && date <= now) {
+          setBirthday(date);
+          return;
+        }
+      }
     }
-  }, [daysInMonth, birthDay]);
+    setBirthday(undefined);
+  }, [isMonthFirst]);
   const [clientSince, setClientSince] = useState<Date | undefined>(new Date());
   const [locationId, setLocationId] = useState(defaultLocationId || '');
   const [showLocationSelector, setShowLocationSelector] = useState(!defaultLocationId);
@@ -149,9 +153,7 @@ export function NewClientDialog({
     setPhone('');
     setNotes('');
     setBirthday(undefined);
-    setBirthMonth('');
-    setBirthDay('');
-    setBirthYear('');
+    setBirthdayInput('');
     setClientSince(new Date());
     setLocationId(defaultLocationId || '');
     setPreferredStylistId('');
@@ -361,40 +363,15 @@ export function NewClientDialog({
           </p>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2 col-span-2">
+            <div className="space-y-2">
               <Label>Birthday</Label>
-              <div className="flex gap-2">
-                <Select value={birthMonth} onValueChange={setBirthMonth}>
-                  <SelectTrigger className="flex-[2]">
-                    <SelectValue placeholder="Month" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {months.map((m, i) => (
-                      <SelectItem key={i} value={String(i)}>{m}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={birthDay} onValueChange={setBirthDay}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Day" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: daysInMonth }, (_, i) => (
-                      <SelectItem key={i + 1} value={String(i + 1)}>{i + 1}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={birthYear} onValueChange={setBirthYear}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {years.map((y) => (
-                      <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Input
+                value={birthdayInput}
+                onChange={(e) => handleBirthdayInput(e.target.value)}
+                placeholder={birthdayPlaceholder}
+                inputMode="numeric"
+                autoCapitalize="off"
+              />
             </div>
             <div className="space-y-2">
               <Label>Client Since</Label>
