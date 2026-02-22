@@ -1,27 +1,52 @@
 
-# Replace Birthday Calendar with Three-Dropdown Date Picker
 
-## Problem
-The calendar-based birthday picker (even with dropdown navigation) is clunky for entering birthdates. Users want a simple, familiar month/day/year dropdown pattern.
+# Replace Birthday Dropdowns with Typed Date Input
 
-## Solution
-Replace the Calendar + Popover birthday input with three inline `Select` dropdowns (Month, Day, Year) that construct a `Date` object from the selections.
+## Overview
 
-## Changes
+Replace the three `Select` dropdowns (Month, Day, Year) with a single typed input field that uses locale-aware date formatting. US markets get `MM/DD/YYYY`, while other locales get their native format (e.g. `DD/MM/YYYY` for en-GB, `DD/MM/YYYY` for es/fr/de).
+
+## How It Works
+
+The input auto-formats as the user types:
+- User types digits only; slashes are inserted automatically
+- Placeholder shows the expected format (e.g. "MM/DD/YYYY" or "DD/MM/YYYY")
+- Validation ensures the date is real (no Feb 30) and not in the future
+- On valid entry, the `birthday` state is set; on invalid/incomplete, it clears
+
+## Locale Detection
+
+Uses the existing `useOrgDefaults()` hook to read `locale`. The format map:
+- `en`, `en-US` -> `MM/DD/YYYY` (month-first)
+- `en-GB`, `es`, `fr`, `de`, and all others -> `DD/MM/YYYY` (day-first)
+
+## Technical Changes
 
 ### File: `src/components/dashboard/schedule/NewClientDialog.tsx`
 
-**Remove** the Calendar/Popover birthday section (lines 332-359) and replace with three `Select` dropdowns in a row:
+**Remove:**
+- `birthMonth`, `birthDay`, `birthYear` state variables and their `useEffect` syncs
+- `years`, `months`, `daysInMonth` memos
+- The three `Select` components in the Birthday section
 
-- **Month dropdown**: January through December (values 0-11)
-- **Day dropdown**: 1-31, dynamically adjusted based on selected month/year (e.g. Feb shows 28 or 29 days)
-- **Year dropdown**: Current year down to 100 years ago, listed in descending order for fast selection
+**Add:**
+- Import `useOrgDefaults` from `@/hooks/useOrgDefaults`
+- A single `birthdayInput` string state (e.g. `""`)
+- A helper that determines format from locale (`isMonthFirst` boolean)
+- An `handleBirthdayInput` function that:
+  1. Strips non-digits
+  2. Auto-inserts `/` separators at positions 2 and 4
+  3. Caps length at 10 characters (`MM/DD/YYYY`)
+  4. Parses into a `Date` when all 10 chars are entered
+  5. Validates: real date, not in the future, year within last 100 years
+  6. Sets `birthday` state on valid, clears on invalid
+- Replace the three dropdowns with a single `Input` component using `autoCapitalize="off"`, `inputMode="numeric"`, and the locale-aware placeholder
 
-The three selects will manage intermediate state (`birthMonth`, `birthDay`, `birthYear`) and update the existing `birthday` state (a `Date`) whenever all three are populated. On dialog open, if `birthday` is already set, the dropdowns pre-populate from it.
+**Reset handling:** `resetForm` clears `birthdayInput` to `''` (replaces the three `setBirth*('')` calls).
 
-**Layout**: The three dropdowns sit inside the existing grid cell, arranged as a flex row with Month taking more space than Day and Year.
-
-**Import cleanup**: Remove `Calendar` import (line 18) and `CalendarIcon` usage for the birthday field (the "Client Since" field still uses it). Keep all `Select` imports already present.
+**Layout:** The Birthday field becomes a single `Input` inside the existing `space-y-2` div, no longer needing the `flex gap-2` wrapper or `col-span-2` grid. Simpler and more compact.
 
 ### No other files changed
-The `Select` component and all utilities (`cn`, `format`) are already imported. No new dependencies needed.
+
+All utilities (`useOrgDefaults`, `Input`, `cn`) are already available. No new dependencies.
+
